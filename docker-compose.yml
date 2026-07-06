@@ -1,0 +1,24 @@
+services:
+  # ฐานข้อมูล PostgreSQL สำหรับ NestJS Application
+  db:
+    image: postgres:13.0
+    ports:
+      - "5432:5432" # เปิดพอร์ตสำหรับรับการเชื่อมต่อจากภายนอกเข้าตัวฐานข้อมูล
+    environment:
+      POSTGRES_DB: python_exercises
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # เก็บข้อมูลของฐานข้อมูลไว้แบบถาวร
+    restart: always
+
+  # คลังเก็บคิวงาน BullMQ
+  redis:
+    image: redis:6.0
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "6379:6379" # เปิดพอร์ตสำหรับติดต่อ Redis จากเครื่องหลัก
+    restart: always
+
+volumes:
+  postgres_data:

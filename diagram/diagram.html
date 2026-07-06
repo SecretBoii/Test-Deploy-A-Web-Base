@@ -1,0 +1,2551 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive Database ER Diagram Schema Viewer for Python Autograder, featuring visual relationships, SQL DDL generation, and Prisma schema definitions.">
+    <title>Python Autograder - ER Diagram Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.85);
+            --card-bg: rgba(30, 41, 59, 0.55);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --accent-green: #10b981;
+            --accent-pink: #ec4899;
+            --accent-purple: #8b5cf6;
+            --accent-cyan: #06b6d4;
+            --accent-orange: #f59e0b;
+            --font-sans: 'Plus Jakarta Sans', 'Sarabun', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+            font-size: 0.9rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text p {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        .nav-controls {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.45rem 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn *, .small-action-btn * {
+            pointer-events: none;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--accent-purple));
+            border: none;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--primary-hover), var(--accent-purple));
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent-green), #047857);
+            border: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-accent:hover {
+            background: linear-gradient(135deg, #059669, #065f46);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #f87171;
+        }
+
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: #ef4444;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+            height: calc(100vh - 61px);
+            overflow: hidden;
+        }
+
+        /* Sidebar Left: Tables list & search */
+        .sidebar {
+            width: 300px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            z-index: 10;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.65rem 1rem 0.65rem 2.25rem;
+            border-radius: 8px;
+            outline: none;
+            font-size: 0.8rem;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            pointer-events: none;
+            font-size: 0.85rem;
+        }
+
+        .sidebar-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+
+        .table-list {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .table-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .table-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .table-list-item {
+            padding: 0.6rem 0.85rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.15s ease;
+        }
+
+        .table-list-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateX(4px);
+        }
+
+        .table-list-item.active {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: var(--primary);
+        }
+
+        .table-item-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        .table-item-badge {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* ER Diagram Workspace Board */
+        .workspace-board {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            background: radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.2) 0%, rgba(11, 15, 25, 0.95) 100%);
+            z-index: 1;
+        }
+
+        .erd-canvas {
+            width: 2000px;
+            height: 1500px;
+            position: relative;
+            padding: 40px;
+        }
+
+        /* Connection SVG Overlay */
+        .connections-svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .conn-line {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.15);
+            stroke-width: 1.5;
+            transition: stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+
+        .conn-line.active {
+            stroke: var(--accent-cyan);
+            stroke-width: 2.5;
+            filter: drop-shadow(0 0 5px var(--accent-cyan));
+            z-index: 5;
+        }
+
+        .conn-line.highlight {
+            stroke: var(--accent-purple);
+            stroke-width: 2.5;
+            filter: drop-shadow(0 0 5px var(--accent-purple));
+        }
+
+        /* Database Cards Styling */
+        .table-card {
+            width: 280px;
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.6);
+            z-index: 2;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: absolute;
+            user-select: none;
+            transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s ease;
+        }
+
+        .table-card:hover {
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 12px 35px -5px rgba(99, 102, 241, 0.15);
+        }
+
+        .table-card.active-highlight {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.35);
+            z-index: 10;
+        }
+
+        .table-card.dimmed {
+            opacity: 0.3;
+            filter: blur(0.5px);
+        }
+
+        .card-header {
+            padding: 0.65rem 0.85rem;
+            color: white;
+            font-weight: 700;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            cursor: move;
+            background: rgba(15, 23, 42, 0.4);
+        }
+
+        .card-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .edit-table-icon {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            cursor: pointer;
+            padding: 0.15rem;
+            border-radius: 4px;
+        }
+
+        .edit-table-icon:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .card-body {
+            padding: 0.4rem 0;
+            font-size: 0.75rem;
+        }
+
+        .column-row {
+            display: flex;
+            align-items: center;
+            padding: 0.35rem 0.85rem;
+            position: relative;
+            color: var(--text-primary);
+            cursor: pointer;
+        }
+
+        .column-row:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .column-row.active {
+            background: rgba(99, 102, 241, 0.12);
+            color: white;
+            font-weight: 600;
+        }
+
+        .column-key-type {
+            width: 26px;
+            font-size: 0.55rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 0.1rem 0.15rem;
+            border-radius: 4px;
+            margin-right: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .key-pk {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .key-fk {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .key-pfk {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .key-none {
+            visibility: hidden;
+            width: 26px;
+        }
+
+        .column-name {
+            flex: 1;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .column-comment-badge {
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+            cursor: pointer;
+        }
+
+        .column-type {
+            color: var(--text-secondary);
+            font-family: monospace;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        /* Connecting ports */
+        .port {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .port-left {
+            left: -3px;
+        }
+
+        .port-right {
+            right: -3px;
+        }
+
+        /* Table header colors based on categories */
+        .header-master {
+            border-top: 3px solid var(--accent-green);
+        }
+
+        .header-core {
+            border-top: 3px solid var(--primary);
+        }
+
+        .header-relation {
+            border-top: 3px solid var(--accent-purple);
+        }
+
+        .header-activity {
+            border-top: 3px solid var(--accent-pink);
+        }
+
+        /* Detail Inspector Sidebar Right */
+        .detail-panel {
+            width: 360px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        .detail-panel.hidden {
+            display: none;
+        }
+
+        .detail-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .detail-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .detail-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: white;
+        }
+
+        .detail-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            margin-bottom: 1.25rem;
+            background: rgba(255, 255, 255, 0.015);
+            padding: 0.65rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1rem;
+            gap: 0.5rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.4rem 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-align: center;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        .code-block {
+            background: #05070f;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.85rem;
+            font-family: monospace;
+            font-size: 0.7rem;
+            color: #818cf8;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.5;
+        }
+
+        .section-subtitle {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Column Manager Styles in Right Panel */
+        .col-manager-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0.65rem;
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-bottom: 0.35rem;
+        }
+
+        .col-manager-item:hover, .col-manager-item.active {
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .col-manager-left {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .col-manager-actions {
+            display: flex;
+            gap: 0.35rem;
+        }
+
+        .small-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.2rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .small-action-btn:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Forms Styling */
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .form-group label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .form-control {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.45rem 0.65rem;
+            border-radius: 6px;
+            outline: none;
+            font-size: 0.75rem;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        /* Modal Popup */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        .modal.open {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #111827;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 480px;
+            max-width: 95%;
+            padding: 1.5rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            transition: width 0.2s ease;
+        }
+
+        .modal-content.wide {
+            width: 880px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: white;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 0.75rem;
+        }
+
+        /* Comments List */
+        .comments-section {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+
+        .comment-item {
+            padding: 0.5rem;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.03);
+        }
+
+        .comment-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            font-size: 0.65rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .comment-text {
+            color: var(--text-primary);
+            line-height: 1.3;
+        }
+
+        /* Diagram Legend Bottom Left */
+        .diagram-notes-overlay {
+            position: absolute;
+            bottom: 1rem;
+            left: 320px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: flex;
+            gap: 1.25rem;
+            font-size: 0.7rem;
+        }
+
+        .note-tag {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            white-space: nowrap;
+            color: var(--text-secondary);
+        }
+
+        .note-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        /* Hover Tooltip */
+        .tooltip {
+            position: absolute;
+            background: #1e1b4b;
+            border: 1px solid var(--primary);
+            color: white;
+            padding: 0.45rem 0.65rem;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 100;
+            display: none;
+            max-width: 240px;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Embedded State Script for Export Injection -->
+    <script id="schema-data-script">
+        window.initialSchemaMetadata = null;
+        window.initialConnections = null;
+        window.initialTablePositions = null;
+        window.initialColumnComments = null;
+    </script>
+
+    <header>
+        <div class="logo-area">
+            <div class="logo-icon">&gt;_</div>
+            <div class="logo-text">
+                <h1>Python Autograder</h1>
+                <p>Interactive Schema &amp; ERD Studio</p>
+            </div>
+        </div>
+        <div class="nav-controls">
+            <button class="btn btn-accent" onclick="openImportModal()">
+                📥 Import SQL DDL
+            </button>
+            <button class="btn btn-primary" onclick="exportHTML()">
+                💾 Export / Save HTML
+            </button>
+            <button class="btn" onclick="resetLayoutPositions()">
+                🔄 Reset Positions
+            </button>
+            <button class="btn" onclick="resetView()">
+                Reset View
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar Left: Search & Table Creator -->
+        <div class="sidebar">
+            <div class="search-box">
+                <input type="text" id="search-input" class="search-input" placeholder="ค้นหาตารางหรือคอลัมน์..." oninput="handleSearch()">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <div class="sidebar-actions">
+                <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="openTableModal(null)">
+                    ➕ Create New Table
+                </button>
+                <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="clearAllData()">
+                    🧹 Reset Studio Data
+                </button>
+            </div>
+
+            <div class="section-subtitle">
+                <span>ตารางฐานข้อมูล (${Object.keys(schemaMetadata || {}).length || 0})</span>
+            </div>
+            <div class="table-list" id="table-list">
+                <!-- Dynamically Rendered -->
+            </div>
+        </div>
+
+        <!-- Interactive Diagram Board -->
+        <div class="workspace-board" id="workspace-board">
+            <div class="erd-canvas" id="erd-canvas">
+                <svg class="connections-svg" id="connections-svg">
+                    <defs>
+                        <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="rgba(255,255,255,0.4)" />
+                        </marker>
+                        <marker id="arrow-active" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--accent-cyan)" />
+                        </marker>
+                    </defs>
+                </svg>
+                <!-- Rendered Table Cards -->
+            </div>
+
+            <!-- Notes Overlay -->
+            <div class="diagram-notes-overlay">
+                <div class="note-tag">
+                    <span class="note-dot" style="background: var(--accent-green)"></span>
+                    <span>Master</span>
+                </div>
+                <div class="note-tag">
+                    <span class="note-dot" style="background: var(--primary)"></span>
+                    <span>Core</span>
+                </div>
+                <div class="note-tag">
+                    <span class="note-dot" style="background: var(--accent-pink)"></span>
+                    <span>Transactional</span>
+                </div>
+                <div class="note-tag">
+                    <span class="note-dot" style="background: var(--accent-purple)"></span>
+                    <span>Junction</span>
+                </div>
+            </div>
+
+            <div class="tooltip" id="erd-tooltip"></div>
+        </div>
+
+        <!-- Sidebar Right: Table details, Column CRUD & Comments -->
+        <div class="detail-panel" id="detail-panel">
+            <div class="detail-header">
+                <span class="detail-title" id="panel-title">Inspector</span>
+                <button class="close-btn" onclick="closePanel()">×</button>
+            </div>
+            
+            <div id="panel-empty-state" style="text-align: center; padding: 3rem 1rem; color: var(--text-secondary); font-size: 0.8rem;">
+                <p>💡 กรุณาคลิกเลือกตารางหรือช่องคอลัมน์ในแผนภาพ เพื่อแก้ไขโครงสร้างฐานข้อมูล หรือเขียนคอมเมนต์ความคิดเห็น</p>
+            </div>
+
+            <div id="panel-content" style="display: none; flex-direction: column; gap: 1rem;">
+                <div>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                        <h3 id="panel-table-name" style="font-weight: 700; color: white;">Table</h3>
+                        <div style="display: flex; gap: 0.35rem;">
+                            <button class="small-action-btn" onclick="editCurrentTable()">✏️ Edit Table</button>
+                            <button class="small-action-btn" style="color: #f87171;" onclick="deleteCurrentTable()">🗑️ Delete</button>
+                        </div>
+                    </div>
+                    <p class="detail-desc" id="panel-desc"></p>
+                </div>
+                
+                <div class="tabs-header">
+                    <button class="tab-btn active" id="tab-btn-cols" onclick="switchTab('tab-cols')">Columns &amp; Comments</button>
+                    <button class="tab-btn" id="tab-btn-sql" onclick="switchTab('tab-sql')">SQL DDL</button>
+                    <button class="tab-btn" id="tab-btn-prisma" onclick="switchTab('tab-prisma')">Prisma</button>
+                </div>
+
+                <!-- Tab: Columns Manager & Commenting -->
+                <div class="tab-content active" id="tab-cols">
+                    <div class="section-subtitle">
+                        <span>รายการคอลัมน์</span>
+                    </div>
+                    <div id="columns-editor-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                        <!-- Columns populated here -->
+                    </div>
+
+                    <!-- Column Edit / Comments panel inside inspector -->
+                    <div id="active-column-detail-box" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; background: rgba(0,0,0,0.15);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.35rem;">
+                            <strong style="color: var(--accent-cyan); font-size: 0.8rem;" id="active-col-title">Column Details</strong>
+                            <button class="small-action-btn" onclick="hideActiveColumnBox()">Close</button>
+                        </div>
+                        
+                        <!-- Comment Form -->
+                        <div class="form-group" style="margin-top: 0.5rem;">
+                            <label>ข้อคิดเห็น / คอมเมนต์ประจำคอลัมน์ (Comments):</label>
+                            <div class="comments-section" id="active-col-comments-list">
+                                <!-- List of comments -->
+                            </div>
+                            <div style="display: flex; gap: 0.4rem; margin-top: 0.5rem;">
+                                <input type="text" id="new-comment-input" class="form-control" placeholder="พิมพ์ความคิดเห็นของคุณ...">
+                                <button class="btn btn-primary" onclick="addNewComment()">Save</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Toggle Form to Add Column -->
+                    <div style="margin-top: 0.5rem;">
+                        <button class="btn" style="width: 100%; justify-content: center;" onclick="toggleAddColumnForm()">
+                            ➕ Add Column to Table
+                        </button>
+                        <div id="add-column-form-box" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; background: rgba(255,255,255,0.02); margin-top: 0.5rem;">
+                            <input type="hidden" id="edit-col-index" value="-1">
+                            <div class="form-group">
+                                <label>ชื่อคอลัมน์ (Column Name):</label>
+                                <input type="text" id="col-form-name" class="form-control" placeholder="e.g. user_id">
+                            </div>
+                            <div class="form-group">
+                                <label>ประเภทข้อมูล (Data Type):</label>
+                                <input type="text" id="col-form-type" class="form-control" placeholder="e.g. INT, VARCHAR(100)">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>ประเภท Key:</label>
+                                    <select id="col-form-key" class="form-control" onchange="toggleFormFKFields()">
+                                        <option value="none">None</option>
+                                        <option value="PK">Primary Key (PK)</option>
+                                        <option value="FK">Foreign Key (FK)</option>
+                                        <option value="PFK">PK, FK (PFK)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div id="form-fk-options" style="display: none;">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>อ้างอิงตาราง (Ref Table):</label>
+                                        <select id="col-form-ref-table" class="form-control" onchange="populateFormRefColumns()">
+                                            <!-- Dynamically populated -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>อ้างอิงคอลัมน์ (Ref Col):</label>
+                                        <select id="col-form-ref-column" class="form-control">
+                                            <!-- Dynamically populated -->
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 0.5rem;">
+                                <button class="btn" onclick="toggleAddColumnForm(false)">Cancel</button>
+                                <button class="btn btn-primary" onclick="saveColumnForm()">Save Column</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: SQL -->
+                <div class="tab-content" id="tab-sql">
+                    <pre class="code-block" id="sql-code"></pre>
+                </div>
+
+                <!-- Tab: Prisma -->
+                <div class="tab-content" id="tab-prisma">
+                    <pre class="code-block" id="prisma-code"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Table Add/Edit Modal -->
+    <div class="modal" id="table-modal">
+        <div class="modal-content" id="table-modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="table-modal-title">Create Table</span>
+                <button class="close-btn" onclick="closeTableModal()">×</button>
+            </div>
+            
+            <div class="modal-body-layout" id="table-modal-body-layout" style="display: flex; gap: 1.5rem;">
+                <!-- Left panel: Table details -->
+                <div class="modal-left-panel" style="flex: 1; display: flex; flex-direction: column; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label>ชื่อตาราง (Table Name):</label>
+                        <input type="text" id="table-modal-name" class="form-control" placeholder="e.g. Course">
+                    </div>
+                    <div class="form-group">
+                        <label>หมวดหมู่ตาราง (Category):</label>
+                        <select id="table-modal-category" class="form-control">
+                            <option value="Core">Core Entity</option>
+                            <option value="Master">Master Data</option>
+                            <option value="Transactional">Transactional Log</option>
+                            <option value="Junction">Junction Table (N:M)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>รายละเอียด / คำอธิบายตาราง (Description):</label>
+                        <textarea id="table-modal-desc" class="form-control" rows="5" placeholder="อธิบายบทบาทหน้าที่ของตารางนี้..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Right panel: Columns editor (visible only in Edit Table mode) -->
+                <div class="modal-right-panel" id="modal-columns-panel" style="flex: 1.2; display: none; flex-direction: column; gap: 0.75rem; border-left: 1px solid var(--border-color); padding-left: 1.5rem; max-height: 400px; overflow-y: auto;">
+                    <div class="section-subtitle">
+                        <span>รายการคอลัมน์ในตาราง</span>
+                        <button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.7rem;" onclick="toggleModalAddColumnForm(true)">➕ Add Column</button>
+                    </div>
+                    
+                    <div id="modal-columns-list" style="display: flex; flex-direction: column; gap: 0.35rem; max-height: 180px; overflow-y: auto; padding-right: 4px;">
+                        <!-- Column rows rendered dynamically -->
+                    </div>
+
+                    <!-- Modal Column form (toggled) -->
+                    <div id="modal-column-form-box" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.65rem; background: rgba(255,255,255,0.015); margin-top: 0.5rem;">
+                        <input type="hidden" id="modal-col-edit-idx" value="-1">
+                        <div class="form-group">
+                            <label>ชื่อคอลัมน์ (Column Name):</label>
+                            <input type="text" id="modal-col-name" class="form-control" placeholder="e.g. user_id">
+                        </div>
+                        <div class="form-group">
+                            <label>ประเภทข้อมูล (Data Type):</label>
+                            <input type="text" id="modal-col-type" class="form-control" placeholder="e.g. INT, VARCHAR(100)">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>ประเภท Key:</label>
+                                <select id="modal-col-key" class="form-control" onchange="toggleModalFKFields()">
+                                    <option value="none">None</option>
+                                    <option value="PK">Primary Key (PK)</option>
+                                    <option value="FK">Foreign Key (FK)</option>
+                                    <option value="PFK">PK, FK (PFK)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="modal-col-fk-options" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>อ้างอิงตาราง (Ref Table):</label>
+                                    <select id="modal-col-ref-table" class="form-control" onchange="populateModalRefColumns()">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>อ้างอิงคอลัมน์ (Ref Col):</label>
+                                    <select id="modal-col-ref-column" class="form-control">
+                                        <!-- Populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.4rem; justify-content: flex-end; margin-top: 0.5rem;">
+                            <button class="btn" onclick="toggleModalAddColumnForm(false)">Cancel</button>
+                            <button class="btn btn-primary" onclick="saveModalColumnForm()">Save Column</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn" onclick="closeTableModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTableModal()">Save Table</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SQL Import Modal -->
+    <div class="modal" id="import-modal">
+        <div class="modal-content" style="width: 580px;">
+            <div class="modal-header">
+                <span class="modal-title">Import SQL DDL Script</span>
+                <button class="close-btn" onclick="closeImportModal()">×</button>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-secondary);">วางสคริปต์ SQL (คำสั่ง `CREATE TABLE`) เพื่อสร้างและวาดตารางและโครงสร้างความสัมพันธ์โดยอัตโนมัติ</p>
+            <div class="form-group">
+                <textarea id="import-sql-text" class="form-control" style="font-family: monospace; font-size: 0.7rem;" rows="12" placeholder="CREATE TABLE Student (&#10;  student_id INT PRIMARY KEY,&#10;  name VARCHAR(100),&#10;  education_id VARCHAR(100),&#10;  FOREIGN KEY (education_id) REFERENCES Education(EducationID)&#10;);"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeImportModal()">Cancel</button>
+                <button class="btn btn-accent" onclick="executeSQLImport()">Import Schema</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default Database Metadata (Schema Structure)
+        const DEFAULT_SCHEMA = {
+            Education: {
+                name: "Education",
+                desc: "ตารางเก็บข้อมูลระดับสถาบันการศึกษา หรือสถานศึกษาของผู้เรียนเพื่อนำมาใช้วิเคราะห์ผลหรือระบุสังกัด",
+                badge: "Master",
+                columns: [
+                    { name: "EducationID", type: "VARCHAR(100)", key: "PK", refTable: "", refCol: "" },
+                    { name: "university", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "Faculty", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "Major", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" }
+                ]
+            },
+            Role: {
+                name: "Role",
+                desc: "บทบาทหน้าที่ในการเข้าถึงระบบ เช่น สิทธิ์นักศึกษา (Student) หรือ ผู้สอน (Instructor)",
+                badge: "Master",
+                columns: [
+                    { name: "Roleid", type: "VARCHAR(20)", key: "PK", refTable: "", refCol: "" },
+                    { name: "Rolename", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" }
+                ]
+            },
+            Userprofile: {
+                name: "Userprofile",
+                desc: "ข้อมูลบัญชีผู้ใช้งานรวมถึงข้อมูลส่วนตัวสำหรับการยืนยันตัวตนและการวิเคราะห์ข้อมูลผลคะแนน",
+                badge: "Core",
+                columns: [
+                    { name: "Userid", type: "INT", key: "PK", refTable: "", refCol: "" },
+                    { name: "Username", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "Password", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "Gender", type: "VARCHAR(10)", key: "none", refTable: "", refCol: "" },
+                    { name: "Date of birth", type: "DATE", key: "none", refTable: "", refCol: "" },
+                    { name: "EducationID", type: "VARCHAR(100)", key: "FK", refTable: "Education", refCol: "EducationID" },
+                    { name: "Register_timestamp", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" },
+                    { name: "Roleid", type: "VARCHAR(20)", key: "FK", refTable: "Role", refCol: "Roleid" }
+                ]
+            },
+            ExerciseDB: {
+                name: "ExerciseDB",
+                desc: "ฐานข้อมูลจัดเก็บโจทย์เขียนโปรแกรม ระดับความยาก คำใบ้ และรายละเอียดที่ใช้เป็นคำสั่งตรวจโค้ดของระบบ Autograder",
+                badge: "Core",
+                columns: [
+                    { name: "exercise_id", type: "INT", key: "PK", refTable: "", refCol: "" },
+                    { name: "title", type: "VARCHAR(255)", key: "none", refTable: "", refCol: "" },
+                    { name: "description", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "topic", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "objective", type: "VARCHAR(100)", key: "none", refTable: "", refCol: "" },
+                    { name: "difficulty_level", type: "INT", key: "none", refTable: "", refCol: "" },
+                    { name: "expected_time", type: "INT", key: "none", refTable: "", refCol: "" },
+                    { name: "status", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "hint", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "created_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" },
+                    { name: "updated_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" }
+                ]
+            },
+            Session: {
+                name: "Session",
+                desc: "เซสชันเรียน กลุ่มการมอบหมายงาน หรือห้องสอบที่สร้างโดยผู้สอนเพื่อรวมชุดโจทย์ให้นักเรียนทำร่วมกันตามเวลาที่กำหนด",
+                badge: "Core",
+                columns: [
+                    { name: "session_id", type: "INT", key: "PK", refTable: "", refCol: "" },
+                    { name: "session_name", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "Session_objective", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "target_level", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "duration", type: "INT", key: "none", refTable: "", refCol: "" },
+                    { name: "status", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "created_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" },
+                    { name: "updated_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" }
+                ]
+            },
+            Session_Exercise: {
+                name: "Session_Exercise",
+                desc: "ตารางเชื่อมระหว่าง Session และ Exercise เพื่อสร้างความสัมพันธ์แบบ N:M (Many-to-Many)",
+                badge: "Junction",
+                columns: [
+                    { name: "session_id", type: "INT", key: "PFK", refTable: "Session", refCol: "session_id" },
+                    { name: "exercise_id", type: "INT", key: "PFK", refTable: "ExerciseDB", refCol: "exercise_id" },
+                    { name: "created_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" }
+                ]
+            },
+            Activity: {
+                name: "Activity",
+                desc: "ตารางบันทึกกิจกรรมการส่งตรวจโค้ด เก็บซอร์สโค้ด คะแนน และ Log ข้อผิดพลาดจากการตรวจของ Python Autograder พร้อมทั้ง AI Feedback",
+                badge: "Transactional",
+                columns: [
+                    { name: "activity_id", type: "INT", key: "PK", refTable: "", refCol: "" },
+                    { name: "user_id", type: "INT", key: "FK", refTable: "Userprofile", refCol: "Userid" },
+                    { name: "exercise_id", type: "INT", key: "FK", refTable: "ExerciseDB", refCol: "exercise_id" },
+                    { name: "session_id", type: "INT", key: "FK", refTable: "Session", refCol: "session_id" },
+                    { name: "started_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" },
+                    { name: "submitted_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" },
+                    { name: "hint_used", type: "BOOLEAN", key: "none", refTable: "", refCol: "" },
+                    { name: "answer", type: "TEXT", key: "none", refTable: "", refCol: "" },
+                    { name: "score", type: "INT", key: "none", refTable: "", refCol: "" },
+                    { name: "exception_message", type: "TEXT", key: "none", refTable: "", refCol: "" },
+                    { name: "ai_feedback", type: "TEXT", key: "none", refTable: "", refCol: "" },
+                    { name: "event_type", type: "VARCHAR(50)", key: "none", refTable: "", refCol: "" },
+                    { name: "run_count", type: "INT", key: "none", refTable: "", refCol: "" },
+                    { name: "created_at", type: "TIMESTAMP", key: "none", refTable: "", refCol: "" }
+                ]
+            }
+        };
+
+        const DEFAULT_POSITIONS = {
+            Education: { x: 50, y: 80 },
+            Role: { x: 50, y: 350 },
+            Userprofile: { x: 420, y: 80 },
+            Session: { x: 420, y: 480 },
+            Activity: { x: 820, y: 50 },
+            Session_Exercise: { x: 820, y: 640 },
+            ExerciseDB: { x: 1220, y: 220 }
+        };
+
+        // State variables
+        let schemaMetadata = {};
+        let tablePositions = {};
+        let columnComments = {};
+        let selectedTableId = null;
+        let selectedColumnName = null;
+        let activeDragCard = null;
+        let dragStartX = 0, dragStartY = 0;
+        let cardStartX = 0, cardStartY = 0;
+
+        // Initialize board
+        window.addEventListener('load', () => {
+            loadState();
+            renderBoard();
+            renderTableList();
+            setTimeout(drawConnections, 300);
+        });
+
+        window.addEventListener('resize', drawConnections);
+
+        // Persistent State Management
+        function loadState() {
+            // Priority: LocalStorage -> Embedded HTML Exports -> Defaults
+            const localSchema = localStorage.getItem('erd_schema_metadata');
+            const localPos = localStorage.getItem('erd_table_positions');
+            const localComments = localStorage.getItem('erd_column_comments');
+
+            schemaMetadata = localSchema ? JSON.parse(localSchema) : (window.initialSchemaMetadata || JSON.parse(JSON.stringify(DEFAULT_SCHEMA)));
+            tablePositions = localPos ? JSON.parse(localPos) : (window.initialTablePositions || JSON.parse(JSON.stringify(DEFAULT_POSITIONS)));
+            columnComments = localComments ? JSON.parse(localComments) : (window.initialColumnComments || {});
+        }
+
+        function saveStateToLocal() {
+            localStorage.setItem('erd_schema_metadata', JSON.stringify(schemaMetadata));
+            localStorage.setItem('erd_table_positions', JSON.stringify(tablePositions));
+            localStorage.setItem('erd_column_comments', JSON.stringify(columnComments));
+        }
+
+        function clearAllData() {
+            if (confirm("⚠️ คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตข้อมูลทั้งหมดกลับสู่ค่าเริ่มต้น? คอมเมนต์และตำแหน่งที่เคยจัดจะสูญหาย")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
+        // Render Table list on left sidebar
+        function renderTableList() {
+            const container = document.getElementById('table-list');
+            container.innerHTML = '';
+            
+            Object.keys(schemaMetadata).forEach(key => {
+                const data = schemaMetadata[key];
+                const item = document.createElement('div');
+                item.className = 'table-list-item';
+                item.id = `list-item-${key}`;
+                item.onclick = () => selectTable(key);
+
+                let badgeBg = 'rgba(99, 102, 241, 0.2)';
+                let badgeText = '#a5b4fc';
+                if (data.badge === 'Master') { badgeBg = 'rgba(16, 185, 129, 0.2)'; badgeText = '#34d399'; }
+                if (data.badge === 'Transactional') { badgeBg = 'rgba(239, 68, 68, 0.2)'; badgeText = '#fca5a5'; }
+                if (data.badge === 'Junction') { badgeBg = 'rgba(139, 92, 246, 0.2)'; badgeText = '#c084fc'; }
+
+                item.innerHTML = `
+                    <span class="table-item-name">${key}</span>
+                    <span class="table-item-badge" style="background: ${badgeBg}; color: ${badgeText}">${data.badge}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Render visual cards on the board
+        function renderBoard() {
+            const canvas = document.getElementById('erd-canvas');
+            // Remove existing cards
+            canvas.querySelectorAll('.table-card').forEach(el => el.remove());
+
+            Object.keys(schemaMetadata).forEach(key => {
+                const table = schemaMetadata[key];
+                const pos = tablePositions[key] || { x: 100, y: 100 };
+                
+                const card = document.createElement('div');
+                card.className = 'table-card';
+                card.id = `card-${key}`;
+                card.style.left = `${pos.x}px`;
+                card.style.top = `${pos.y}px`;
+                
+                let headerClass = 'header-core';
+                if (table.badge === 'Master') headerClass = 'header-master';
+                if (table.badge === 'Transactional') headerClass = 'header-activity';
+                if (table.badge === 'Junction') headerClass = 'header-relation';
+
+                let colsHtml = '';
+                table.columns.forEach(col => {
+                    let keyClass = 'key-none';
+                    if (col.key === 'PK') keyClass = 'key-pk';
+                    if (col.key === 'FK') keyClass = 'key-fk';
+                    if (col.key === 'PFK') keyClass = 'key-pfk';
+
+                    const commentKey = `${key}-${col.name}`;
+                    const hasComments = columnComments[commentKey] && columnComments[commentKey].length > 0;
+                    const commentIcon = hasComments ? `<span class="column-comment-badge" title="มีคอมเมนต์">💬</span>` : '';
+
+                    colsHtml += `
+                        <div class="column-row" id="row-${key}-${col.name}" onclick="selectColumn('${key}', '${col.name}')">
+                            <span class="column-key-type ${keyClass}">${col.key === 'none' ? '' : col.key}</span>
+                            <span class="column-name">${col.name} ${commentIcon}</span>
+                            <span class="column-type">${col.type}</span>
+                            <div class="port port-left"></div>
+                            <div class="port port-right"></div>
+                        </div>
+                    `;
+                });
+
+                card.innerHTML = `
+                    <div class="card-header ${headerClass}">
+                        <span>${key}</span>
+                        <span class="table-item-badge" style="background: rgba(255,255,255,0.1); color: #fff;">${table.badge}</span>
+                    </div>
+                    <div class="card-body" style="flex: 1;">
+                        ${colsHtml}
+                    </div>
+                    <div class="card-footer" onclick="event.stopPropagation(); openTableModal('${key}')" style="border-top: 1px solid var(--border-color); padding: 0.5rem; text-align: center; font-size: 0.75rem; color: var(--accent-cyan); font-weight: 600; cursor: pointer; transition: background 0.15s; background: rgba(0,0,0,0.15);" onmouseover="this.style.background='rgba(6,182,212,0.15)'" onmouseout="this.style.background='rgba(0,0,0,0.15)'">
+                        ⚙️ แก้ไขตาราง &amp; คอลัมน์
+                    </div>
+                `;
+
+                // Handle clicks and dragging
+                card.addEventListener('mousedown', (e) => {
+                    if (e.target.closest('.card-footer') || e.target.closest('.column-row')) return;
+                    selectTable(key);
+                });
+
+                canvas.appendChild(card);
+                makeDraggable(card, key);
+            });
+        }
+
+        // Handle Card Dragging
+        function makeDraggable(card, tableId) {
+            const header = card.querySelector('.card-header');
+            
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.closest('.edit-table-icon')) return;
+                
+                activeDragCard = card;
+                const rect = card.getBoundingClientRect();
+                
+                cardStartX = card.offsetLeft;
+                cardStartY = card.offsetTop;
+                
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                
+                card.style.zIndex = '100';
+                
+                // Set moving cursor
+                document.body.style.cursor = 'move';
+                e.preventDefault();
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (activeDragCard !== card) return;
+                const dx = e.clientX - dragStartX;
+                const dy = e.clientY - dragStartY;
+                
+                const newX = Math.max(10, cardStartX + dx);
+                const newY = Math.max(10, cardStartY + dy);
+                
+                card.style.left = `${newX}px`;
+                card.style.top = `${newY}px`;
+                
+                tablePositions[tableId] = { x: newX, y: newY };
+                drawConnections();
+            });
+
+            window.addEventListener('mouseup', (e) => {
+                if (activeDragCard !== card) return;
+                card.style.zIndex = '2';
+                activeDragCard = null;
+                document.body.style.cursor = 'default';
+                saveStateToLocal();
+            });
+        }
+
+        // Draw connections dynamically based on current FK meta and layout coordinates
+        function drawConnections() {
+            const svg = document.getElementById('connections-svg');
+            const canvas = document.getElementById('erd-canvas');
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            // Clear current path elements
+            svg.querySelectorAll('path').forEach(p => p.remove());
+
+            Object.keys(schemaMetadata).forEach(fromTableKey => {
+                const table = schemaMetadata[fromTableKey];
+                
+                table.columns.forEach(col => {
+                    // Check if foreign key
+                    if ((col.key === 'FK' || col.key === 'PFK') && col.refTable && col.refCol) {
+                        const targetTableKey = col.refTable;
+                        const targetColName = col.refCol;
+                        
+                        const sourceRow = document.getElementById(`row-${fromTableKey}-${col.name}`);
+                        const targetRow = document.getElementById(`row-${targetTableKey}-${targetColName}`);
+                        
+                        if (!sourceRow || !targetRow) return;
+
+                        const sCard = document.getElementById(`card-${fromTableKey}`);
+                        const tCard = document.getElementById(`card-${targetTableKey}`);
+                        
+                        if (!sCard || !tCard) return;
+
+                        // Smart Port Connector choice: connect right to left, or left to right
+                        const isSourceToLeft = sCard.offsetLeft < tCard.offsetLeft;
+                        
+                        const sPortClass = isSourceToLeft ? '.port-right' : '.port-left';
+                        const tPortClass = isSourceToLeft ? '.port-left' : '.port-right';
+
+                        const sPort = sourceRow.querySelector(sPortClass);
+                        const tPort = targetRow.querySelector(tPortClass);
+                        
+                        if (!sPort || !tPort) return;
+
+                        const sPortRect = sPort.getBoundingClientRect();
+                        const tPortRect = tPort.getBoundingClientRect();
+
+                        const x1 = sPortRect.left + sPortRect.width / 2 - canvasRect.left;
+                        const y1 = sPortRect.top + sPortRect.height / 2 - canvasRect.top;
+                        const x2 = tPortRect.left + tPortRect.width / 2 - canvasRect.left;
+                        const y2 = tPortRect.top + tPortRect.height / 2 - canvasRect.top;
+
+                        const dx = Math.abs(x2 - x1) * 0.45;
+                        const cx1 = x1 + (isSourceToLeft ? dx : -dx);
+                        const cy1 = y1;
+                        const cx2 = x2 + (isSourceToLeft ? -dx : dx);
+                        const cy2 = y2;
+
+                        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                        path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`);
+                        path.setAttribute('class', 'conn-line');
+                        path.setAttribute('id', `path-${fromTableKey}-${col.name}-to-${targetTableKey}-${targetColName}`);
+                        
+                        const relDesc = `ความสัมพันธ์แบบเชื่อมโยง FK: ${fromTableKey}.${col.name} ➔ ${targetTableKey}.${targetColName}`;
+                        path.addEventListener('mouseenter', (e) => showTooltip(e, relDesc, path));
+                        path.addEventListener('mouseleave', hideTooltip);
+
+                        svg.appendChild(path);
+                    }
+                });
+            });
+
+            // Re-apply active highlights to connection paths
+            if (selectedTableId) {
+                document.querySelectorAll('.conn-line').forEach(path => {
+                    if (path.id.toLowerCase().includes(selectedTableId.toLowerCase())) {
+                        path.classList.add('active');
+                    }
+                });
+            }
+        }
+
+        // Search Filter
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            document.querySelectorAll('.table-card').forEach(card => {
+                const tableName = card.id.replace('card-', '').toLowerCase();
+                const colNames = Array.from(card.querySelectorAll('.column-name'))
+                    .map(el => el.textContent.toLowerCase());
+                
+                const matchesTable = tableName.includes(query);
+                const matchesCols = colNames.some(name => name.includes(query));
+                
+                card.style.display = (query === '' || matchesTable || matchesCols) ? 'flex' : 'none';
+            });
+            setTimeout(drawConnections, 50);
+        }
+
+        // Show Tooltip for lines and comments
+        function showTooltip(e, text, pathEl) {
+            const tooltip = document.getElementById('erd-tooltip');
+            tooltip.style.display = 'block';
+            tooltip.innerHTML = text;
+            
+            if (pathEl) pathEl.classList.add('highlight');
+            
+            const board = document.getElementById('workspace-board');
+            const boardRect = board.getBoundingClientRect();
+            tooltip.style.left = `${e.clientX - boardRect.left + board.scrollLeft + 15}px`;
+            tooltip.style.top = `${e.clientY - boardRect.top + board.scrollTop - 20}px`;
+        }
+
+        function hideTooltip() {
+            document.getElementById('erd-tooltip').style.display = 'none';
+            document.querySelectorAll('.conn-line').forEach(p => p.classList.remove('highlight'));
+        }
+
+        // Reset workspace selections
+        function resetView() {
+            selectedTableId = null;
+            selectedColumnName = null;
+            closePanel();
+            
+            document.querySelectorAll('.table-card').forEach(card => {
+                card.classList.remove('active-highlight', 'dimmed');
+            });
+            document.querySelectorAll('.table-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.conn-line').forEach(path => {
+                path.classList.remove('active');
+            });
+        }
+
+        // Reset table card positions to default
+        function resetLayoutPositions() {
+            if (confirm("🔄 คุณแน่ใจหรือไม่ว่าต้องการจัดตำแหน่งตารางใหม่กลับสู่ตำแหน่งเริ่มต้น?")) {
+                tablePositions = JSON.parse(JSON.stringify(DEFAULT_POSITIONS));
+                saveStateToLocal();
+                renderBoard();
+                drawConnections();
+            }
+        }
+
+        // Inspector selection
+        function selectTable(tableId) {
+            selectedTableId = tableId;
+
+            // Highlight sidebar list item
+            document.querySelectorAll('.table-list-item').forEach(item => item.classList.remove('active'));
+            const activeListItem = document.getElementById(`list-item-${tableId}`);
+            if (activeListItem) activeListItem.classList.add('active');
+
+            // Dim other table cards
+            document.querySelectorAll('.table-card').forEach(card => {
+                if (card.id === `card-${tableId}`) {
+                    card.classList.add('active-highlight');
+                    card.classList.remove('dimmed');
+                } else {
+                    card.classList.remove('active-highlight');
+                    card.classList.add('dimmed');
+                }
+            });
+
+            // Highlight lines
+            document.querySelectorAll('.conn-line').forEach(path => {
+                if (path.id.toLowerCase().includes(tableId.toLowerCase())) {
+                    path.classList.add('active');
+                } else {
+                    path.classList.remove('active');
+                }
+            });
+
+            // Populate inspector details
+            const table = schemaMetadata[tableId];
+            if (table) {
+                document.getElementById('panel-empty-state').style.display = 'none';
+                document.getElementById('panel-content').style.display = 'flex';
+                
+                document.getElementById('panel-table-name').innerText = table.name;
+                document.getElementById('panel-desc').innerText = table.desc || "ไม่มีรายละเอียดคำอธิบายสำหรับตารางนี้";
+                
+                // Render Inspector Columns List with Edit & Comment options
+                renderInspectorColumns(tableId);
+
+                // Code tabs
+                document.getElementById('sql-code').textContent = generateSQL(tableId);
+                document.getElementById('prisma-code').textContent = generatePrisma(tableId);
+
+                hideActiveColumnBox();
+            }
+        }
+
+        // Render column list in sidebar inspector
+        function renderInspectorColumns(tableId) {
+            const container = document.getElementById('columns-editor-list');
+            container.innerHTML = '';
+            
+            const table = schemaMetadata[tableId];
+            table.columns.forEach((col, index) => {
+                const item = document.createElement('div');
+                item.className = 'col-manager-item';
+                item.id = `col-manager-item-${col.name}`;
+                
+                let keyBadge = '';
+                if (col.key === 'PK') keyBadge = '<span class="column-key-type key-pk">PK</span>';
+                if (col.key === 'FK') keyBadge = '<span class="column-key-type key-fk" title="อ้างอิง: ' + col.refTable + '.' + col.refCol + '">FK</span>';
+                if (col.key === 'PFK') keyBadge = '<span class="column-key-type key-pfk" title="อ้างอิง: ' + col.refTable + '.' + col.refCol + '">PFK</span>';
+                if (col.key === 'none') keyBadge = '<span style="width: 10px;"></span>';
+
+                const commentKey = `${tableId}-${col.name}`;
+                const commentCount = columnComments[commentKey] ? columnComments[commentKey].length : 0;
+                const commentBadge = commentCount > 0 ? `<span class="column-comment-badge" title="${commentCount} คอมเมนต์">💬 ${commentCount}</span>` : '';
+
+                item.innerHTML = `
+                    <div class="col-manager-left" onclick="selectColumn('${tableId}', '${col.name}')">
+                        ${keyBadge}
+                        <strong style="color: white;">${col.name}</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.65rem;">${col.type}</span>
+                        ${commentBadge}
+                    </div>
+                    <div class="col-manager-actions">
+                        <button class="small-action-btn" onclick="editColumnInline('${tableId}', ${index})" title="แก้ไขคอลัมน์">✏️</button>
+                        <button class="small-action-btn" style="color: #f87171;" onclick="deleteColumn('${tableId}', ${index})" title="ลบคอลัมน์">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Select a column for commenting
+        function selectColumn(tableId, colName) {
+            selectTable(tableId);
+            selectedColumnName = colName;
+            
+            // Highlight column row in the visual card
+            document.querySelectorAll('.column-row').forEach(row => row.classList.remove('active'));
+            const targetRow = document.getElementById(`row-${tableId}-${colName}`);
+            if (targetRow) targetRow.classList.add('active');
+
+            // Highlight in inspector list
+            document.querySelectorAll('.col-manager-item').forEach(item => item.classList.remove('active'));
+            const listItem = document.getElementById(`col-manager-item-${colName}`);
+            if (listItem) listItem.classList.add('active');
+
+            // Show details & comments panel in sidebar
+            const activeColBox = document.getElementById('active-column-detail-box');
+            activeColBox.style.display = 'block';
+            document.getElementById('active-col-title').innerText = `คอลัมน์: ${tableId}.${colName}`;
+
+            renderColumnCommentsList();
+        }
+
+        function hideActiveColumnBox() {
+            selectedColumnName = null;
+            document.getElementById('active-column-detail-box').style.display = 'none';
+            document.querySelectorAll('.column-row').forEach(row => row.classList.remove('active'));
+            document.querySelectorAll('.col-manager-item').forEach(item => item.classList.remove('active'));
+        }
+
+        // Render comments
+        function renderColumnCommentsList() {
+            const listContainer = document.getElementById('active-col-comments-list');
+            listContainer.innerHTML = '';
+            
+            const commentKey = `${selectedTableId}-${selectedColumnName}`;
+            const comments = columnComments[commentKey] || [];
+            
+            if (comments.length === 0) {
+                listContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 0.7rem; padding: 0.5rem 0;">ไม่มีคอมเมนต์สำหรับช่องนี้</div>`;
+                return;
+            }
+
+            comments.forEach((c, idx) => {
+                const item = document.createElement('div');
+                item.className = 'comment-item';
+                item.innerHTML = `
+                    <div class="comment-meta">
+                        <span>#${idx+1} Anonymous</span>
+                        <span>${c.time}</span>
+                    </div>
+                    <div class="comment-text">${c.text}</div>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Add a comment to active column
+        function addNewComment() {
+            const input = document.getElementById('new-comment-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const commentKey = `${selectedTableId}-${selectedColumnName}`;
+            if (!columnComments[commentKey]) {
+                columnComments[commentKey] = [];
+            }
+
+            const timestamp = new Date().toLocaleString('th-TH', { hour12: false });
+            columnComments[commentKey].push({
+                text: text,
+                time: timestamp
+            });
+
+            input.value = '';
+            saveStateToLocal();
+            renderColumnCommentsList();
+            renderBoard(); // Redraw UI card badge
+            renderInspectorColumns(selectedTableId);
+            
+            // Re-apply focus styles after redraw
+            selectTable(selectedTableId);
+            selectColumn(selectedTableId, selectedColumnName);
+        }
+
+        // Close right side inspector panel
+        function closePanel() {
+            document.getElementById('detail-panel').classList.add('hidden');
+            document.querySelectorAll('.table-card').forEach(card => {
+                card.classList.remove('active-highlight', 'dimmed');
+            });
+            document.querySelectorAll('.conn-line').forEach(path => {
+                path.classList.remove('active');
+            });
+            document.querySelectorAll('.table-list-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // SQL DDL Generator
+        function generateSQL(tableId) {
+            const table = schemaMetadata[tableId];
+            if (!table) return "";
+            
+            let lines = [];
+            let fks = [];
+
+            table.columns.forEach(col => {
+                let pkeyStr = col.key === 'PK' || col.key === 'PFK' ? ' PRIMARY KEY' : '';
+                lines.push(`  ${col.name} ${col.type}${pkeyStr}`);
+                if ((col.key === 'FK' || col.key === 'PFK') && col.refTable && col.refCol) {
+                    fks.push(`  FOREIGN KEY (${col.name}) REFERENCES ${col.refTable}(${col.refCol})`);
+                }
+            });
+
+            const allLines = lines.concat(fks).join(',\n');
+            return `CREATE TABLE ${tableId} (\n${allLines}\n);`;
+        }
+
+        // Prisma model generator
+        function generatePrisma(tableId) {
+            const table = schemaMetadata[tableId];
+            if (!table) return "";
+
+            let colLines = [];
+            let relLines = [];
+
+            table.columns.forEach(col => {
+                let typeStr = 'String';
+                let typeLower = col.type.toLowerCase();
+                if (typeLower.includes('int')) typeStr = 'Int';
+                else if (typeLower.includes('timestamp') || typeLower.includes('date')) typeStr = 'DateTime';
+                else if (typeLower.includes('boolean')) typeStr = 'Boolean';
+
+                let decorations = [];
+                if (col.key === 'PK' || col.key === 'PFK') decorations.push('@id');
+                
+                let decorStr = decorations.length > 0 ? ` ${decorations.join(' ')}` : '';
+                colLines.push(`  ${col.name} ${typeStr}${decorStr}`);
+
+                if ((col.key === 'FK' || col.key === 'PFK') && col.refTable && col.refCol) {
+                    const relationName = col.refTable.toLowerCase();
+                    relLines.push(`  ${relationName} ${col.refTable} @relation(fields: [${col.name}], references: [${col.refCol}])`);
+                }
+            });
+
+            const allLines = colLines.concat(relLines).join('\n');
+            return `model ${tableId} {\n${allLines}\n}`;
+        }
+
+        // Tabs switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-btn-${tabId.split('-')[1]}`).classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // CRUD: Table Management Modals
+        function openTableModal(tableKey) {
+            const modal = document.getElementById('table-modal');
+            const title = document.getElementById('table-modal-title');
+            const modalContent = document.getElementById('table-modal-content');
+            const columnsPanel = document.getElementById('modal-columns-panel');
+            
+            modal.classList.add('open');
+            
+            if (tableKey) {
+                // Edit mode
+                selectedTableId = tableKey;
+                title.innerText = `แก้ไขตาราง: ${tableKey}`;
+                document.getElementById('table-modal-name').value = tableKey;
+                document.getElementById('table-modal-name').disabled = true;
+                document.getElementById('table-modal-category').value = schemaMetadata[tableKey].badge;
+                document.getElementById('table-modal-desc').value = schemaMetadata[tableKey].desc || "";
+                
+                // Show right panel columns studio & make modal wide
+                modalContent.classList.add('wide');
+                columnsPanel.style.display = 'flex';
+                
+                renderModalColumns(tableKey);
+                toggleModalAddColumnForm(false);
+            } else {
+                // New mode
+                selectedTableId = null;
+                title.innerText = "สร้างตารางใหม่ (Create Table)";
+                document.getElementById('table-modal-name').value = "";
+                document.getElementById('table-modal-name').disabled = false;
+                document.getElementById('table-modal-category').value = "Core";
+                document.getElementById('table-modal-desc').value = "";
+                
+                // Hide columns studio & keep modal normal width
+                modalContent.classList.remove('wide');
+                columnsPanel.style.display = 'none';
+            }
+        }
+
+        function closeTableModal() {
+            document.getElementById('table-modal').classList.remove('open');
+        }
+
+        function saveTableModal() {
+            const name = document.getElementById('table-modal-name').value.trim();
+            const category = document.getElementById('table-modal-category').value;
+            const desc = document.getElementById('table-modal-desc').value.trim();
+
+            if (!name) {
+                alert("กรุณาระบุชื่อตาราง");
+                return;
+            }
+
+            const isEdit = document.getElementById('table-modal-name').disabled;
+
+            if (isEdit) {
+                // Update table metadata
+                schemaMetadata[name].badge = category;
+                schemaMetadata[name].desc = desc;
+            } else {
+                if (schemaMetadata[name]) {
+                    alert("มีตารางชื่อนี้อยู่แล้วในระบบ");
+                    return;
+                }
+
+                // Add new table
+                schemaMetadata[name] = {
+                    name: name,
+                    badge: category,
+                    desc: desc,
+                    columns: [
+                        { name: "id", type: "INT", key: "PK", refTable: "", refCol: "" } // Add default PK
+                    ]
+                };
+
+                // Add default layout coordinate
+                const scrollX = document.getElementById('workspace-board').scrollLeft;
+                const scrollY = document.getElementById('workspace-board').scrollTop;
+                tablePositions[name] = { x: 100 + scrollX, y: 100 + scrollY };
+            }
+
+            saveStateToLocal();
+            renderBoard();
+            renderTableList();
+            drawConnections();
+            closeTableModal();
+            selectTable(name);
+        }
+
+        function editCurrentTable() {
+            if (selectedTableId) {
+                openTableModal(selectedTableId);
+            }
+        }
+
+        function deleteCurrentTable() {
+            if (!selectedTableId) return;
+            if (confirm(`🗑️ คุณแน่ใจหรือไม่ว่าต้องการลบตาราง ${selectedTableId} ? การกระทำนี้รวมถึงการลบความสัมพันธ์ทั้งหมดที่โยงเข้าหาตารางนี้`)) {
+                delete schemaMetadata[selectedTableId];
+                delete tablePositions[selectedTableId];
+                
+                // Clean up references to this table in other tables
+                Object.keys(schemaMetadata).forEach(k => {
+                    schemaMetadata[k].columns.forEach(col => {
+                        if (col.refTable === selectedTableId) {
+                            col.key = "none";
+                            col.refTable = "";
+                            col.refCol = "";
+                        }
+                    });
+                });
+
+                saveStateToLocal();
+                resetView();
+                renderBoard();
+                renderTableList();
+                drawConnections();
+            }
+        }
+
+        // CRUD: Column Management
+        function toggleAddColumnForm(show = true) {
+            const form = document.getElementById('add-column-form-box');
+            form.style.display = show ? 'block' : 'none';
+            
+            if (show) {
+                // Clear form for NEW mode
+                document.getElementById('edit-col-index').value = "-1";
+                document.getElementById('col-form-name').value = "";
+                document.getElementById('col-form-type').value = "VARCHAR(100)";
+                document.getElementById('col-form-key').value = "none";
+                toggleFormFKFields();
+            }
+        }
+
+        function toggleFormFKFields() {
+            const key = document.getElementById('col-form-key').value;
+            const fkBox = document.getElementById('form-fk-options');
+            if (key === 'FK' || key === 'PFK') {
+                fkBox.style.display = 'block';
+                populateFormRefTables();
+            } else {
+                fkBox.style.display = 'none';
+            }
+        }
+
+        function populateFormRefTables() {
+            const select = document.getElementById('col-form-ref-table');
+            select.innerHTML = '';
+            Object.keys(schemaMetadata).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.text = t;
+                select.appendChild(opt);
+            });
+            populateFormRefColumns();
+        }
+
+        function populateFormRefColumns() {
+            const tableKey = document.getElementById('col-form-ref-table').value;
+            const select = document.getElementById('col-form-ref-column');
+            select.innerHTML = '';
+            if (schemaMetadata[tableKey]) {
+                schemaMetadata[tableKey].columns.forEach(col => {
+                    const opt = document.createElement('option');
+                    opt.value = col.name;
+                    opt.text = col.name;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        function saveColumnForm() {
+            const name = document.getElementById('col-form-name').value.trim();
+            const type = document.getElementById('col-form-type').value.trim();
+            const key = document.getElementById('col-form-key').value;
+            const editIdx = parseInt(document.getElementById('edit-col-index').value);
+
+            if (!name || !type) {
+                alert("กรุณากรอกชื่อและประเภทคอลัมน์");
+                return;
+            }
+
+            const table = schemaMetadata[selectedTableId];
+            let refTable = "";
+            let refCol = "";
+
+            if (key === 'FK' || key === 'PFK') {
+                refTable = document.getElementById('col-form-ref-table').value;
+                refCol = document.getElementById('col-form-ref-column').value;
+            }
+
+            const newColObj = {
+                name: name,
+                type: type,
+                key: key,
+                refTable: refTable,
+                refCol: refCol
+            };
+
+            if (editIdx >= 0) {
+                // Edit existing column
+                const oldColName = table.columns[editIdx].name;
+                table.columns[editIdx] = newColObj;
+                
+                // If column name changed, rename comments
+                if (oldColName !== name) {
+                    const oldCommentKey = `${selectedTableId}-${oldColName}`;
+                    const newCommentKey = `${selectedTableId}-${name}`;
+                    if (columnComments[oldCommentKey]) {
+                        columnComments[newCommentKey] = columnComments[oldCommentKey];
+                        delete columnComments[oldCommentKey];
+                    }
+                }
+            } else {
+                // Verify column name uniqueness
+                const exists = table.columns.some(c => c.name === name);
+                if (exists) {
+                    alert("มีคอลัมน์ชื่อนี้อยู่แล้วในตาราง");
+                    return;
+                }
+                // Add new column
+                table.columns.push(newColObj);
+            }
+
+            saveStateToLocal();
+            renderBoard();
+            renderInspectorColumns(selectedTableId);
+            drawConnections();
+            toggleAddColumnForm(false);
+            
+            // Focus table
+            selectTable(selectedTableId);
+        }
+
+        function editColumnInline(tableId, index) {
+            selectTable(tableId);
+            toggleAddColumnForm(true);
+            
+            const col = schemaMetadata[tableId].columns[index];
+            document.getElementById('edit-col-index').value = index;
+            document.getElementById('col-form-name').value = col.name;
+            document.getElementById('col-form-type').value = col.type;
+            document.getElementById('col-form-key').value = col.key;
+            
+            if (col.key === 'FK' || col.key === 'PFK') {
+                document.getElementById('form-fk-options').style.display = 'block';
+                populateFormRefTables();
+                document.getElementById('col-form-ref-table').value = col.refTable;
+                populateFormRefColumns();
+                document.getElementById('col-form-ref-column').value = col.refCol;
+            } else {
+                document.getElementById('form-fk-options').style.display = 'none';
+            }
+        }
+
+        function deleteColumn(tableId, index) {
+            const colName = schemaMetadata[tableId].columns[index].name;
+            if (confirm(`🗑️ คุณแน่ใจหรือไม่ว่าต้องการลบคอลัมน์ ${colName} ?`)) {
+                schemaMetadata[tableId].columns.splice(index, 1);
+                
+                // Delete comments mapping
+                const commentKey = `${tableId}-${colName}`;
+                delete columnComments[commentKey];
+
+                saveStateToLocal();
+                renderBoard();
+                renderInspectorColumns(tableId);
+                drawConnections();
+                
+                selectTable(tableId);
+            }
+        }
+
+        // SQL DDL Import
+        function openImportModal() {
+            document.getElementById('import-sql-text').value = '';
+            document.getElementById('import-modal').classList.add('open');
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('open');
+        }
+
+        function executeSQLImport() {
+            const rawSql = document.getElementById('import-sql-text').value;
+            if (!rawSql.trim()) {
+                alert("กรุณาวางสคริปต์ SQL DDL");
+                return;
+            }
+
+            // Remove all backticks and double quotes to prevent regex mismatch
+            const sqlText = rawSql.replace(/[`"]/g, '');
+
+            try {
+                // Parsing table names, columns and keys using regex
+                const tableBlocks = sqlText.split(/CREATE\s+TABLE/i);
+                if (tableBlocks.length <= 1) {
+                    throw new Error("ไม่พบคำสั่ง CREATE TABLE ที่ถูกต้อง");
+                }
+
+                let importCount = 0;
+                let scrollOffset = 50;
+
+                tableBlocks.slice(1).forEach(block => {
+                    const cleanBlock = block.trim();
+                    const nameMatch = /^(\w+)/.exec(cleanBlock);
+                    if (!nameMatch) return;
+
+                    const tableName = nameMatch[1];
+                    const bodyStart = cleanBlock.indexOf('(');
+                    const bodyEnd = cleanBlock.lastIndexOf(')');
+                    
+                    if (bodyStart === -1 || bodyEnd === -1) return;
+
+                    const body = cleanBlock.substring(bodyStart + 1, bodyEnd);
+                    
+                    // Split by comma outside parentheses
+                    const columnLines = [];
+                    let current = '';
+                    let parenCount = 0;
+                    for (let i = 0; i < body.length; i++) {
+                        const c = body[i];
+                        if (c === '(') parenCount++;
+                        if (c === ')') parenCount--;
+                        if (c === ',' && parenCount === 0) {
+                            columnLines.push(current.trim());
+                            current = '';
+                        } else {
+                            current += c;
+                        }
+                    }
+                    if (current.trim()) columnLines.push(current.trim());
+
+                    const columns = [];
+                    const fksList = [];
+                    let pksList = [];
+
+                    columnLines.forEach(line => {
+                        const upperLine = line.toUpperCase();
+                        
+                        // Parse FOREIGN KEY inline or outline table constraint
+                        if (upperLine.startsWith('FOREIGN KEY')) {
+                            // Outline constraint: FOREIGN KEY (col) REFERENCES ref_table(ref_col)
+                            const fkRegex = /FOREIGN\s+KEY\s*\(\s*(\w+)\s*\)\s*REFERENCES\s*(\w+)\s*\(\s*(\w+)\s*\)/i;
+                            const match = fkRegex.exec(line);
+                            if (match) {
+                                fksList.push({
+                                    col: match[1],
+                                    refTable: match[2],
+                                    refCol: match[3]
+                                });
+                            }
+                            return;
+                        }
+
+                        if (upperLine.startsWith('PRIMARY KEY')) {
+                            // Outline primary key constraint: PRIMARY KEY (col1, col2)
+                            const pkRegex = /PRIMARY\s+KEY\s*\(\s*([\w\s,]+)\s*\)/i;
+                            const match = pkRegex.exec(line);
+                            if (match) {
+                                pksList = match[1].split(',').map(s => s.trim());
+                            }
+                            return;
+                        }
+
+                        // Column definition line e.g., student_id INT PRIMARY KEY
+                        const parts = line.split(/\s+/);
+                        if (parts.length >= 2) {
+                            const colName = parts[0];
+                            const colType = parts[1];
+                            let key = 'none';
+
+                            if (upperLine.includes('PRIMARY KEY')) {
+                                key = 'PK';
+                            }
+
+                            // Foreign key inline REFERENCES
+                            let refTable = "";
+                            let refCol = "";
+                            if (upperLine.includes('REFERENCES')) {
+                                const refMatch = /REFERENCES\s+(\w+)\s*\((\w+)\)/i.exec(line);
+                                if (refMatch) {
+                                    key = 'FK';
+                                    refTable = refMatch[1];
+                                    refCol = refMatch[2];
+                                }
+                            }
+
+                            columns.push({
+                                name: colName,
+                                type: colType,
+                                key: key,
+                                refTable: refTable,
+                                refCol: refCol
+                            });
+                        }
+                    });
+
+                    // Match inline pks and constraints
+                    pksList.forEach(pkName => {
+                        const col = columns.find(c => c.name === pkName);
+                        if (col) col.key = (col.key === 'FK') ? 'PFK' : 'PK';
+                    });
+
+                    fksList.forEach(fk => {
+                        const col = columns.find(c => c.name === fk.col);
+                        if (col) {
+                            col.key = (col.key === 'PK' || col.key === 'PFK') ? 'PFK' : 'FK';
+                            col.refTable = fk.refTable;
+                            col.refCol = fk.refCol;
+                        }
+                    });
+
+                    // Add to schema
+                    schemaMetadata[tableName] = {
+                        name: tableName,
+                        badge: "Core",
+                        desc: `ตารางนำเข้าจาก SQL DDL เมื่อ ${new Date().toLocaleDateString('th-TH')}`,
+                        columns: columns
+                    };
+
+                    // Distribute layout coordinates slightly offsetted
+                    const board = document.getElementById('workspace-board');
+                    tablePositions[tableName] = {
+                        x: 100 + board.scrollLeft + scrollOffset,
+                        y: 100 + board.scrollTop + scrollOffset
+                    };
+                    scrollOffset += 40;
+                    importCount++;
+                });
+
+                if (importCount > 0) {
+                    saveStateToLocal();
+                    renderBoard();
+                    renderTableList();
+                    drawConnections();
+                    closeImportModal();
+                    alert(`✅ นำเข้าตารางสำเร็จทั้งหมด ${importCount} ตารางเรียบร้อยแล้ว!`);
+                } else {
+                    alert("❌ ไม่สามารถนำเข้าตารางได้ กรุณาตรวจสอบคำสั่ง CREATE TABLE");
+                }
+
+            } catch (err) {
+                alert(`❌ เกิดข้อผิดพลาดในการวิเคราะห์คำสั่ง SQL DDL: ${err.message}`);
+            }
+        }
+
+        // Render Columns inside the Modal Table Editor
+        function renderModalColumns(tableId) {
+            const container = document.getElementById('modal-columns-list');
+            container.innerHTML = '';
+            
+            const table = schemaMetadata[tableId];
+            if (!table) return;
+
+            table.columns.forEach((col, index) => {
+                const item = document.createElement('div');
+                item.className = 'col-manager-item';
+                
+                let keyBadge = '';
+                if (col.key === 'PK') keyBadge = '<span class="column-key-type key-pk">PK</span>';
+                if (col.key === 'FK') keyBadge = '<span class="column-key-type key-fk" title="อ้างอิง: ' + col.refTable + '.' + col.refCol + '">FK</span>';
+                if (col.key === 'PFK') keyBadge = '<span class="column-key-type key-pfk" title="อ้างอิง: ' + col.refTable + '.' + col.refCol + '">PFK</span>';
+                if (col.key === 'none') keyBadge = '<span style="width: 10px;"></span>';
+
+                item.innerHTML = `
+                    <div class="col-manager-left">
+                        ${keyBadge}
+                        <strong style="color: white; font-size: 0.75rem;">${col.name}</strong>
+                        <span style="color: var(--text-secondary); font-size: 0.65rem; margin-left: 0.5rem;">${col.type}</span>
+                    </div>
+                    <div class="col-manager-actions">
+                        <button class="small-action-btn" onclick="editModalColumn(${index})" title="แก้ไขคอลัมน์">✏️</button>
+                        <button class="small-action-btn" style="color: #f87171;" onclick="deleteModalColumn(${index})" title="ลบคอลัมน์">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // Toggle add column form in the Modal
+        function toggleModalAddColumnForm(show = true) {
+            const form = document.getElementById('modal-column-form-box');
+            form.style.display = show ? 'block' : 'none';
+            
+            if (show) {
+                document.getElementById('modal-col-edit-idx').value = "-1";
+                document.getElementById('modal-col-name').value = "";
+                document.getElementById('modal-col-type').value = "VARCHAR(100)";
+                document.getElementById('modal-col-key').value = "none";
+                toggleModalFKFields();
+            }
+        }
+
+        // Toggle FK selectors in the Modal
+        function toggleModalFKFields() {
+            const key = document.getElementById('modal-col-key').value;
+            const fkBox = document.getElementById('modal-col-fk-options');
+            if (key === 'FK' || key === 'PFK') {
+                fkBox.style.display = 'block';
+                populateModalRefTables();
+            } else {
+                fkBox.style.display = 'none';
+            }
+        }
+
+        function populateModalRefTables() {
+            const select = document.getElementById('modal-col-ref-table');
+            select.innerHTML = '';
+            Object.keys(schemaMetadata).forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.text = t;
+                select.appendChild(opt);
+            });
+            populateModalRefColumns();
+        }
+
+        function populateModalRefColumns() {
+            const tableKey = document.getElementById('modal-col-ref-table').value;
+            const select = document.getElementById('modal-col-ref-column');
+            select.innerHTML = '';
+            if (schemaMetadata[tableKey]) {
+                schemaMetadata[tableKey].columns.forEach(col => {
+                    const opt = document.createElement('option');
+                    opt.value = col.name;
+                    opt.text = col.name;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        // Save column from within the modal
+        function saveModalColumnForm() {
+            const name = document.getElementById('modal-col-name').value.trim();
+            const type = document.getElementById('modal-col-type').value.trim();
+            const key = document.getElementById('modal-col-key').value;
+            const editIdx = parseInt(document.getElementById('modal-col-edit-idx').value);
+
+            if (!name || !type) {
+                alert("กรุณากรอกชื่อและประเภทคอลัมน์");
+                return;
+            }
+
+            const table = schemaMetadata[selectedTableId];
+            let refTable = "";
+            let refCol = "";
+
+            if (key === 'FK' || key === 'PFK') {
+                refTable = document.getElementById('modal-col-ref-table').value;
+                refCol = document.getElementById('modal-col-ref-column').value;
+            }
+
+            const newColObj = {
+                name: name,
+                type: type,
+                key: key,
+                refTable: refTable,
+                refCol: refCol
+            };
+
+            if (editIdx >= 0) {
+                // Edit existing column
+                const oldColName = table.columns[editIdx].name;
+                table.columns[editIdx] = newColObj;
+                
+                // Rename comments if name changed
+                if (oldColName !== name) {
+                    const oldCommentKey = `${selectedTableId}-${oldColName}`;
+                    const newCommentKey = `${selectedTableId}-${name}`;
+                    if (columnComments[oldCommentKey]) {
+                        columnComments[newCommentKey] = columnComments[oldCommentKey];
+                        delete columnComments[oldCommentKey];
+                    }
+                }
+            } else {
+                // Check uniqueness
+                const exists = table.columns.some(c => c.name === name);
+                if (exists) {
+                    alert("มีคอลัมน์ชื่อนี้อยู่แล้วในตาราง");
+                    return;
+                }
+                table.columns.push(newColObj);
+            }
+
+            saveStateToLocal();
+            renderBoard();
+            renderModalColumns(selectedTableId);
+            drawConnections();
+            toggleModalAddColumnForm(false);
+            
+            // Sync details view
+            selectTable(selectedTableId);
+        }
+
+        function editModalColumn(index) {
+            toggleModalAddColumnForm(true);
+            
+            const col = schemaMetadata[selectedTableId].columns[index];
+            document.getElementById('modal-col-edit-idx').value = index;
+            document.getElementById('modal-col-name').value = col.name;
+            document.getElementById('modal-col-type').value = col.type;
+            document.getElementById('modal-col-key').value = col.key;
+            
+            if (col.key === 'FK' || col.key === 'PFK') {
+                document.getElementById('modal-col-fk-options').style.display = 'block';
+                populateModalRefTables();
+                document.getElementById('modal-col-ref-table').value = col.refTable;
+                populateModalRefColumns();
+                document.getElementById('modal-col-ref-column').value = col.refCol;
+            } else {
+                document.getElementById('modal-col-fk-options').style.display = 'none';
+            }
+        }
+
+        function deleteModalColumn(index) {
+            const colName = schemaMetadata[selectedTableId].columns[index].name;
+            if (confirm(`🗑️ คุณแน่ใจหรือไม่ว่าต้องการลบคอลัมน์ ${colName} ?`)) {
+                schemaMetadata[selectedTableId].columns.splice(index, 1);
+                
+                // Delete comments mapping
+                const commentKey = `${selectedTableId}-${colName}`;
+                delete columnComments[commentKey];
+
+                saveStateToLocal();
+                renderBoard();
+                renderModalColumns(selectedTableId);
+                drawConnections();
+                
+                selectTable(selectedTableId);
+            }
+        }
+
+        // Export/Save HTML - Overwriting the local file
+        function exportHTML() {
+            // Remove selection active highlights first to save a clean board state
+            const prevSelectedTable = selectedTableId;
+            const prevSelectedCol = selectedColumnName;
+            
+            resetView(); // Clean up DOM states
+
+            // Serialize current states directly into the data injection script block
+            const dataScript = document.getElementById('schema-data-script');
+            dataScript.textContent = `
+        window.initialSchemaMetadata = ${JSON.stringify(schemaMetadata, null, 2)};
+        window.initialTablePositions = ${JSON.stringify(tablePositions, null, 2)};
+        window.initialColumnComments = ${JSON.stringify(columnComments, null, 2)};
+            `;
+
+            // Construct full document HTML text
+            const fullHtml = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+
+            // Trigger file download
+            const blob = new Blob([fullHtml], { type: "text/html" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "diagram.html";
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Restore previous active views for the session
+            if (prevSelectedTable) {
+                selectTable(prevSelectedTable);
+                if (prevSelectedCol) {
+                    selectColumn(prevSelectedTable, prevSelectedCol);
+                }
+            }
+
+            alert("💾 ดาวน์โหลดไฟล์ diagram.html เรียบร้อยแล้ว!\n\nกรุณานำไฟล์นี้ไปเขียนบันทึกทับ (overwrite) ทับไฟล์เดิมในโฟลเดอร์โครงการของคุณ เพื่อเซฟสิทธิ์การจัดแก้ไขอย่างถาวรใน Repository");
+        }
+    </script>
+</body>
+</html>

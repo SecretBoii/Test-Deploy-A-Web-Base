@@ -1,0 +1,20 @@
+import { Controller, Post, Body } from '@nestjs/common';
+import { ExercisesService } from './exercises.service';
+import { SubmitExerciseDto } from './dto';
+
+@Controller('exercises') // พาธหลัก: http://localhost:3000/exercises
+export class ExercisesController {
+  constructor(private readonly exercisesService: ExercisesService) {}
+
+  @Post('run') // ท่อยิง: POST http://localhost:3000/exercises/run
+  async runCode(@Body() submitExerciseDto: SubmitExerciseDto) {
+    const { userId, exerciseId, sourceCode, hint_used } = submitExerciseDto;
+    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'run', hint_used);
+  }
+
+  @Post('submit') // ท่อยิง: POST http://localhost:3000/exercises/submit
+  async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
+    const { userId, exerciseId, sourceCode, hint_used } = submitExerciseDto;
+    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'submit', hint_used);
+  }
+}

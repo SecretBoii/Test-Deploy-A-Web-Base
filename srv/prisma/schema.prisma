@@ -1,0 +1,117 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Role {
+  roleId   String        @id @db.VarChar(20)
+  roleName String        @db.VarChar(50)
+  users    Userprofile[]
+
+  @@map("Role")
+}
+
+model Education {
+  educationId String        @id @db.VarChar(100)
+  university  String        @db.VarChar(100)
+  faculty     String        @db.VarChar(100)
+  major       String        @db.VarChar(100)
+  users       Userprofile[]
+
+  @@map("Education")
+}
+
+model Userprofile {
+  userId            Int        @id @default(autoincrement())
+  username          String     @db.VarChar(100)
+  password          String     @db.VarChar(100)
+  gender            String     @db.VarChar(10)
+  dateOfBirth       DateTime   @db.Date
+  educationId       String     @db.VarChar(100)
+  roleId            String     @db.VarChar(20)
+  registerTimestamp DateTime   @default(now()) @db.Timestamp()
+
+  education Education  @relation(fields: [educationId], references: [educationId])
+  role      Role       @relation(fields: [roleId], references: [roleId])
+  activities Activity[]
+
+  @@map("Userprofile")
+}
+
+model Exercise {
+  exerciseId       Int               @id @default(autoincrement())
+  title            String            @db.VarChar(255)
+  description      String            @db.Text
+  topic            String            @db.VarChar(100)
+  objective        String            @db.Text
+  difficultyLevel  Int
+  expectedTime     Int
+  status           String            @db.VarChar(50)
+  hint             String            @db.Text
+  createdAt        DateTime          @default(now()) @db.Timestamp()
+  updatedAt        DateTime          @updatedAt @db.Timestamp()
+  
+  activities       Activity[]
+  sessionExercises SessionExercise[]
+
+  @@map("Exercise")
+}
+
+model Session {
+  sessionId        Int               @id @default(autoincrement())
+  sessionName      String            @db.VarChar(50)
+  sessionObjective String            @db.VarChar(50)
+  targetLevel      String            @db.VarChar(50)
+  duration         Int
+  status           String            @db.VarChar(50)
+  createdAt        DateTime          @default(now()) @db.Timestamp()
+  updatedAt        DateTime          @updatedAt @db.Timestamp()
+  
+  activities       Activity[]
+  sessionExercises SessionExercise[]
+
+  @@map("Session")
+}
+
+model SessionExercise {
+  sessionId Int
+  exerciseId Int
+  createdAt DateTime @default(now()) @db.Timestamp()
+
+  session  Session    @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
+
+  @@id([sessionId, exerciseId])
+  @@map("Session_Exercise")
+}
+
+model Activity {
+  activityId        Int      @id @default(autoincrement())
+  userId            Int
+  exerciseId        Int
+  sessionId         Int
+  startedAt         DateTime @db.Timestamp()
+  submittedAt       DateTime @default(now()) @db.Timestamp()
+  hintUsed          Boolean  @default(false)
+  answer            String   @db.Text
+  score             Int
+  exceptionMessage  String?  @db.Text
+  aiFeedback        String?  @db.Text
+  eventType         String   @db.VarChar(50)
+  runCount          Int
+  createdAt         DateTime @default(now()) @db.Timestamp()
+
+  user     Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  exercise Exercise  @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
+  session  Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+
+  @@map("Activity")
+}
