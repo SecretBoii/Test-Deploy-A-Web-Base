@@ -8,13 +8,13 @@ export class ExercisesController {
 
   @Post('run') // ท่อยิง: POST http://localhost:3000/exercises/run
   async runCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hint_used } = submitExerciseDto;
-    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'run', hint_used);
+    const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
+    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'run', hintUsed);
   }
 
   @Post('submit') // ท่อยิง: POST http://localhost:3000/exercises/submit
   async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hint_used } = submitExerciseDto;
-    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'submit', hint_used);
+    const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
+    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'submit', hintUsed);
   }
 }

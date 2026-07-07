@@ -8,110 +8,111 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = []
 }
 
 model Role {
-  roleId   String        @id @db.VarChar(20)
-  roleName String        @db.VarChar(50)
+  roleId   Int           @id @default(autoincrement()) @map("role_id")
+  roleName String        @db.VarChar(50) @map("role_name")
   users    Userprofile[]
 
-  @@map("Role")
+  @@map("role")
 }
 
 model Education {
-  educationId String        @id @db.VarChar(100)
+  educationId Int           @id @default(autoincrement()) @map("education_id")
   university  String        @db.VarChar(100)
   faculty     String        @db.VarChar(100)
   major       String        @db.VarChar(100)
   users       Userprofile[]
 
-  @@map("Education")
+  @@map("education")
 }
 
 model Userprofile {
-  userId            Int        @id @default(autoincrement())
+  userId            Int        @id @default(autoincrement()) @map("user_id")
   username          String     @db.VarChar(100)
   password          String     @db.VarChar(100)
   gender            String     @db.VarChar(10)
-  dateOfBirth       DateTime   @db.Date
-  educationId       String     @db.VarChar(100)
-  roleId            String     @db.VarChar(20)
-  registerTimestamp DateTime   @default(now()) @db.Timestamp()
+  dateOfBirth       DateTime   @db.Date @map("date_of_birth")
+  educationId       Int        @map("education_id")
+  roleId            Int        @map("role_id")
+  registerTimestamp DateTime   @default(now()) @db.Timestamp() @map("register_timestamp")
 
   education Education  @relation(fields: [educationId], references: [educationId])
   role      Role       @relation(fields: [roleId], references: [roleId])
   activities Activity[]
 
-  @@map("Userprofile")
+  @@map("user_profile")
 }
 
 model Exercise {
-  exerciseId       Int               @id @default(autoincrement())
+  exerciseId       Int               @id @default(autoincrement()) @map("exercise_id")
   title            String            @db.VarChar(255)
   description      String            @db.Text
   topic            String            @db.VarChar(100)
   objective        String            @db.Text
-  difficultyLevel  Int
-  expectedTime     Int
+  difficultyLevel  Int               @map("difficulty_level")
+  expectedTime     Int               @map("expected_time")
   status           String            @db.VarChar(50)
   hint             String            @db.Text
-  createdAt        DateTime          @default(now()) @db.Timestamp()
-  updatedAt        DateTime          @updatedAt @db.Timestamp()
+  createdAt        DateTime          @default(now()) @db.Timestamp() @map("created_at")
+  updatedAt        DateTime          @updatedAt @db.Timestamp() @map("updated_at")
   
   activities       Activity[]
   sessionExercises SessionExercise[]
 
-  @@map("Exercise")
+  @@map("exercise")
 }
 
 model Session {
-  sessionId        Int               @id @default(autoincrement())
-  sessionName      String            @db.VarChar(50)
-  sessionObjective String            @db.VarChar(50)
-  targetLevel      String            @db.VarChar(50)
+  sessionId        Int               @id @default(autoincrement()) @map("session_id")
+  sessionName      String            @db.VarChar(50) @map("session_name")
+  sessionObjective String            @db.VarChar(50) @map("session_objective")
+  targetLevel      String            @db.VarChar(50) @map("target_level")
   duration         Int
   status           String            @db.VarChar(50)
-  createdAt        DateTime          @default(now()) @db.Timestamp()
-  updatedAt        DateTime          @updatedAt @db.Timestamp()
+  createdAt        DateTime          @default(now()) @db.Timestamp() @map("created_at")
+  updatedAt        DateTime          @updatedAt @db.Timestamp() @map("updated_at")
   
   activities       Activity[]
   sessionExercises SessionExercise[]
 
-  @@map("Session")
+  @@map("session")
 }
 
 model SessionExercise {
-  sessionId Int
-  exerciseId Int
-  createdAt DateTime @default(now()) @db.Timestamp()
+  sessionId  Int      @map("session_id")
+  exerciseId Int      @map("exercise_id")
+  createdAt  DateTime @default(now()) @db.Timestamp() @map("created_at")
 
-  session  Session    @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  session  Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
   exercise Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
 
   @@id([sessionId, exerciseId])
-  @@map("Session_Exercise")
+  @@map("session_exercise")
 }
 
 model Activity {
-  activityId        Int      @id @default(autoincrement())
-  userId            Int
-  exerciseId        Int
-  sessionId         Int
-  startedAt         DateTime @db.Timestamp()
-  submittedAt       DateTime @default(now()) @db.Timestamp()
-  hintUsed          Boolean  @default(false)
-  answer            String   @db.Text
-  score             Int
-  exceptionMessage  String?  @db.Text
-  aiFeedback        String?  @db.Text
-  eventType         String   @db.VarChar(50)
-  runCount          Int
-  createdAt         DateTime @default(now()) @db.Timestamp()
+  activityId       Int         @id @default(autoincrement()) @map("activity_id")
+  userId           Int         @map("user_id")
+  exerciseId       Int         @map("exercise_id")
+  sessionId        Int         @map("session_id")
+  startedAt        DateTime    @db.Timestamp() @map("started_at")
+  submittedAt      DateTime    @default(now()) @db.Timestamp() @map("submitted_at")
+  hintUsed         Boolean     @default(false) @map("hint_used")
+  answer           String      @db.Text
+  score            Int
+  exceptionMessage String?     @db.Text @map("exception_message")
+  aiFeedback       String?     @db.Text @map("ai_feedback")
+  eventType        String      @db.VarChar(50) @map("event_type")
+  runCount         Int         @map("run_count")
+  createdAt        DateTime    @default(now()) @db.Timestamp() @map("created_at")
 
   user     Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  exercise Exercise  @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
+  exercise Exercise    @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
   session  Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
 
-  @@map("Activity")
+  @@map("activity")
 }

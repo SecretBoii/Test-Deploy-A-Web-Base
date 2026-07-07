@@ -13,8 +13,8 @@ async function main() {
 
     // 1. Seed Roles
     const roles = [
-      { roleId: 'STUDENT', roleName: 'Student' },
-      { roleId: 'TEACHER', roleName: 'Teacher' },
+      { roleId: 1, roleName: 'Student' },
+      { roleId: 2, roleName: 'Teacher' },
     ];
     for (const r of roles) {
       await prisma.role.upsert({
@@ -27,7 +27,7 @@ async function main() {
 
     // 2. Seed Education
     const education = {
-      educationId: 'DEFAULT',
+      educationId: 1,
       university: 'Default University',
       faculty: 'Default Faculty',
       major: 'Default Major',
@@ -46,8 +46,8 @@ async function main() {
       password: '1234_hashed_or_plain',
       gender: 'male',
       dateOfBirth: new Date('2000-01-01'),
-      educationId: 'DEFAULT',
-      roleId: 'STUDENT',
+      educationId: 1,
+      roleId: 1,
     };
     await prisma.userprofile.upsert({
       where: { userId: user.userId },

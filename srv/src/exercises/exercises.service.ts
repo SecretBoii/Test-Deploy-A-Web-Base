@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
@@ -25,7 +30,13 @@ export class ExercisesService implements OnModuleInit {
     });
   }
 
-  async submitExercise(userId: string, exerciseId: string, sourceCode: string, event_type: string, hint_used: boolean) {
+  async submitExercise(
+    userId: string,
+    exerciseId: string,
+    sourceCode: string,
+    event_type: string,
+    hintUsed: boolean,
+  ) {
     try {
       // 1. ดึงข้อมูลโจทย์เพื่อนำเกณฑ์การตรวจและข้อมูลวิชามาใช้งาน
       const exercise = await this.prisma.exercise.findUnique({
@@ -55,9 +66,9 @@ export class ExercisesService implements OnModuleInit {
       // 🚀 สเตปที่ 1: ส่งโค้ดไปต่อคิวและประมวลผลผ่าน BullMQ (จำกัด Concurrency ไว้ที่ 4 ตู้)
       // -------------------------------------------------------------
       const job = await this.codeQueue.add('execute', { sourceCode });
-      
+
       // รอผลลัพธ์แบบ Synchronous จนกว่า Worker จะตรวจโค้ดใน Docker เสร็จสิ้น
-      const runResult = await job.waitUntilFinished(this.queueEvents) as {
+      const runResult = (await job.waitUntilFinished(this.queueEvents)) as {
         status: string;
         stdout: string;
         stderr: string;
@@ -70,7 +81,13 @@ export class ExercisesService implements OnModuleInit {
       const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
-      const prompt = this.buildGeminiPrompt(sourceCode, runResult, event_type, run_count, exercise);
+      const prompt = this.buildGeminiPrompt(
+        sourceCode,
+        runResult,
+        event_type,
+        run_count,
+        exercise,
+      );
 
       let geminiResponse;
       try {
@@ -82,7 +99,10 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error('❌ Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
+        console.error(
+          '❌ Primary model call failed:',
+          apiError.response?.data?.error?.message || apiError.message,
+        );
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
           geminiResponse = await firstValueFrom(
@@ -93,10 +113,14 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          console.error(
+            '❌ Fallback model call failed:',
+            fallbackError.response?.data?.error?.message ||
+              fallbackError.message,
+          );
           throw new HttpException(
             `สายพานตรวจโค้ดขัดข้อง: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
-            HttpStatus.INTERNAL_SERVER_ERROR
+            HttpStatus.INTERNAL_SERVER_ERROR,
           );
         }
       }
@@ -109,7 +133,12 @@ export class ExercisesService implements OnModuleInit {
 
       const aiText = candidates[0].content.parts[0].text;
       const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
-      const aiReview = this.parseAiResponse(aiText, defaultScore, event_type, run_count);
+      const aiReview = this.parseAiResponse(
+        aiText,
+        defaultScore,
+        event_type,
+        run_count,
+      );
 
       // 4. บันทึกข้อมูลประวัติการตรวจ (Activity Log) ลงฐานข้อมูลจริง
       await this.prisma.activity.create({
@@ -119,7 +148,7 @@ export class ExercisesService implements OnModuleInit {
           sessionId: sessionId,
           startedAt: new Date(),
           submittedAt: new Date(),
-          hintUsed: hint_used,
+          hintUsed,
           answer: sourceCode,
           score: aiReview.score,
           exceptionMessage: aiReview.exception_message,
@@ -180,14 +209,19 @@ export class ExercisesService implements OnModuleInit {
           exception_message: parsed.exception_message ?? null,
           ai_feedback: parsed.ai_feedback ?? null,
           event_type: parsed.event_type ?? safe_event_type,
-          run_count: typeof parsed.run_count === 'number' ? parsed.run_count : safe_run_count,
+          run_count:
+            typeof parsed.run_count === 'number'
+              ? parsed.run_count
+              : safe_run_count,
         };
       } catch (innerParseError) {
         // 3. แผนสำรอง: ดึงผลลัพธ์ผ่าน Regex หากพบปัญหา Syntax
         const scoreMatch = cleanText.match(/"score"\s*:\s*(\d+)/);
         const score = scoreMatch ? parseInt(scoreMatch[1], 10) : defaultScore;
 
-        const exceptionMatch = cleanText.match(/"exception_message"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        const exceptionMatch = cleanText.match(
+          /"exception_message"\s*:\s*"((?:[^"\\]|\\.)*)"/,
+        );
         let exception_message: string | null = null;
         if (exceptionMatch) {
           exception_message = exceptionMatch[1]
@@ -196,7 +230,9 @@ export class ExercisesService implements OnModuleInit {
             .replace(/\\\\/g, '\\');
         }
 
-        const feedbackMatch = cleanText.match(/"ai_feedback"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        const feedbackMatch = cleanText.match(
+          /"ai_feedback"\s*:\s*"((?:[^"\\]|\\.)*)"/,
+        );
         let ai_feedback: string | null = null;
         if (feedbackMatch) {
           ai_feedback = feedbackMatch[1]

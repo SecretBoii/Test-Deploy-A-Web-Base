@@ -4,7 +4,9 @@ import { spawn } from 'child_process';
 
 @Processor('code-execution', { concurrency: 4 }) // 👈 จำกัดการรัน Docker พร้อมกันสูงสุด 4 ตู้คอนเทนเนอร์
 export class CodeExecutionProcessor extends WorkerHost {
-  async process(job: Job<{ sourceCode: string }>): Promise<{ status: string; stdout: string; stderr: string }> {
+  async process(
+    job: Job<{ sourceCode: string }>,
+  ): Promise<{ status: string; stdout: string; stderr: string }> {
     const { sourceCode } = job.data;
 
     return new Promise((resolve) => {
@@ -13,8 +15,8 @@ export class CodeExecutionProcessor extends WorkerHost {
         'run',
         '--rm',
         '-i',
-        '--memory=128m',       // จำกัดการใช้ RAM 128MB
-        '--cpus=0.5',          // จำกัดการใช้ CPU 0.5 Core
+        '--memory=128m', // จำกัดการใช้ RAM 128MB
+        '--cpus=0.5', // จำกัดการใช้ CPU 0.5 Core
         'python:3.10-slim',
         'python',
       ]);
@@ -43,7 +45,7 @@ export class CodeExecutionProcessor extends WorkerHost {
 
       child.on('close', (code, signal) => {
         clearTimeout(timeoutId);
-        
+
         if (signal === 'SIGTERM' || signal === 'SIGKILL' || child.killed) {
           resolve({
             status: 'Time Limit Exceeded',
