@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 import { SubmitExerciseDto } from './dto';
 
@@ -16,5 +16,10 @@ export class ExercisesController {
   async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
     const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
     return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'submit', hintUsed);
+  }
+
+  @Get('status/:activityId') // ท่อยิง: GET http://localhost:3000/exercises/status/:activityId
+  async getStatus(@Param('activityId') activityId: string) {
+    return await this.exercisesService.getStatus(Number(activityId));
   }
 }

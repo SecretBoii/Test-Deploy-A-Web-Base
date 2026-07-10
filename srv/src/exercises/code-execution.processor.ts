@@ -1,15 +1,29 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { spawn } from 'child_process';
+import { ExercisesService } from './exercises.service';
 
 @Processor('code-execution', { concurrency: 4 }) // 👈 จำกัดการรัน Docker พร้อมกันสูงสุด 4 ตู้คอนเทนเนอร์
 export class CodeExecutionProcessor extends WorkerHost {
-  async process(
-    job: Job<{ sourceCode: string }>,
-  ): Promise<{ status: string; stdout: string; stderr: string }> {
-    const { sourceCode } = job.data;
+  constructor(private readonly exercisesService: ExercisesService) {
+    super();
+  }
 
-    return new Promise((resolve) => {
+  async process(
+    job: Job<{
+      activityId: number;
+      userId: number;
+      exerciseId: number;
+      sessionId: number;
+      sourceCode: string;
+      event_type: string;
+      run_count: number;
+      hintUsed: boolean;
+    }>,
+  ): Promise<{ status: string; stdout: string; stderr: string }> {
+    const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
+
+    const runResult = await new Promise<{ status: string; stdout: string; stderr: string }>((resolve) => {
       // สั่งเปิดคอนเทนเนอร์แบบอินเตอร์แอคทีฟ (-i) จำกัดเวลาการรันผ่านระบบ NestJS และลบคอนเทนเนอร์หลังรันเสร็จ (--rm)
       const child = spawn('docker', [
         'run',
@@ -71,5 +85,17 @@ export class CodeExecutionProcessor extends WorkerHost {
       child.stdin.write(sourceCode);
       child.stdin.end();
     });
+
+    // 🚀 ส่งผลลัพธ์ไปที่ ExercisesService เพื่อให้คะแนนด้วย AI และอัปเดตลง DB แบบ Asynchronous
+    await this.exercisesService.completeGrading(
+      activityId,
+      runResult,
+      event_type,
+      run_count,
+      exerciseId,
+      sourceCode,
+    );
+
+    return runResult;
   }
 }

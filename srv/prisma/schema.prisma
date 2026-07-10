@@ -104,6 +104,7 @@ model Activity {
   hintUsed         Boolean     @default(false) @map("hint_used")
   answer           String      @db.Text
   score            Int
+  status           String      @default("PENDING") @db.VarChar(50)
   exceptionMessage String?     @db.Text @map("exception_message")
   aiFeedback       String?     @db.Text @map("ai_feedback")
   eventType        String      @db.VarChar(50) @map("event_type")
