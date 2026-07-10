@@ -62,32 +62,94 @@ export class ExercisesService implements OnModuleInit {
       });
       const sessionId = sessionExercise?.sessionId ?? 1;
 
-      // -------------------------------------------------------------
-      // 🚀 สเตปที่ 1: ส่งโค้ดไปต่อคิวและประมวลผลผ่าน BullMQ (จำกัด Concurrency ไว้ที่ 4 ตู้)
-      // -------------------------------------------------------------
-      const job = await this.codeQueue.add('execute', { sourceCode });
+      // 4. สร้างบันทึกประวัติสถานะ PENDING ลงฐานข้อมูลก่อนรัน
+      const activity = await this.prisma.activity.create({
+        data: {
+          userId: Number(userId),
+          exerciseId: Number(exerciseId),
+          sessionId: sessionId,
+          startedAt: new Date(),
+          submittedAt: new Date(),
+          hintUsed: hintUsed,
+          answer: sourceCode,
+          score: 0,
+          status: 'PENDING',
+          eventType: event_type,
+          runCount: run_count,
+        },
+      });
 
-      // รอผลลัพธ์แบบ Synchronous จนกว่า Worker จะตรวจโค้ดใน Docker เสร็จสิ้น
-      const runResult = (await job.waitUntilFinished(this.queueEvents)) as {
-        status: string;
-        stdout: string;
-        stderr: string;
+      // 5. ส่งงานเข้าระบบคิวประมวลผลเบื้องหลัง
+      await this.codeQueue.add('execute', {
+        activityId: activity.activityId,
+        userId: Number(userId),
+        exerciseId: Number(exerciseId),
+        sessionId: sessionId,
+        sourceCode,
+        event_type,
+        run_count,
+        hintUsed,
+      });
+
+      // 6. ตอบกลับหน้าบ้านทันทีโดยไม่ต้องยิงรอ
+      return {
+        success: true,
+        message: 'ส่งโค้ดเข้าระบบคิวประมวลผลสำเร็จ!',
+        activityId: activity.activityId,
+        status: 'PENDING',
       };
+    } catch (error) {
+      throw new HttpException(
+        `การส่งโค้ดขัดข้อง: ${error.response?.data?.error?.message || error.message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 
-      // -------------------------------------------------------------
-      // 🚀 สเตปที่ 2: ยิงหา Gemini ด้วยรุ่นแบบไดนามิกจาก env
-      // -------------------------------------------------------------
+  // ดึงผลการตรวจคำตอบจากไอดีบันทึก
+  async getStatus(activityId: number) {
+    const activity = await this.prisma.activity.findUnique({
+      where: { activityId },
+    });
+    if (!activity) {
+      throw new HttpException('ไม่พบข้อมูลประวัติการตรวจข้อนี้', HttpStatus.NOT_FOUND);
+    }
+
+    return {
+      success: true,
+      activityId: activity.activityId,
+      status: activity.status,
+      score: activity.score,
+      exceptionMessage: activity.exceptionMessage,
+      aiFeedback: activity.aiFeedback,
+      runCount: activity.runCount,
+      eventType: activity.eventType,
+    };
+  }
+
+  // ทำการวิเคราะห์ AI และอัปเดตสถานะของแบบฝึกหัดเสร็จสมบูรณ์ (เรียกใช้จาก Worker)
+  async completeGrading(
+    activityId: number,
+    runResult: { status: string; stdout: string; stderr: string },
+    event_type: string,
+    run_count: number,
+    exerciseId: number,
+    sourceCode: string,
+  ) {
+    try {
+      const exercise = await this.prisma.exercise.findUnique({
+        where: { exerciseId },
+      });
+      if (!exercise) {
+        throw new Error(`ไม่พบโจทย์ไอดี ${exerciseId} สำหรับขั้นตอนให้คะแนน`);
+      }
+
+      // 🚀 ยิงหา Gemini ด้วยรุ่นแบบไดนามิกจาก env
       const apiKey = process.env.GEMINI_API_KEY;
       const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
-      const prompt = this.buildGeminiPrompt(
-        sourceCode,
-        runResult,
-        event_type,
-        run_count,
-        exercise,
-      );
+      const prompt = this.buildGeminiPrompt(sourceCode, runResult, event_type, run_count, exercise);
 
       let geminiResponse;
       try {
@@ -99,10 +161,7 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error(
-          '❌ Primary model call failed:',
-          apiError.response?.data?.error?.message || apiError.message,
-        );
+        console.error('❌ Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
           geminiResponse = await firstValueFrom(
@@ -113,19 +172,13 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error(
-            '❌ Fallback model call failed:',
-            fallbackError.response?.data?.error?.message ||
-              fallbackError.message,
-          );
-          throw new HttpException(
-            `สายพานตรวจโค้ดขัดข้อง: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
-            HttpStatus.INTERNAL_SERVER_ERROR,
+          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          throw new Error(
+            `สายพานตรวจโค้ด Gemini ล้มเหลว: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
           );
         }
       }
 
-      // แกะข้อมูลผลลัพธ์
       const candidates = geminiResponse.data?.candidates;
       if (!candidates || candidates.length === 0) {
         throw new Error('Gemini ไม่ส่งข้อมูลตอบกลับมา');
@@ -133,49 +186,29 @@ export class ExercisesService implements OnModuleInit {
 
       const aiText = candidates[0].content.parts[0].text;
       const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
-      const aiReview = this.parseAiResponse(
-        aiText,
-        defaultScore,
-        event_type,
-        run_count,
-      );
+      const aiReview = this.parseAiResponse(aiText, defaultScore, event_type, run_count);
 
-      // 4. บันทึกข้อมูลประวัติการตรวจ (Activity Log) ลงฐานข้อมูลจริง
-      await this.prisma.activity.create({
+      // บันทึกผลการตรวจและเปลี่ยนสถานะเป็น SUCCESS
+      await this.prisma.activity.update({
+        where: { activityId },
         data: {
-          userId: Number(userId),
-          exerciseId: Number(exerciseId),
-          sessionId: sessionId,
-          startedAt: new Date(),
-          submittedAt: new Date(),
-          hintUsed,
-          answer: sourceCode,
           score: aiReview.score,
-          exceptionMessage: aiReview.exception_message,
+          exceptionMessage: aiReview.exception_message ?? (runResult.stderr || null),
           aiFeedback: aiReview.ai_feedback,
-          eventType: event_type,
-          runCount: run_count,
+          status: 'SUCCESS',
         },
       });
-
-      // -------------------------------------------------------------
-      // 🚀 สเตปที่ 3: ส่งผลลัพธ์กลับไปหน้าบ้านสวยๆ
-      // -------------------------------------------------------------
-      return {
-        success: true,
-        message: 'ตรวจโค้ดและรีวิวผ่านระบบ AI สำเร็จ!',
-        judge: {
-          status: runResult.status,
-          stdout: runResult.stdout,
-          stderr: runResult.stderr,
-        },
-        aiReview: aiReview,
-      };
     } catch (error) {
-      throw new HttpException(
-        `สายพานตรวจโค้ดขัดข้อง: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      console.error(`❌ completeGrading Error for Activity ID ${activityId}:`, error.message);
+      // หากขั้นตอนใดๆ ล้มเหลว ให้ทำเครื่องหมายรายการนี้ว่า FAILED
+      await this.prisma.activity.update({
+        where: { activityId },
+        data: {
+          status: 'FAILED',
+          exceptionMessage: 'ระบบประมวลผลหลังบ้านขัดข้อง',
+          aiFeedback: `การตรวจล้มเหลว: ${error.message}`,
+        },
+      });
     }
   }
 
