@@ -3,7 +3,7 @@ import { Job } from 'bullmq';
 import { spawn } from 'child_process';
 import { ExercisesService } from './exercises.service';
 
-@Processor('code-execution', { concurrency: 4 }) // 👈 จำกัดการรัน Docker พร้อมกันสูงสุด 4 ตู้คอนเทนเนอร์
+@Processor('code-execution', { concurrency: 4 })
 export class CodeExecutionProcessor extends WorkerHost {
   constructor(private readonly exercisesService: ExercisesService) {
     super();
@@ -24,13 +24,12 @@ export class CodeExecutionProcessor extends WorkerHost {
     const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
 
     const runResult = await new Promise<{ status: string; stdout: string; stderr: string }>((resolve) => {
-      // สั่งเปิดคอนเทนเนอร์แบบอินเตอร์แอคทีฟ (-i) จำกัดเวลาการรันผ่านระบบ NestJS และลบคอนเทนเนอร์หลังรันเสร็จ (--rm)
       const child = spawn('docker', [
         'run',
         '--rm',
         '-i',
-        '--memory=128m', // จำกัดการใช้ RAM 128MB
-        '--cpus=0.5', // จำกัดการใช้ CPU 0.5 Core
+        '--memory=128m',
+        '--cpus=0.5',
         'python:3.10-slim',
         'python',
       ]);
@@ -39,13 +38,12 @@ export class CodeExecutionProcessor extends WorkerHost {
       let stderr = '';
       let timeoutId: NodeJS.Timeout;
 
-      // ตั้งกลไกหมดเวลาประมวลผล (Timeout 5 วินาที)
       timeoutId = setTimeout(() => {
         child.kill();
         resolve({
           status: 'Time Limit Exceeded',
           stdout: stdout,
-          stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+          stderr: 'Execution timed out (5s limit exceeded)',
         });
       }, 5000);
 
@@ -64,7 +62,7 @@ export class CodeExecutionProcessor extends WorkerHost {
           resolve({
             status: 'Time Limit Exceeded',
             stdout: stdout,
-            stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+            stderr: 'Execution timed out (5s limit exceeded)',
           });
         } else if (code !== 0) {
           resolve({
@@ -81,12 +79,10 @@ export class CodeExecutionProcessor extends WorkerHost {
         }
       });
 
-      // ส่งโค้ดของนักศึกษาผ่านทาง stdin เข้าไปยัง Python ใน Docker
       child.stdin.write(sourceCode);
       child.stdin.end();
     });
 
-    // 🚀 ส่งผลลัพธ์ไปที่ ExercisesService เพื่อให้คะแนนด้วย AI และอัปเดตลง DB แบบ Asynchronous
     await this.exercisesService.completeGrading(
       activityId,
       runResult,

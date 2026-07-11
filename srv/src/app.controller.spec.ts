@@ -1,4 +1,3 @@
-// src/app.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { CodeProcessor } from './code.processor';
@@ -11,7 +10,7 @@ describe('AppController', () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
       providers: [
-        AppService, // 👈 แอด Service จริงเข้าไปร่วมด้วย
+        AppService,
         {
           provide: CodeProcessor,
           useValue: {
@@ -26,7 +25,6 @@ describe('AppController', () => {
     appController = app.get<AppController>(AppController);
   });
 
-  // บล็อกการทดสอบหลัก (ห้ามหายเด็ดขาด)
   describe('getProblems', () => {
     it('should return problems list', () => {
       expect(appController.getProblems()).toEqual([{ id: 'sum-01', title: 'Test Problem' }]);

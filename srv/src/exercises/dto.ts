@@ -1,19 +1,19 @@
 import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 
 export class SubmitExerciseDto {
-  @IsNotEmpty({ message: 'userId ห้ามเป็นค่าว่าง' })
+  @IsNotEmpty({ message: 'userId' })
   @IsString()
   userId: string;
 
-  @IsNotEmpty({ message: 'exerciseId ห้ามเป็นค่าว่าง' })
+  @IsNotEmpty({ message: 'exerciseId' })
   @IsString()
   exerciseId: string;
 
-  @IsNotEmpty({ message: 'sourceCode ห้ามเป็นค่าว่าง' })
+  @IsNotEmpty({ message: 'sourceCode' })
   @IsString()
   sourceCode: string;
 
-  @IsNotEmpty({ message: 'hintUsed ห้ามเป็นค่าว่าง' })
+  @IsNotEmpty({ message: 'hintUsed' })
   @IsBoolean()
   hintUsed: boolean;
 }
