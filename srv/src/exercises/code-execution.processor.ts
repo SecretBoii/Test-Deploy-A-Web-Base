@@ -23,6 +23,35 @@ export class CodeExecutionProcessor extends WorkerHost {
   ): Promise<{ status: string; stdout: string; stderr: string }> {
     const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
 
+    const wrapperScript = `
+import sys, subprocess
+try:
+    data = sys.stdin.read()
+    parts = data.split('===INPUTS===')
+    code = parts[0].strip()
+    inputs = parts[1].strip() if len(parts) > 1 else ''
+    
+    with open('/tmp/sol.py', 'w', encoding='utf-8') as f:
+        f.write(code)
+        
+    res = subprocess.run(
+        [sys.executable, '/tmp/sol.py'],
+        input=inputs,
+        text=True,
+        capture_output=True,
+        timeout=4
+    )
+    sys.stdout.write(res.stdout)
+    sys.stderr.write(res.stderr)
+    sys.exit(res.returncode)
+except subprocess.TimeoutExpired:
+    sys.stderr.write('Time Limit Exceeded (Timeout 4s)')
+    sys.exit(124)
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+`.trim();
+
     const runResult = await new Promise<{ status: string; stdout: string; stderr: string }>((resolve) => {
       const child = spawn('docker', [
         'run',
@@ -32,6 +61,8 @@ export class CodeExecutionProcessor extends WorkerHost {
         '--cpus=0.5',
         'python:3.10-slim',
         'python',
+        '-c',
+        wrapperScript
       ]);
 
       let stdout = '';
@@ -79,7 +110,10 @@ export class CodeExecutionProcessor extends WorkerHost {
         }
       });
 
-      child.stdin.write(sourceCode);
+      const mockInputs = "5\n10\n15\n20\nstudent\n";
+      const payload = sourceCode + "\n===INPUTS===\n" + mockInputs;
+
+      child.stdin.write(payload);
       child.stdin.end();
     });
 
