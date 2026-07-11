@@ -1,0 +1,11 @@
+POST http://localhost:3000/exercises/run HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "exerciseId": "101",
+  "sourceCode": "width = int(input())\nheight = int(input())\nprint(width * height)",
+  "hintUsed": false
+}
+
+GET http://localhost:3000/exercises/status/37 HTTP/1.1

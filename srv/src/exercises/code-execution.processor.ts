@@ -23,29 +23,58 @@ export class CodeExecutionProcessor extends WorkerHost {
   ): Promise<{ status: string; stdout: string; stderr: string }> {
     const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
 
+    const wrapperScript = `
+import sys, subprocess
+try:
+    data = sys.stdin.read()
+    parts = data.split('===INPUTS===')
+    code = parts[0].strip()
+    inputs = parts[1].strip() if len(parts) > 1 else ''
+    
+    with open('/tmp/sol.py', 'w', encoding='utf-8') as f:
+        f.write(code)
+        
+    res = subprocess.run(
+        [sys.executable, '/tmp/sol.py'],
+        input=inputs,
+        text=True,
+        capture_output=True,
+        timeout=4
+    )
+    sys.stdout.write(res.stdout)
+    sys.stderr.write(res.stderr)
+    sys.exit(res.returncode)
+except subprocess.TimeoutExpired:
+    sys.stderr.write('Time Limit Exceeded (Timeout 4s)')
+    sys.exit(124)
+except Exception as e:
+    sys.stderr.write(str(e))
+    sys.exit(1)
+`.trim();
+
     const runResult = await new Promise<{ status: string; stdout: string; stderr: string }>((resolve) => {
-      // สั่งเปิดคอนเทนเนอร์แบบอินเตอร์แอคทีฟ (-i) จำกัดเวลาการรันผ่านระบบ NestJS และลบคอนเทนเนอร์หลังรันเสร็จ (--rm)
       const child = spawn('docker', [
         'run',
         '--rm',
         '-i',
-        '--memory=128m', // จำกัดการใช้ RAM 128MB
-        '--cpus=0.5', // จำกัดการใช้ CPU 0.5 Core
+        '--memory=128m',
+        '--cpus=0.5',
         'python:3.10-slim',
         'python',
+        '-c',
+        wrapperScript
       ]);
 
       let stdout = '';
       let stderr = '';
       let timeoutId: NodeJS.Timeout;
 
-      // ตั้งกลไกหมดเวลาประมวลผล (Timeout 5 วินาที)
       timeoutId = setTimeout(() => {
         child.kill();
         resolve({
           status: 'Time Limit Exceeded',
           stdout: stdout,
-          stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+          stderr: 'Execution timed out (5s limit exceeded)',
         });
       }, 5000);
 
@@ -64,7 +93,7 @@ export class CodeExecutionProcessor extends WorkerHost {
           resolve({
             status: 'Time Limit Exceeded',
             stdout: stdout,
-            stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+            stderr: 'Execution timed out (5s limit exceeded)',
           });
         } else if (code !== 0) {
           resolve({
@@ -81,12 +110,13 @@ export class CodeExecutionProcessor extends WorkerHost {
         }
       });
 
-      // ส่งโค้ดของนักศึกษาผ่านทาง stdin เข้าไปยัง Python ใน Docker
-      child.stdin.write(sourceCode);
+      const mockInputs = "5\n10\n15\n20\nstudent\n";
+      const payload = sourceCode + "\n===INPUTS===\n" + mockInputs;
+
+      child.stdin.write(payload);
       child.stdin.end();
     });
 
-    // 🚀 ส่งผลลัพธ์ไปที่ ExercisesService เพื่อให้คะแนนด้วย AI และอัปเดตลง DB แบบ Asynchronous
     await this.exercisesService.completeGrading(
       activityId,
       runResult,
