@@ -9,25 +9,88 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ExercisesService implements OnModuleInit {
   private queueEvents: QueueEvents;
+  private skillsGuideline = new Map<string, string>();
 
   constructor(
     private readonly httpService: HttpService,
-    @InjectQueue('code-execution') private readonly codeQueue: Queue, // 👈 ฉีดคิวงานเข้ามาใช้งาน
-    private readonly prisma: PrismaService, // 👈 ฉีด PrismaService เข้ามาใช้งาน
+    @InjectQueue('code-execution') private readonly codeQueue: Queue,
+    private readonly prisma: PrismaService,
   ) {}
 
   onModuleInit() {
-    // 👈 สร้างระบบติดตามความคืบหน้าของคิวงาน (QueueEvents) เพื่อรอผลการรันโค้ด
     this.queueEvents = new QueueEvents('code-execution', {
       connection: {
         host: 'localhost',
         port: 6379,
       },
     });
+
+    this.loadSkillsGuidelines();
+  }
+
+  private loadSkillsGuidelines() {
+    try {
+      const possiblePaths = [
+        path.join(process.cwd(), 'src', 'exercises', 'skills'),
+        path.join(process.cwd(), 'dist', 'exercises', 'skills'),
+        path.join(__dirname, 'skills'),
+      ];
+
+      let skillsDir = '';
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          skillsDir = p;
+          break;
+        }
+      }
+
+      if (!skillsDir) {
+        console.warn(
+          '[Skills Loader] ไม่พบโฟลเดอร์เกณฑ์การตรวจในพิกัดใดๆ:',
+          possiblePaths,
+        );
+        return;
+      }
+
+      console.log(`[Skills Loader] กำลังโหลดไฟล์เกณฑ์การตรวจจากพิกัด: ${skillsDir}`);
+
+      const files = fs.readdirSync(skillsDir);
+      for (const file of files) {
+        if (file.endsWith('.md')) {
+          const filePath = path.join(skillsDir, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const skillName = path.basename(file, '.md');
+          this.skillsGuideline.set(skillName, content);
+          console.log(`[Skills Loader] โหลดสำเร็จ: ${file} (${content.length} ตัวอักษร)`);
+        }
+      }
+      console.log(`[Skills Loader] โหลดเกณฑ์ทั้งหมดเสร็จสิ้น! จำนวน: ${this.skillsGuideline.size} รายการ`);
+    } catch (error) {
+      console.error(`[Skills Loader] โหลดขัดข้อง:`, error.message);
+    }
+  }
+
+  // ดึงข้อเสนอแนะทักษะ (Skill Guideline)
+  getSkillGuideline(skillName: string): string {
+    const guideline = this.skillsGuideline.get(skillName);
+    if (!guideline) {
+      return `โปรดประเมินทักษะ ${skillName} ของนักศึกษาและให้คำแนะนำที่สร้างสรรค์`;
+    }
+    return guideline;
+  }
+
+  getLoadedSkills() {
+    const obj: Record<string, string> = {};
+    this.skillsGuideline.forEach((value, key) => {
+      obj[key] = value.substring(0, 80) + '...';
+    });
+    return obj;
   }
 
   async submitExercise(
@@ -38,7 +101,6 @@ export class ExercisesService implements OnModuleInit {
     hintUsed: boolean,
   ) {
     try {
-      // 1. ดึงข้อมูลโจทย์เพื่อนำเกณฑ์การตรวจและข้อมูลวิชามาใช้งาน
       const exercise = await this.prisma.exercise.findUnique({
         where: { exerciseId: Number(exerciseId) },
       });
@@ -46,7 +108,6 @@ export class ExercisesService implements OnModuleInit {
         throw new HttpException('ไม่พบโจทย์ข้อนี้ในระบบ', HttpStatus.NOT_FOUND);
       }
 
-      // 2. คำนวณจำนวนครั้งที่กดรันจริงจากฐานข้อมูล (ประวัติ Activity ที่มี eventType = 'run')
       const previousRuns = await this.prisma.activity.count({
         where: {
           userId: Number(userId),
@@ -56,13 +117,11 @@ export class ExercisesService implements OnModuleInit {
       });
       const run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
 
-      // 3. ค้นหา sessionId ของโจทย์ข้อนี้
       const sessionExercise = await this.prisma.sessionExercise.findFirst({
         where: { exerciseId: Number(exerciseId) },
       });
       const sessionId = sessionExercise?.sessionId ?? 1;
 
-      // 4. สร้างบันทึกประวัติสถานะ PENDING ลงฐานข้อมูลก่อนรัน
       const activity = await this.prisma.activity.create({
         data: {
           userId: Number(userId),
@@ -79,7 +138,6 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      // 5. ส่งงานเข้าระบบคิวประมวลผลเบื้องหลัง
       await this.codeQueue.add('execute', {
         activityId: activity.activityId,
         userId: Number(userId),
@@ -91,7 +149,6 @@ export class ExercisesService implements OnModuleInit {
         hintUsed,
       });
 
-      // 6. ตอบกลับหน้าบ้านทันทีโดยไม่ต้องยิงรอ
       return {
         success: true,
         message: 'ส่งโค้ดเข้าระบบคิวประมวลผลสำเร็จ!',
@@ -144,7 +201,6 @@ export class ExercisesService implements OnModuleInit {
         throw new Error(`ไม่พบโจทย์ไอดี ${exerciseId} สำหรับขั้นตอนให้คะแนน`);
       }
 
-      // 🚀 ยิงหา Gemini ด้วยรุ่นแบบไดนามิกจาก env
       const apiKey = process.env.GEMINI_API_KEY;
       const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
@@ -161,7 +217,7 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error('❌ Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
+        console.error('Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
           geminiResponse = await firstValueFrom(
@@ -172,7 +228,7 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          console.error('Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
           throw new Error(
             `สายพานตรวจโค้ด Gemini ล้มเหลว: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
           );
@@ -188,7 +244,6 @@ export class ExercisesService implements OnModuleInit {
       const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
       const aiReview = this.parseAiResponse(aiText, defaultScore, event_type, run_count);
 
-      // บันทึกผลการตรวจและเปลี่ยนสถานะเป็น SUCCESS
       await this.prisma.activity.update({
         where: { activityId },
         data: {
@@ -199,8 +254,7 @@ export class ExercisesService implements OnModuleInit {
         },
       });
     } catch (error) {
-      console.error(`❌ completeGrading Error for Activity ID ${activityId}:`, error.message);
-      // หากขั้นตอนใดๆ ล้มเหลว ให้ทำเครื่องหมายรายการนี้ว่า FAILED
+      console.error(`completeGrading Error for Activity ID ${activityId}:`, error.message);
       await this.prisma.activity.update({
         where: { activityId },
         data: {
@@ -300,40 +354,60 @@ export class ExercisesService implements OnModuleInit {
     run_count: number,
     exercise: { title: string; topic: string; objective: string },
   ): string {
-    return `
-      คุณคืออาจารย์ตรวจข้อสอบวิชาคอมพิวเตอร์ กำลังตรวจโจทย์ข้อ: "${exercise.title}"
+    const securityRules = this.getSkillGuideline('security');
+    const complexityRules = this.getSkillGuideline('complexity');
+    const pep8Rules = this.getSkillGuideline('pep8');
+    const edgeCasesRules = this.getSkillGuideline('edge_cases'); 
+
+    let hintLevelInstruction = '';
+    if (run_count <= 2) {
+      hintLevelInstruction = `
+        - Provide only high-level conceptual hints. Do not specify line numbers or point to the exact errors. Do not write any code solutions or code snippets under any circumstances.
+      `;
+    }
+    else if (run_count <= 4) {
+      hintLevelInstruction = `
+        - Identify the general category of the logical error and narrow down the scope of the erroneous code block. Still, do not write code solutions for the user.
+      `;
+    }
+    else { 
+      hintLevelInstruction = `
+        - Point to the exact line numbers of the errors. Explain the root causes of the bugs clearly. You are allowed to provide code examples or refactoring suggestions to guide them.
+      `;
+    }
+
+    return ` 
+      Evaluate the student's Python program based on the following information:
+      Exercise Title: "${exercise.title}"
+      Topic: "${exercise.topic}"
+      Objective/Rubric: "${exercise.objective}"
       
-      [วัตถุประสงค์เกณฑ์ตรวจของโจทย์ข้อนี้ (Dynamic Rubrics)]:
-      - หัวข้อการเรียนรู้: ${exercise.topic}
-      - วัตถุประสงค์หลักที่ต้องประเมิน: ${exercise.objective}
+      Student's Source Code:
+      "${sourceCode}"
+      
+      Execution Output from Sandbox:
+      - Status: ${runResult.status}
+      - Output: ${runResult.stdout || 'None'}
+      - Error: ${runResult.stderr || 'None'}
 
-      [ข้อมูลการเรียกใช้งาน]:
-      ชนิดของ event: ${event_type}
-      จำนวนครั้งที่กดรัน (ไม่รวมครั้งนี้ถ้าเป็น submit): ${run_count}
+      Additional rules to evaluate (use these criteria):
+      [Security Check] ${securityRules}
+      [Complexity/Big-O Check] ${complexityRules}
+      [PEP 8 Cleanliness Check] ${pep8Rules}
+      [Edge Cases Check] ${edgeCasesRules}
+      
+      Hint rules you MUST follow for this run count:
+      ${hintLevelInstruction}
 
-      [ซอร์สโค้ดของนักศึกษา]:
-      ${sourceCode}
-
-      [ผลลัพธ์จากการรันใน Sandbox]:
-      สถานะ: ${runResult.status}
-      Output: ${runResult.stdout || 'ไม่มี output'}
-      Error (ถ้ามี): ${runResult.stderr || 'ไม่มี'}
-
-      โปรดส่งผลลัพธ์การตรวจกลับมาเป็นรูปแบบ JSON Object เท่านั้น โดยมีโครงสร้างดังนี้:
+      ====================================================
+      CRITICAL INSTRUCTIONS FOR RESPONSE (JSON ONLY):
+      Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros. The response must exactly follow this JSON schema:
       {
-        "score": <คะแนนที่ตรวจได้เป็นตัวเลข 0 ถึง 100>,
-        "exception_message": "<หากเกิด error ให้ระบุชื่อ exception สั้นกระชับที่สุด เช่น 'NameError: name 'x' is not defined' หรือเป็น null หากไม่มีข้อผิดพลาด>",
-        "ai_feedback": "<ระบุจุดที่ต้องแก้ไขทันทีเพื่อให้สอดคล้องกับวัตถุประสงค์หลักของโจทย์ข้อนี้ เป็นข้อสั้นๆ ห้ามมีคำอธิบายอารัมภบท ทักทาย ชมเชย หรือคำปลอบใจใดๆ ทั้งสิ้น หรือเป็น null หากได้คะแนนเต็ม 10>",
-        "event_type": "${event_type}",
-        "run_count": ${run_count}
+        "score": <overall evaluation score as an integer from 0 to 100>,
+        "exception_message": "<short exception name if compile/runtime error occurred, otherwise null>",
+        "ai_feedback": "<compiled feedback summarizing security, complexity/Big-O, PEP 8 compliance, and debugging tips according to the hint rules above>"
       }
-
-      ⚠️ ข้อบังคับเด็ดขาดในการตอบกลับ:
-      1. ห้ามมีข้อความอื่นนอกเหนือจาก JSON Object ห้ามมีคำทักทาย เกริ่นนำ อารัมภบท หรือลงท้ายใดๆ ทั้งสิ้น
-      2. ข้อความใน "ai_feedback" ต้องชี้เป้าจุดผิดและแนวทางการแก้ปัญหาตรงๆ ทันที (ห้ามใช้คำพูดเกริ่น เช่น "ขอแนะนำให้...", "โค้ดของคุณเกือบถูกต้องแล้ว...")
-      3. เนื้อหาทั้งหมดต้องสั้นและตรงประเด็นที่สุด (มีแต่เนื้อ ไม่มีน้ำ) และยาวไม่เกิน 2-3 บรรทัดย่อย
-      4. ห้ามใช้การกดปุ่มขึ้นบรรทัดใหม่จริง ๆ (Raw Newlines/Line breaks) ภายในข้อความ JSON
-      5. หากต้องการแยกบรรทัดในคำแนะนำ ให้พิมพ์ตัวอักษร \\n (ย้อนกลับสแลชตามด้วยตัว n) แทนการขึ้นบรรทัดใหม่จริง ๆ
     `;
   }
+
 }
