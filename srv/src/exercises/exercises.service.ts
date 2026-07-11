@@ -9,25 +9,88 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
 import { firstValueFrom } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class ExercisesService implements OnModuleInit {
   private queueEvents: QueueEvents;
+  private skillsGuideline = new Map<string, string>();
 
   constructor(
     private readonly httpService: HttpService,
-    @InjectQueue('code-execution') private readonly codeQueue: Queue, // 👈 ฉีดคิวงานเข้ามาใช้งาน
-    private readonly prisma: PrismaService, // 👈 ฉีด PrismaService เข้ามาใช้งาน
+    @InjectQueue('code-execution') private readonly codeQueue: Queue,
+    private readonly prisma: PrismaService,
   ) {}
 
   onModuleInit() {
-    // 👈 สร้างระบบติดตามความคืบหน้าของคิวงาน (QueueEvents) เพื่อรอผลการรันโค้ด
     this.queueEvents = new QueueEvents('code-execution', {
       connection: {
         host: 'localhost',
         port: 6379,
       },
     });
+
+    this.loadSkillsGuidelines();
+  }
+
+  private loadSkillsGuidelines() {
+    try {
+      const possiblePaths = [
+        path.join(process.cwd(), 'src', 'exercises', 'skills'),
+        path.join(process.cwd(), 'dist', 'exercises', 'skills'),
+        path.join(__dirname, 'skills'),
+      ];
+
+      let skillsDir = '';
+      for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+          skillsDir = p;
+          break;
+        }
+      }
+
+      if (!skillsDir) {
+        console.warn(
+          '[Skills Loader] ไม่พบโฟลเดอร์เกณฑ์การตรวจในพิกัดใดๆ:',
+          possiblePaths,
+        );
+        return;
+      }
+
+      console.log(`[Skills Loader] กำลังโหลดไฟล์เกณฑ์การตรวจจากพิกัด: ${skillsDir}`);
+
+      const files = fs.readdirSync(skillsDir);
+      for (const file of files) {
+        if (file.endsWith('.md')) {
+          const filePath = path.join(skillsDir, file);
+          const content = fs.readFileSync(filePath, 'utf-8');
+          const skillName = path.basename(file, '.md');
+          this.skillsGuideline.set(skillName, content);
+          console.log(`[Skills Loader] โหลดสำเร็จ: ${file} (${content.length} ตัวอักษร)`);
+        }
+      }
+      console.log(`[Skills Loader] โหลดเกณฑ์ทั้งหมดเสร็จสิ้น! จำนวน: ${this.skillsGuideline.size} รายการ`);
+    } catch (error) {
+      console.error(`[Skills Loader] โหลดขัดข้อง:`, error.message);
+    }
+  }
+
+  // ดึงข้อเสนอแนะทักษะ (Skill Guideline)
+  getSkillGuideline(skillName: string): string {
+    const guideline = this.skillsGuideline.get(skillName);
+    if (!guideline) {
+      return `โปรดประเมินทักษะ ${skillName} ของนักศึกษาและให้คำแนะนำที่สร้างสรรค์`;
+    }
+    return guideline;
+  }
+
+  getLoadedSkills() {
+    const obj: Record<string, string> = {};
+    this.skillsGuideline.forEach((value, key) => {
+      obj[key] = value.substring(0, 80) + '...';
+    });
+    return obj;
   }
 
   async submitExercise(
@@ -38,7 +101,6 @@ export class ExercisesService implements OnModuleInit {
     hintUsed: boolean,
   ) {
     try {
-      // 1. ดึงข้อมูลโจทย์เพื่อนำเกณฑ์การตรวจและข้อมูลวิชามาใช้งาน
       const exercise = await this.prisma.exercise.findUnique({
         where: { exerciseId: Number(exerciseId) },
       });
@@ -46,7 +108,6 @@ export class ExercisesService implements OnModuleInit {
         throw new HttpException('ไม่พบโจทย์ข้อนี้ในระบบ', HttpStatus.NOT_FOUND);
       }
 
-      // 2. คำนวณจำนวนครั้งที่กดรันจริงจากฐานข้อมูล (ประวัติ Activity ที่มี eventType = 'run')
       const previousRuns = await this.prisma.activity.count({
         where: {
           userId: Number(userId),
@@ -56,13 +117,11 @@ export class ExercisesService implements OnModuleInit {
       });
       const run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
 
-      // 3. ค้นหา sessionId ของโจทย์ข้อนี้
       const sessionExercise = await this.prisma.sessionExercise.findFirst({
         where: { exerciseId: Number(exerciseId) },
       });
       const sessionId = sessionExercise?.sessionId ?? 1;
 
-      // 4. สร้างบันทึกประวัติสถานะ PENDING ลงฐานข้อมูลก่อนรัน
       const activity = await this.prisma.activity.create({
         data: {
           userId: Number(userId),
@@ -79,7 +138,6 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      // 5. ส่งงานเข้าระบบคิวประมวลผลเบื้องหลัง
       await this.codeQueue.add('execute', {
         activityId: activity.activityId,
         userId: Number(userId),
@@ -91,7 +149,6 @@ export class ExercisesService implements OnModuleInit {
         hintUsed,
       });
 
-      // 6. ตอบกลับหน้าบ้านทันทีโดยไม่ต้องยิงรอ
       return {
         success: true,
         message: 'ส่งโค้ดเข้าระบบคิวประมวลผลสำเร็จ!',
@@ -144,7 +201,6 @@ export class ExercisesService implements OnModuleInit {
         throw new Error(`ไม่พบโจทย์ไอดี ${exerciseId} สำหรับขั้นตอนให้คะแนน`);
       }
 
-      // 🚀 ยิงหา Gemini ด้วยรุ่นแบบไดนามิกจาก env
       const apiKey = process.env.GEMINI_API_KEY;
       const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
@@ -161,7 +217,7 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error('❌ Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
+        console.error('Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
           geminiResponse = await firstValueFrom(
@@ -172,7 +228,7 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          console.error('Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
           throw new Error(
             `สายพานตรวจโค้ด Gemini ล้มเหลว: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
           );
@@ -188,7 +244,6 @@ export class ExercisesService implements OnModuleInit {
       const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
       const aiReview = this.parseAiResponse(aiText, defaultScore, event_type, run_count);
 
-      // บันทึกผลการตรวจและเปลี่ยนสถานะเป็น SUCCESS
       await this.prisma.activity.update({
         where: { activityId },
         data: {
@@ -199,8 +254,7 @@ export class ExercisesService implements OnModuleInit {
         },
       });
     } catch (error) {
-      console.error(`❌ completeGrading Error for Activity ID ${activityId}:`, error.message);
-      // หากขั้นตอนใดๆ ล้มเหลว ให้ทำเครื่องหมายรายการนี้ว่า FAILED
+      console.error(`completeGrading Error for Activity ID ${activityId}:`, error.message);
       await this.prisma.activity.update({
         where: { activityId },
         data: {
