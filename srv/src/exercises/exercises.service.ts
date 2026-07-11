@@ -76,11 +76,10 @@ export class ExercisesService implements OnModuleInit {
     }
   }
 
-  // ดึงข้อเสนอแนะทักษะ (Skill Guideline)
   getSkillGuideline(skillName: string): string {
     const guideline = this.skillsGuideline.get(skillName);
     if (!guideline) {
-      return `โปรดประเมินทักษะ ${skillName} ของนักศึกษาและให้คำแนะนำที่สร้างสรรค์`;
+      return `Please evaluate the student's ${skillName} skill and provide constructive feedback.`;
     }
     return guideline;
   }
@@ -105,7 +104,7 @@ export class ExercisesService implements OnModuleInit {
         where: { exerciseId: Number(exerciseId) },
       });
       if (!exercise) {
-        throw new HttpException('ไม่พบโจทย์ข้อนี้ในระบบ', HttpStatus.NOT_FOUND);
+        throw new HttpException('Exercise not found', HttpStatus.NOT_FOUND);
       }
 
       const previousRuns = await this.prisma.activity.count({
@@ -151,25 +150,24 @@ export class ExercisesService implements OnModuleInit {
 
       return {
         success: true,
-        message: 'ส่งโค้ดเข้าระบบคิวประมวลผลสำเร็จ!',
+        message: 'Code submitted to execution queue successfully!',
         activityId: activity.activityId,
         status: 'PENDING',
       };
     } catch (error) {
       throw new HttpException(
-        `การส่งโค้ดขัดข้อง: ${error.response?.data?.error?.message || error.message}`,
+        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
-  // ดึงผลการตรวจคำตอบจากไอดีบันทึก
   async getStatus(activityId: number) {
     const activity = await this.prisma.activity.findUnique({
       where: { activityId },
     });
     if (!activity) {
-      throw new HttpException('ไม่พบข้อมูลประวัติการตรวจข้อนี้', HttpStatus.NOT_FOUND);
+      throw new HttpException('Activity log not found', HttpStatus.NOT_FOUND);
     }
 
     return {
@@ -184,7 +182,6 @@ export class ExercisesService implements OnModuleInit {
     };
   }
 
-  // ทำการวิเคราะห์ AI และอัปเดตสถานะของแบบฝึกหัดเสร็จสมบูรณ์ (เรียกใช้จาก Worker)
   async completeGrading(
     activityId: number,
     runResult: { status: string; stdout: string; stderr: string },
@@ -198,7 +195,7 @@ export class ExercisesService implements OnModuleInit {
         where: { exerciseId },
       });
       if (!exercise) {
-        throw new Error(`ไม่พบโจทย์ไอดี ${exerciseId} สำหรับขั้นตอนให้คะแนน`);
+        throw new Error(`Exercise ID ${exerciseId} not found for grading process`);
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
@@ -228,16 +225,16 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error('Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
           throw new Error(
-            `สายพานตรวจโค้ด Gemini ล้มเหลว: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
+            `Gemini grading pipeline failed: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
           );
         }
       }
 
       const candidates = geminiResponse.data?.candidates;
       if (!candidates || candidates.length === 0) {
-        throw new Error('Gemini ไม่ส่งข้อมูลตอบกลับมา');
+        throw new Error('Gemini returned no candidates response');
       }
 
       const aiText = candidates[0].content.parts[0].text;
@@ -259,8 +256,8 @@ export class ExercisesService implements OnModuleInit {
         where: { activityId },
         data: {
           status: 'FAILED',
-          exceptionMessage: 'ระบบประมวลผลหลังบ้านขัดข้อง',
-          aiFeedback: `การตรวจล้มเหลว: ${error.message}`,
+          exceptionMessage: 'Backend processing failed',
+          aiFeedback: `Grading failed: ${error.message}`,
         },
       });
     }
@@ -282,14 +279,12 @@ export class ExercisesService implements OnModuleInit {
     const safe_run_count = typeof run_count === 'number' ? run_count : 0;
 
     try {
-      // 1. ทำความสะอาด markdown code blocks
       const cleanText = aiText
         .replace(/```json/gi, '')
         .replace(/```/g, '')
         .trim();
 
       try {
-        // 2. ลอง Parse มาตรฐานก่อน
         const parsed = JSON.parse(cleanText);
         return {
           score: typeof parsed.score === 'number' ? parsed.score : defaultScore,
@@ -302,7 +297,6 @@ export class ExercisesService implements OnModuleInit {
               : safe_run_count,
         };
       } catch (innerParseError) {
-        // 3. แผนสำรอง: ดึงผลลัพธ์ผ่าน Regex หากพบปัญหา Syntax
         const scoreMatch = cleanText.match(/"score"\s*:\s*(\d+)/);
         const score = scoreMatch ? parseInt(scoreMatch[1], 10) : defaultScore;
 
@@ -339,8 +333,8 @@ export class ExercisesService implements OnModuleInit {
     } catch (parseError) {
       return {
         score: defaultScore,
-        exception_message: 'ไม่สามารถแยกวิเคราะห์โครงสร้าง JSON ได้',
-        ai_feedback: `ไม่สามารถแปลงผลวิเคราะห์จาก AI เป็น JSON ได้: ${parseError.message}`,
+        exception_message: 'Failed to parse JSON structure',
+        ai_feedback: `Could not parse AI response as JSON: ${parseError.message}`,
         event_type: safe_event_type,
         run_count: safe_run_count,
       };

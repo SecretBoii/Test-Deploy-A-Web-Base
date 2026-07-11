@@ -43,7 +43,7 @@ export class CodeExecutionProcessor extends WorkerHost {
         resolve({
           status: 'Time Limit Exceeded',
           stdout: stdout,
-          stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+          stderr: 'Execution timed out (5s limit exceeded)',
         });
       }, 5000);
 
@@ -62,7 +62,7 @@ export class CodeExecutionProcessor extends WorkerHost {
           resolve({
             status: 'Time Limit Exceeded',
             stdout: stdout,
-            stderr: 'โค้ดใช้เวลาประมวลผลนานเกินไป (Timeout 5s)',
+            stderr: 'Execution timed out (5s limit exceeded)',
           });
         } else if (code !== 0) {
           resolve({

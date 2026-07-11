@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq'; // 👈 นำเข้า BullModule
+import { BullModule } from '@nestjs/bullmq'; 
 import { ExercisesModule } from './exercises/exercises.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { CodeProcessor } from './code.processor'; // 👈 นำเข้าไฟล์นี้กลับมาด้วย
+import { CodeProcessor } from './code.processor'; 
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -22,7 +22,7 @@ import { PrismaModule } from './prisma/prisma.module';
   controllers: [AppController],
   providers: [
     AppService, 
-    CodeProcessor // 👈 ใส่กลับเข้ามาตรงนี้ เพื่อเคลียร์บั๊ก UnknownDependencies
+    CodeProcessor
   ],
 })
 export class AppModule {}
