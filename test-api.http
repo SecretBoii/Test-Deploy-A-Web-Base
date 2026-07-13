@@ -1,11 +1,67 @@
+// LEVEL 1: Remembering & Understanding (จำและเข้าใจ)
+// โจทย์ข้อ 101: พิมพ์ Hello World
 POST http://localhost:3000/exercises/run HTTP/1.1
 Content-Type: application/json
 
 {
   "userId": "1",
   "exerciseId": "101",
-  "sourceCode": "width = int(input())\nheight = int(input())\nprint(width * height)",
+  "sourceCode": "print(\"Hello, World!\")",
   "hintUsed": false
 }
 
-GET http://localhost:3000/exercises/status/37 HTTP/1.1
+###
+// LEVEL 2: Applying (การประยุกต์ใช้งานเบื้องต้น)
+// โจทย์ข้อ 106: ตรวจสอบเลขคู่หรือคี่
+POST http://localhost:3000/exercises/run HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "exerciseId": "106",
+  "sourceCode": "num = int(input())\nif num % 2 == 0:\n    print(\"Even\")\nelse:\n    print(\"Odd\")",
+  "hintUsed": false
+}
+
+###
+// LEVEL 3: Analyzing (การวิเคราะห์logicวนซ้ำ)
+// โจทย์ข้อ 109: หาผลรวมของตัวเลข 1 ถึง N
+POST http://localhost:3000/exercises/run HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "exerciseId": "109",
+  "sourceCode": "n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    total += i\nprint(total)",
+  "hintUsed": false
+}
+
+###
+// LEVEL 4: Evaluating (การประเมินค่า ตรวจสอบตรรกะ และดักจับ Edge Case)
+// โจทย์ข้อ 114: ตรวจสอบพาลินโดรม (Palindrome)
+POST http://localhost:3000/exercises/run HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "exerciseId": "114",
+  "sourceCode": "word = input()\nif word == word[::-1]:\n    print(\"Yes\")\nelse:\n    print(\"No\")",
+  "hintUsed": false
+}
+
+###
+// LEVEL 5: Creating (การดีไซน์และคิดค้นอัลกอริทึม)
+// โจทย์ข้อ 117: หาค่าแฟกทอเรียลแบบ Recursion
+POST http://localhost:3000/exercises/run HTTP/1.1
+Content-Type: application/json
+
+{
+  "userId": "1",
+  "exerciseId": "117",
+  "sourceCode": "def factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n\nnum = int(input())\nprint(factorial(num))",
+  "hintUsed": false
+}
+
+###
+// ตรวจสอบคะแนนและ AI Feedback
+GET http://localhost:3000/exercises/status/8 HTTP/1.1
