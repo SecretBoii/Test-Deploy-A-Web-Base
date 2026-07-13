@@ -15,6 +15,7 @@ async function main() {
     const roles = [
       { roleId: 1, roleName: 'Student' },
       { roleId: 2, roleName: 'Teacher' },
+      { roleId: 3, roleName: 'Admin' },
     ];
     for (const r of roles) {
       await prisma.role.upsert({
@@ -40,21 +41,46 @@ async function main() {
     console.log('✅ Education seeded.');
 
     // 3. Seed Userprofile
-    const user = {
-      userId: 1,
-      username: 'student1',
-      password: '1234_hashed_or_plain',
-      gender: 'male',
-      dateOfBirth: new Date('2000-01-01'),
-      educationId: 1,
-      roleId: 1,
-    };
-    await prisma.userprofile.upsert({
-      where: { userId: user.userId },
-      update: {},
-      create: user,
-    });
-    console.log('✅ Userprofile seeded.');
+    const users = [
+      {
+        userId: 1,
+        username: 'student',
+        password: '1234',
+        gender: 'male',
+        dateOfBirth: new Date('2000-01-01'),
+        educationId: 1,
+        roleId: 1,
+      },
+      {
+        userId: 2,
+        username: 'teacher',
+        password: '1234',
+        gender: 'female',
+        dateOfBirth: new Date('1990-05-15'),
+        educationId: 1,
+        roleId: 2,
+      },
+      {
+        userId: 3,
+        username: 'admin',
+        password: '1234',
+        gender: 'male',
+        dateOfBirth: new Date('1985-03-20'),
+        educationId: 1,
+        roleId: 3,
+      },
+    ];
+    for (const u of users) {
+      await prisma.userprofile.upsert({
+        where: { userId: u.userId },
+        update: {
+          username: u.username,
+          password: u.password,
+        },
+        create: u,
+      });
+    }
+    console.log('✅ Userprofiles seeded.');
 
     // 4. Seed Exercises
     const exercises = [
