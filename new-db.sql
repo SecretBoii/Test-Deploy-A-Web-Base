@@ -146,9 +146,9 @@ SELECT SETVAL('education_education_id_seq', (SELECT MAX(education_id) FROM educa
 -- INSERT: user_profile  (1 user ต่อ role)
 -- ─────────────────────────────────────────────────────────────
 INSERT INTO user_profile (user_id, username, password, gender, date_of_birth, education_id, role_id) VALUES
-    (1, 'student1', '1234_hashed_or_plain', 'male',   '2000-01-01', 1, 1),
-    (2, 'teacher1', '1234_hashed_or_plain', 'female', '1990-05-15', 1, 2),
-    (3, 'admin1',   '1234_hashed_or_plain', 'male',   '1985-03-20', 1, 3);
+    (1, 'student', '1234', 'male',   '2000-01-01', 1, 1),
+    (2, 'teacher', '1234', 'female', '1990-05-15', 1, 2),
+    (3, 'admin',   '1234', 'male',   '1985-03-20', 1, 3);
 
 SELECT SETVAL('user_profile_user_id_seq', (SELECT MAX(user_id) FROM user_profile));
 
