@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import {
   Search,
   Bell,
@@ -17,6 +18,14 @@ export function Home() {
   const [activeItem, setActiveItem] = useState('Dashboard')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Auth session check
+  const userStr = localStorage.getItem('user')
+  const user = userStr ? JSON.parse(userStr) : null
+
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
   const menuItems = [
     { name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
     { name: 'Exercises', icon: <Code2 size={20} /> },
@@ -32,6 +41,7 @@ export function Home() {
 
   const handleLogout = () => {
     console.log('Logging out...')
+    localStorage.removeItem('user')
     window.location.href = '/login'
   }
 
@@ -88,10 +98,10 @@ export function Home() {
                 fontSize: '10px',
                 fontWeight: 600,
                 color: '#94a3b8',
-                letterSpacing: '0.2px',
+                letterSpacing: '0.1px',
               }}
             >
-              Your Tier : Premium
+              {user.username} ({user.roleId === 1 ? 'Student' : user.roleId === 2 ? 'Teacher' : 'Admin'})
             </Box>
           </Box>
         </Box>

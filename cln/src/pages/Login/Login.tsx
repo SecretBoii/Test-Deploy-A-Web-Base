@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { login } from '../../api'
 import {
   TextField,
   Button,
@@ -25,15 +26,26 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(2) // 3rd dot active by default: < o o • o >
+  const [error, setError] = useState('')
 
   const handleTogglePassword = () => {
     setShowPassword(!showPassword)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('Logging in with:', { username, password })
-    navigate('/home')
+    setError('')
+
+    try {
+      const userData = await login(username.trim(), password)
+      console.log('Logging in with:', userData)
+      localStorage.setItem('user', JSON.stringify(userData))
+      navigate('/')
+    } catch (err: any) {
+      console.error('Login error:', err)
+      const errorMsg = err.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+      setError(errorMsg)
+    }
   }
 
   const handlePrevSlide = () => {
@@ -74,7 +86,7 @@ export function Login() {
           gap: { xs: '40px', md: '0px' },
           alignItems: { xs: 'center', md: 'stretch' },
           '@media (prefers-color-scheme: dark)': {
-            background: 'linear-gradient(135deg, #2e1065 0%, #0f172a 100%)',
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
           },
         }}
       >
@@ -154,7 +166,7 @@ export function Login() {
                 },
                 '@media (prefers-color-scheme: dark)': {
                   bgcolor: '#0f172a',
-                  borderColor: '#2e1065',
+                  borderColor: '#1e293b',
                   boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.4)',
                 },
                 position: 'absolute',
@@ -224,7 +236,7 @@ export function Login() {
                 },
                 '@media (prefers-color-scheme: dark)': {
                   bgcolor: '#0f172a',
-                  borderColor: '#2e1065',
+                  borderColor: '#1e293b',
                   boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.4)',
                 },
                 position: 'absolute',
@@ -361,7 +373,7 @@ export function Login() {
                       '50%': { transform: 'translate(-3px, -3px) rotate(-15deg)' },
                     },
                     '@media (prefers-color-scheme: dark)': {
-                      color: '#f8fafc',
+                      color: '#f1f5f9',
                     },
                   }}
                 >
@@ -611,7 +623,7 @@ export function Login() {
               sx={{
                 '& .MuiOutlinedInput-root': {
                   '@media (prefers-color-scheme: dark)': {
-                    '& fieldset': { borderColor: '#2e1065' },
+                    '& fieldset': { borderColor: '#1e293b' },
                     '&:hover fieldset': { borderColor: '#334155' },
                     color: '#f3f4f6',
                   },
@@ -652,7 +664,7 @@ export function Login() {
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '@media (prefers-color-scheme: dark)': {
-                      '& fieldset': { borderColor: '#2e1065' },
+                      '& fieldset': { borderColor: '#1e293b' },
                       '&:hover fieldset': { borderColor: '#334155' },
                       color: '#f3f4f6',
                     },
@@ -678,6 +690,26 @@ export function Login() {
                 Forgot password?
               </Box>
             </Box>
+
+            {error && (
+              <Box
+                sx={{
+                  color: '#ef4444',
+                  fontSize: '13.5px',
+                  fontWeight: 600,
+                  textAlign: 'center',
+                  bgcolor: 'rgba(239, 68, 68, 0.06)',
+                  py: 1,
+                  px: 2,
+                  borderRadius: '10px',
+                  border: '1px solid rgba(239, 68, 68, 0.15)',
+                  mt: -1,
+                  mb: 1
+                }}
+              >
+                {error}
+              </Box>
+            )}
 
             {/* Login CTA */}
             <Button
@@ -717,7 +749,7 @@ export function Login() {
                   flex: 1,
                   borderBottom: '1px solid #e2e8f0',
                   '@media (prefers-color-scheme: dark)': {
-                    borderColor: '#2e1065',
+                    borderColor: '#ede9fe',
                   },
                 },
                 '&::before': { marginRight: '16px' },
@@ -752,7 +784,7 @@ export function Login() {
                     bgcolor: '#f8fafc',
                     borderColor: '#cbd5e1',
                     '@media (prefers-color-scheme: dark)': {
-                      bgcolor: '#2e1065',
+                      bgcolor: '#1e293b',
                       borderColor: '#334155',
                     },
                   },
@@ -807,7 +839,7 @@ export function Login() {
                     bgcolor: '#f8fafc',
                     borderColor: '#cbd5e1',
                     '@media (prefers-color-scheme: dark)': {
-                      bgcolor: '#2e1065',
+                      bgcolor: '#1e293b',
                       borderColor: '#334155',
                     },
                   },
