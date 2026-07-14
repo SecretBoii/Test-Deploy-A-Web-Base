@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { login } from '../../api'
 import {
   TextField,
   Button,
@@ -24,15 +26,18 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [currentSlide, setCurrentSlide] = useState(2) // 3rd dot active by default to match image: < o o • o >
+  const navigate = useNavigate()
 
   const handleTogglePassword = () => {
     setShowPassword(!showPassword)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Simulated authentication
-    console.log('Logging in with:', { username, password })
+    const userData = await login(username, password)
+    console.log('Logging in with:', userData)
+    localStorage.setItem('user', JSON.stringify(userData))
+    navigate('/')
   }
 
   const handlePrevSlide = () => {
