@@ -40,7 +40,7 @@ export function Login() {
       const userData = await login(username.trim(), password)
       console.log('Logging in with:', userData)
       localStorage.setItem('user', JSON.stringify(userData))
-      navigate('/')
+      navigate('/home')
     } catch (err: any) {
       console.error('Login error:', err)
       const errorMsg = err.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
