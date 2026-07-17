@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { Box, Drawer } from '@mui/material'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
+import { useAuth } from '../context/AuthContext'
 
 interface MainLayoutProps {
   children?: React.ReactNode
@@ -12,19 +13,15 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeItem = 'Dashboard', onItemClick }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
-  // Auth session check
-  const userStr = localStorage.getItem('user')
-  const user = userStr ? JSON.parse(userStr) : null
+  const { user, logout } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
   }
 
   const handleLogout = () => {
     console.log('Logging out...')
-    localStorage.removeItem('user')
-    window.location.href = '/login'
+    logout();
   }
 
   const handleItemClick = (name: string) => {

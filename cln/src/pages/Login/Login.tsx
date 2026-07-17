@@ -5,32 +5,24 @@ import {
   TextField,
   Button,
   InputAdornment,
-  IconButton,
   Box
 } from '@mui/material'
 import {
   User,
   Lock,
-  Eye,
-  EyeOff,
   Play,
   Award,
-  ChevronLeft,
-  ChevronRight,
   MousePointer
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
 
 export function Login() {
   const navigate = useNavigate()
+  const { setUser } = useAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
-  const [currentSlide, setCurrentSlide] = useState(2) // 3rd dot active by default: < o o • o >
   const [error, setError] = useState('')
 
-  const handleTogglePassword = () => {
-    setShowPassword(!showPassword)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,21 +31,14 @@ export function Login() {
     try {
       const userData = await login(username.trim(), password)
       console.log('Logging in with:', userData)
-      localStorage.setItem('user', JSON.stringify(userData))
+      setUser(userData)
+
       navigate('/home')
     } catch (err: any) {
       console.error('Login error:', err)
       const errorMsg = err.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
       setError(errorMsg)
     }
-  }
-
-  const handlePrevSlide = () => {
-    setCurrentSlide((prev) => (prev > 0 ? prev - 1 : 3))
-  }
-
-  const handleNextSlide = () => {
-    setCurrentSlide((prev) => (prev < 3 ? prev + 1 : 0))
   }
 
   return (
@@ -473,71 +458,6 @@ export function Login() {
               <br />
               through interactive practice
             </Box>
-            {/* Carousel Indicators */}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, marginTop: 3 }}>
-              <Box
-                onClick={handlePrevSlide}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  color: '#94a3b8',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    color: '#4f46e5',
-                    bgcolor: 'rgba(79, 70, 229, 0.06)',
-                  },
-                }}
-              >
-                <ChevronLeft size={16} />
-              </Box>
-              {[0, 1, 2, 3].map((index) => (
-                <Box
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  sx={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    bgcolor: '#cbd5e1',
-                    transition: 'all 0.3s ease',
-                    cursor: 'pointer',
-                    ...(currentSlide === index && {
-                      bgcolor: '#0f172a',
-                      width: '16px',
-                      borderRadius: '10px',
-                      '@media (prefers-color-scheme: dark)': {
-                        bgcolor: '#f3f4f6',
-                      },
-                    }),
-                  }}
-                />
-              ))}
-              <Box
-                onClick={handleNextSlide}
-                sx={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  color: '#94a3b8',
-                  transition: 'all 0.2s',
-                  '&:hover': {
-                    color: '#4f46e5',
-                    bgcolor: 'rgba(79, 70, 229, 0.06)',
-                  },
-                }}
-              >
-                <ChevronRight size={16} />
-              </Box>
-            </Box>
           </Box>
         </Box>
       </Box>
@@ -597,6 +517,7 @@ export function Login() {
             onSubmit={handleSubmit}
             sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
             noValidate
+            autoComplete="off"
           >
             {/* Username Field */}
             <TextField
@@ -606,6 +527,7 @@ export function Login() {
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoComplete="off"
               slotProps={{
                 input: {
                   startAdornment: (
@@ -637,21 +559,15 @@ export function Login() {
                 fullWidth
                 variant="outlined"
                 placeholder="At least 8 characters"
-                type={showPassword ? 'text' : 'password'}
+                type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 slotProps={{
                   input: {
                     startAdornment: (
                       <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
                         <Lock size={20} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton onClick={handleTogglePassword} edge="end" style={{ color: '#94a3b8' }}>
-                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </IconButton>
                       </InputAdornment>
                     ),
                     style: {
