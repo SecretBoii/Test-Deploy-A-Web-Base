@@ -1,10 +1,17 @@
 import {
+  Home as HomeIcon,
   LayoutDashboard,
   Code2,
   Play,
   Award,
   Settings,
   LogOut,
+  Users,
+  User,
+  GraduationCap,
+  TrendingUp,
+  FileText,
+  Activity,
 } from 'lucide-react'
 import { Box, Button } from '@mui/material'
 
@@ -19,13 +26,28 @@ interface SidebarProps {
 }
 
 export function Sidebar({ activeItem, onItemClick, user, onLogout }: SidebarProps) {
+  // 1 = Student, 2 = Teacher, 3 = Admin
   const menuItems = [
-    { name: 'หน้าหลัก', icon: <LayoutDashboard size={20} /> },
-    { name: 'Exercises', icon: <Code2 size={20} /> },
-    { name: 'Sessions', icon: <Play size={20} /> },
-    { name: 'Leaderboard', icon: <Award size={20} /> },
-    { name: 'Settings', icon: <Settings size={20} /> },
-  ]
+    // Common / Student Items (Role 1)
+    { name: 'Home', icon: <HomeIcon size={20} />, roles: [1, 2, 3] },
+    { name: 'Sessions', icon: <Play size={20} />, roles: [1, 2] },
+    { name: 'History', icon: <Award size={20} />, roles: [1] },
+    { name: 'Profile', icon: <User size={20} />, roles: [1, 2] },
+
+    // Teacher Items (Role 2)
+    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, roles: [2, 3] },
+    { name: 'Exercises', icon: <Code2 size={20} />, roles: [2] },
+    { name: 'Students', icon: <GraduationCap size={20} />, roles: [2] },
+    { name: 'Student Results', icon: <TrendingUp size={20} />, roles: [2] },
+
+    // Admin Items (Role 3)
+    { name: 'User Management', icon: <Users size={20} />, roles: [3] },
+    { name: 'Reports', icon: <FileText size={20} />, roles: [3] },
+    { name: 'Audit Logs', icon: <Activity size={20} />, roles: [3] },
+    
+    // Settings (Visible to all, or can be customized)
+    { name: 'Settings', icon: <Settings size={20} />, roles: [1, 2, 3] },
+  ].filter((item) => item.roles.includes(user.roleId))
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
