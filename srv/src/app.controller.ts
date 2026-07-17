@@ -1,20 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Controller, Post, Body, Res, Req, UseGuards, UnauthorizedException, Get } from '@nestjs/common';
+import * as express from 'express';
 import { AppService } from './app.service';
 import { CodeProcessor } from './code.processor';
-import { PrismaService } from './prisma/prisma.service';
+import { AuthService } from './auth/auth.service';
+import { JwtAuthGuard } from './auth/jwt-auth.guard';
 
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
     private readonly codeProcessor: CodeProcessor,
-    private readonly prisma: PrismaService,
+    private readonly authService: AuthService,
   ) {}
 
   @Get()
@@ -22,20 +18,23 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get('problems')
-  getProblems() {
-    return this.codeProcessor.getProblems();
-  }
-
   @Post('login')
-  async login(@Body() body: any) {
-    const user = await this.prisma.userprofile.findFirst({
-      where: { username: body.username },
-    });
-
-    if (!user || user.password !== body.password) {
-      throw new UnauthorizedException('Username หรือ Password ไม่ถูกต้อง');
+  async login(
+    @Body() body: any,
+    @Res({ passthrough: true }) response: express.Response,
+  ){
+    const user = await this.authService.vallidateUser(body.username, body.password);
+    if (!user) {
+      throw new UnauthorizedException('Username หรือ Password ไม่ถูกต้อง')
     }
+    
+    const token = this.authService.login(user);
+
+    response.cookie('access_token', token,{
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 24 * 60 * 60 * 1000,
+    });
 
     return {
       userId: user.userId,
@@ -43,4 +42,23 @@ export class AppController {
       roleId: user.roleId,
     };
   }
+
+  @Post('logout')
+  async logout(@Res({ passthrough: true }) response: express.Response) {
+    response.clearCookie('access_token');
+    return { message: 'Logout success' };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('problems')
+  getProblems() {
+    return this.codeProcessor.getProblems();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('profile')
+  getProfile(@Req() req: any) {
+    return req.user;
+  }
 }
+ 

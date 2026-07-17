@@ -1,15 +1,17 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
+
 async function main() {
   try {
-    console.log('🌱 Start seeding...');
+    console.log('Start seeding...');
 
     // 1. Seed Roles
     const roles = [
@@ -24,7 +26,7 @@ async function main() {
         create: r,
       });
     }
-    console.log('✅ Roles seeded.');
+    console.log('Roles seeded.');
 
     // 2. Seed Education
     const education = {
@@ -38,7 +40,7 @@ async function main() {
       update: {},
       create: education,
     });
-    console.log('✅ Education seeded.');
+    console.log('Education seeded.');
 
     // 3. Seed Userprofile
     const users = [
@@ -71,16 +73,20 @@ async function main() {
       },
     ];
     for (const u of users) {
+      const hashedPassword = bcrypt.hashSync(u.password, 10);
       await prisma.userprofile.upsert({
         where: { userId: u.userId },
         update: {
           username: u.username,
-          password: u.password,
+          password: hashedPassword,
         },
-        create: u,
+        create: {
+          ...u,
+          password: hashedPassword,
+        },
       });
     }
-    console.log('✅ Userprofiles seeded.');
+    console.log('Userprofiles seeded.');
 
     // 4. Seed Exercises
     const exercises = [
@@ -120,7 +126,7 @@ async function main() {
         create: ex,
       });
     }
-    console.log('✅ Exercises seeded.');
+    console.log('Exercises seeded.');
 
     // 5. Seed Session
     const session = {
@@ -136,7 +142,7 @@ async function main() {
       update: {},
       create: session,
     });
-    console.log('✅ Session seeded.');
+    console.log('Session seeded.');
 
     // 6. Seed SessionExercise
     await prisma.sessionExercise.upsert({
@@ -165,11 +171,11 @@ async function main() {
         exerciseId: 102,
       },
     });
-    console.log('✅ SessionExercise links seeded.');
+    console.log('SessionExercise links seeded.');
 
-    console.log('🌱 Seeding finished successfully!');
+    console.log('Seeding finished successfully!');
   } catch (error) {
-    console.error('❌ Seeding failed:', error);
+    console.error('Seeding failed:', error);
   } finally {
     await prisma.$disconnect();
     await pool.end();
