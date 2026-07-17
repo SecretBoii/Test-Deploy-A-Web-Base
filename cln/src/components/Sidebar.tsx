@@ -4,7 +4,6 @@ import {
   Code2,
   Play,
   Award,
-  Settings,
   LogOut,
   Users,
   User,
@@ -25,29 +24,32 @@ interface SidebarProps {
   onLogout: () => void
 }
 
+const MENU_DEFINITIONS: Record<string, { name: string; icon: React.ReactNode }> = {
+  home: { name: 'Home', icon: <HomeIcon size={20} /> },
+  dashboard: { name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
+  sessions: { name: 'Sessions', icon: <Play size={20} /> },
+  exercises: { name: 'Exercises', icon: <Code2 size={20} /> },
+  students: { name: 'Students', icon: <GraduationCap size={20} /> },
+  results: { name: 'Student Results', icon: <TrendingUp size={20} /> },
+  history: { name: 'History', icon: <Award size={20} /> },
+  users: { name: 'User Management', icon: <Users size={20} /> },
+  reports: { name: 'Reports', icon: <FileText size={20} /> },
+  audit: { name: 'Audit Logs', icon: <Activity size={20} /> },
+  profile: { name: 'Profile', icon: <User size={20} /> },
+}
+
+const ROLE_MENUS: Record<number, string[]> = {
+  1: ['home', 'sessions', 'history', 'profile'], // Student
+  2: ['home', 'dashboard', 'sessions', 'exercises', 'students', 'results', 'profile'], // Teacher
+  3: ['home', 'dashboard', 'users', 'reports', 'audit'], // Admin
+}
+
 export function Sidebar({ activeItem, onItemClick, user, onLogout }: SidebarProps) {
-  // 1 = Student, 2 = Teacher, 3 = Admin
-  const menuItems = [
-    // Common / Student Items (Role 1)
-    { name: 'Home', icon: <HomeIcon size={20} />, roles: [1, 2, 3] },
-    { name: 'Sessions', icon: <Play size={20} />, roles: [1, 2] },
-    { name: 'History', icon: <Award size={20} />, roles: [1] },
-    { name: 'Profile', icon: <User size={20} />, roles: [1, 2] },
 
-    // Teacher Items (Role 2)
-    { name: 'Dashboard', icon: <LayoutDashboard size={20} />, roles: [2, 3] },
-    { name: 'Exercises', icon: <Code2 size={20} />, roles: [2] },
-    { name: 'Students', icon: <GraduationCap size={20} />, roles: [2] },
-    { name: 'Student Results', icon: <TrendingUp size={20} />, roles: [2] },
-
-    // Admin Items (Role 3)
-    { name: 'User Management', icon: <Users size={20} />, roles: [3] },
-    { name: 'Reports', icon: <FileText size={20} />, roles: [3] },
-    { name: 'Audit Logs', icon: <Activity size={20} />, roles: [3] },
-    
-    // Settings (Visible to all, or can be customized)
-    { name: 'Settings', icon: <Settings size={20} />, roles: [1, 2, 3] },
-  ].filter((item) => item.roles.includes(user.roleId))
+  const menuKeys = ROLE_MENUS[user.roleId] || []
+  const menuItems = menuKeys
+    .map((key) => MENU_DEFINITIONS[key])
+    .filter(Boolean)
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
