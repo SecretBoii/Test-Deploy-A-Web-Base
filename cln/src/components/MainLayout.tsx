@@ -3,6 +3,7 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
+import { useAuth } from '../context/AuthContext'
 
 interface MainLayoutProps {
   children?: React.ReactNode
@@ -18,13 +19,12 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
   const user = userStr ? JSON.parse(userStr) : null
 
   if (!user) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/" replace />
   }
 
   const handleLogout = () => {
     console.log('Logging out...')
-    localStorage.removeItem('user')
-    window.location.href = '/login'
+    logout();
   }
 
   const handleToggleSidebar = () => {
