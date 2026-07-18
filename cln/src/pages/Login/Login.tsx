@@ -33,7 +33,11 @@ export function Login() {
       console.log('Logging in with:', userData)
       setUser(userData)
 
-      navigate('/home')
+      if (userData.roleId === 2) {
+        navigate('/dashboard')
+      } else {
+        navigate('/home')
+      }
     } catch (err: any) {
       console.error('Login error:', err)
       const errorMsg = err.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
