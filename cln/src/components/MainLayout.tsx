@@ -11,7 +11,7 @@ interface MainLayoutProps {
   onItemClick?: (name: string) => void
 }
 
-export function MainLayout({ children, activeItem = 'Dashboard', onItemClick }: MainLayoutProps) {
+export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { user, logout } = useAuth();
 
