@@ -4,6 +4,7 @@ import { MainLayout } from '../../components/MainLayout'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
 import TeacherDashboard from './components/TeacherDashboard'
+import AdminDashboard from './components/AdminDashboard'
 
 export function Dashboard() {
   const { user } = useAuth()
@@ -18,7 +19,11 @@ export function Dashboard() {
       {/* Main content will go here */}
       <Box>
         {activeItem === 'Dashboard' ? (
-          <TeacherDashboard />
+          user?.roleId === 3 ? (
+            <AdminDashboard />
+          ) : (
+            <TeacherDashboard />
+          )
         ) : (
           <h2>{activeItem}</h2>
         )}
