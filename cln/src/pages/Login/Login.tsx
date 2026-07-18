@@ -33,7 +33,7 @@ export function Login() {
       console.log('Logging in with:', userData)
       setUser(userData)
 
-      if (userData.roleId === 2) {
+      if (userData.roleId === 2 || userData.roleId === 3) {
         navigate('/dashboard')
       } else {
         navigate('/home')
