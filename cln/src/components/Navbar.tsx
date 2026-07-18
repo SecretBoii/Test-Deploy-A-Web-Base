@@ -34,7 +34,6 @@ export function Navbar({ onMenuClick, user }: NavbarProps) {
           sx={{
             color: '#475569',
             mr: 1,
-            display: { xs: 'inline-flex', md: 'none' },
           }}
         >
           <Menu size={22} />
