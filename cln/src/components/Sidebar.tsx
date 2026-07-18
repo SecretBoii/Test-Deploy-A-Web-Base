@@ -40,8 +40,8 @@ const MENU_DEFINITIONS: Record<string, { name: string; icon: React.ReactNode }> 
 
 const ROLE_MENUS: Record<number, string[]> = {
   1: ['home', 'sessions', 'history', 'profile'], // Student
-  2: ['home', 'dashboard', 'sessions', 'exercises', 'students', 'results', 'profile'], // Teacher
-  3: ['home', 'dashboard', 'users', 'reports', 'audit'], // Admin
+  2: ['dashboard', 'sessions', 'exercises', 'students', 'results', 'profile'], // Teacher
+  3: ['dashboard', 'users', 'reports', 'audit'], // Admin
 }
 
 export function Sidebar({ activeItem, onItemClick, user, onLogout }: SidebarProps) {
