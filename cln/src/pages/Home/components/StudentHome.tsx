@@ -1,11 +1,11 @@
 import { Box, Typography, Card } from '@mui/material'
 
-interface StudentDashboardProps {
+interface StudentHomeProps {
   username: string
   onSelectExercise: (exerciseId: number) => void
 }
 
-export function StudentDashboard({}: StudentDashboardProps) {
+export function StudentHome({}: StudentHomeProps) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
 
@@ -92,4 +92,4 @@ export function StudentDashboard({}: StudentDashboardProps) {
     </Box>
   )
 }
-export default StudentDashboard
+export default StudentHome
