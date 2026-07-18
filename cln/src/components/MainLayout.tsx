@@ -13,10 +13,7 @@ interface MainLayoutProps {
 
 export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainLayoutProps) {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
-
-  // Auth session check
-  const userStr = localStorage.getItem('user')
-  const user = userStr ? JSON.parse(userStr) : null
+  const { user, logout } = useAuth()
 
   if (!user) {
     return <Navigate to="/" replace />
@@ -24,7 +21,7 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
 
   const handleLogout = () => {
     console.log('Logging out...')
-    logout();
+    logout()
   }
 
   const handleToggleSidebar = () => {
