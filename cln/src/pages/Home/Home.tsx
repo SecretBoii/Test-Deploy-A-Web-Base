@@ -3,7 +3,7 @@ import { MainLayout } from '../../components/MainLayout'
 import { Box } from '@mui/material'
 
 export function Home() {
-  const [activeItem, setActiveItem] = useState('Dashboard')
+  const [activeItem, setActiveItem] = useState('Home')
 
   return (
     <MainLayout activeItem={activeItem} onItemClick={setActiveItem}>
