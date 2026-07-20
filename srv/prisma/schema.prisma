@@ -33,6 +33,7 @@ model Userprofile {
   dateOfBirth       DateTime   @map("date_of_birth") @db.Date
   educationId       Int        @map("education_id")
   roleId            Int        @map("role_id")
+  image             String?
   registerTimestamp DateTime   @default(now()) @map("register_timestamp") @db.Timestamp(6)
   activities        Activity[]
   education         Education  @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
