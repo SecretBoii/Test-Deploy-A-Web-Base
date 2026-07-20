@@ -1,20 +1,15 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-datasource db {
-  provider = "postgresql"
-}
-
 generator client {
   provider        = "prisma-client-js"
   previewFeatures = []
 }
 
+datasource db {
+  provider = "postgresql"
+}
+
 model Role {
   roleId   Int           @id @default(autoincrement()) @map("role_id")
-  roleName String        @db.VarChar(50) @map("role_name")
+  roleName String        @map("role_name") @db.VarChar(50)
   users    Userprofile[]
 
   @@map("role")
@@ -35,14 +30,14 @@ model Userprofile {
   username          String     @db.VarChar(100)
   password          String     @db.VarChar(100)
   gender            String     @db.VarChar(10)
-  dateOfBirth       DateTime   @db.Date @map("date_of_birth")
+  dateOfBirth       DateTime   @map("date_of_birth") @db.Date
   educationId       Int        @map("education_id")
   roleId            Int        @map("role_id")
-  registerTimestamp DateTime   @default(now()) @db.Timestamp() @map("register_timestamp")
-
-  education Education  @relation(fields: [educationId], references: [educationId])
-  role      Role       @relation(fields: [roleId], references: [roleId])
-  activities Activity[]
+  image             String?
+  registerTimestamp DateTime   @default(now()) @map("register_timestamp") @db.Timestamp(6)
+  activities        Activity[]
+  education         Education  @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
+  role              Role       @relation(fields: [roleId], references: [roleId], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("user_profile")
 }
@@ -50,16 +45,15 @@ model Userprofile {
 model Exercise {
   exerciseId       Int               @id @default(autoincrement()) @map("exercise_id")
   title            String            @db.VarChar(255)
-  description      String            @db.Text
+  description      String
   topic            String            @db.VarChar(100)
-  objective        String            @db.Text
+  objective        String
   difficultyLevel  Int               @map("difficulty_level")
   expectedTime     Int               @map("expected_time")
   status           String            @db.VarChar(50)
-  hint             String            @db.Text
-  createdAt        DateTime          @default(now()) @db.Timestamp() @map("created_at")
-  updatedAt        DateTime          @updatedAt @db.Timestamp() @map("updated_at")
-  
+  hint             String
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   activities       Activity[]
   sessionExercises SessionExercise[]
 
@@ -68,14 +62,13 @@ model Exercise {
 
 model Session {
   sessionId        Int               @id @default(autoincrement()) @map("session_id")
-  sessionName      String            @db.VarChar(50) @map("session_name")
-  sessionObjective String            @db.VarChar(50) @map("session_objective")
-  targetLevel      String            @db.VarChar(50) @map("target_level")
+  sessionName      String            @map("session_name") @db.VarChar(100)
+  sessionObjective String            @map("session_objective") @db.VarChar(100)
+  targetLevel      String            @map("target_level") @db.VarChar(50)
   duration         Int
   status           String            @db.VarChar(50)
-  createdAt        DateTime          @default(now()) @db.Timestamp() @map("created_at")
-  updatedAt        DateTime          @updatedAt @db.Timestamp() @map("updated_at")
-  
+  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   activities       Activity[]
   sessionExercises SessionExercise[]
 
@@ -85,10 +78,9 @@ model Session {
 model SessionExercise {
   sessionId  Int      @map("session_id")
   exerciseId Int      @map("exercise_id")
-  createdAt  DateTime @default(now()) @db.Timestamp() @map("created_at")
-
-  session  Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
-  exercise Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  exercise   Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade, onUpdate: NoAction)
+  session    Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([sessionId, exerciseId])
   @@map("session_exercise")
@@ -99,21 +91,20 @@ model Activity {
   userId           Int         @map("user_id")
   exerciseId       Int         @map("exercise_id")
   sessionId        Int         @map("session_id")
-  startedAt        DateTime    @db.Timestamp() @map("started_at")
-  submittedAt      DateTime    @default(now()) @db.Timestamp() @map("submitted_at")
+  startedAt        DateTime    @map("started_at") @db.Timestamp(6)
+  submittedAt      DateTime    @default(now()) @map("submitted_at") @db.Timestamp(6)
   hintUsed         Boolean     @default(false) @map("hint_used")
-  answer           String      @db.Text
+  answer           String
   score            Int
   status           String      @default("PENDING") @db.VarChar(50)
-  exceptionMessage String?     @db.Text @map("exception_message")
-  aiFeedback       String?     @db.Text @map("ai_feedback")
-  eventType        String      @db.VarChar(50) @map("event_type")
+  exceptionMessage String?     @map("exception_message")
+  aiFeedback       String?     @map("ai_feedback")
+  eventType        String      @map("event_type") @db.VarChar(50)
   runCount         Int         @map("run_count")
-  createdAt        DateTime    @default(now()) @db.Timestamp() @map("created_at")
-
-  user     Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  exercise Exercise    @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade)
-  session  Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade)
+  createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  exercise         Exercise    @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade, onUpdate: NoAction)
+  session          Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
+  user             Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("activity")
 }
