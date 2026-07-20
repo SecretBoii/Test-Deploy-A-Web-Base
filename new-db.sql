@@ -47,6 +47,7 @@ CREATE TABLE user_profile (
     date_of_birth       DATE          NOT NULL,
     education_id        INT           NOT NULL REFERENCES education(education_id),
     role_id             INT           NOT NULL REFERENCES role(role_id),
+    image               TEXT,
     register_timestamp  TIMESTAMP     NOT NULL DEFAULT NOW()
 );
 
