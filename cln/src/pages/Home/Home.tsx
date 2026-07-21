@@ -15,7 +15,6 @@ export function Home() {
 
   return (
     <MainLayout activeItem={activeItem} onItemClick={setActiveItem}>
-      {/* Main content will go here */}
       <Box>
         {activeItem === 'Home' ? (
           <StudentDashboard username={user?.username || ''} onSelectExercise={() => {}} />

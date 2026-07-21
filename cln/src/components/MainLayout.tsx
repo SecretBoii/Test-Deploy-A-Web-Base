@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
@@ -11,16 +11,23 @@ interface MainLayoutProps {
   onItemClick?: (name: string) => void
 }
 
-export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainLayoutProps) {
+const MENU_ROUTE_MAP: Record<string, string> = {
+  Home: '/home',
+  Dashboard: '/dashboard',
+  Sessions: '/sessions',
+}
+
+export function MainLayout({ children, activeItem }: MainLayoutProps) {
   const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   if (!user) {
     return <Navigate to="/" replace />
   }
 
   const handleLogout = () => {
-    console.log('Logging out...')
     logout()
   }
 
@@ -29,9 +36,18 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
   }
 
   const handleItemClick = (name: string) => {
-    if (onItemClick) {
-      onItemClick(name)
+    const route = MENU_ROUTE_MAP[name]
+    if (route) {
+      navigate(route)
     }
+  }
+
+  // Determine current active item from URL path if not explicitly provided
+  let currentActiveItem = activeItem
+  if (!currentActiveItem) {
+    if (location.pathname.startsWith('/sessions')) currentActiveItem = 'Sessions'
+    else if (location.pathname.startsWith('/dashboard')) currentActiveItem = 'Dashboard'
+    else currentActiveItem = 'Home'
   }
 
   return (
@@ -64,7 +80,7 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
       >
         <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column' }}>
           <Sidebar
-            activeItem={activeItem}
+            activeItem={currentActiveItem}
             onItemClick={handleItemClick}
             user={user}
             onLogout={handleLogout}
@@ -79,7 +95,7 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
 
         {/* Content Area */}
         <Box sx={{ flexGrow: 1, p: { xs: 2.5, md: 4 } }}>
-          {children || <Outlet />}
+          {children}
         </Box>
       </Box>
     </Box>
@@ -87,4 +103,3 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
 }
 
 export default MainLayout
-

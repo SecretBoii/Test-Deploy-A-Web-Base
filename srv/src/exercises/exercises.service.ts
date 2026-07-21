@@ -459,4 +459,98 @@ export class ExercisesService implements OnModuleInit {
       }
     `;
   }
+
+  async getLevelsSummary(userId: number = 1) {
+    const levels = [1, 2, 3, 4, 5];
+
+    const results = await Promise.all(
+      levels.map(async (lvl) => {
+        const sessions = await this.prisma.session.findMany({
+          where: { targetLevel: lvl, status: 'active' },
+          include: { sessionExercises: true },
+        });
+
+        const totalSessions = sessions.length;
+        const totalMinutes = sessions.reduce((sum, s) => sum + s.duration, 0);
+        const totalHours = Math.round(totalMinutes / 60) || 6;
+
+        const exerciseIds = sessions.flatMap((s) =>
+          s.sessionExercises.map((se) => se.exerciseId),
+        );
+        const totalExercises = exerciseIds.length;
+
+        let completedExercises = 0;
+        if (exerciseIds.length > 0) {
+          const passedActivities = await this.prisma.activity.groupBy({
+            by: ['exerciseId'],
+            where: {
+              userId: userId,
+              exerciseId: { in: exerciseIds },
+              score: { gt: 0 },
+            },
+          });
+          completedExercises = passedActivities.length;
+        }
+
+        return {
+          level: lvl,
+          totalSessions,
+          totalHours,
+          totalExercises,
+          completedExercises,
+        };
+      }),
+    );
+
+    return results;
+  }
+
+  async getLevelSessions(level: number, userId: number = 1) {
+    const sessions = await this.prisma.session.findMany({
+      where: { targetLevel: level, status: 'active' },
+      orderBy: { sessionId: 'asc' },
+      include: {
+        sessionExercises: {
+          orderBy: { sequenceOrder: 'asc' },
+          include: { exercise: true },
+        },
+      },
+    });
+
+    const userActivities = await this.prisma.activity.findMany({
+      where: { userId: userId, score: { gt: 0 } },
+      select: { exerciseId: true },
+    });
+    const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
+
+    const result = sessions.map((session) => {
+      const exercises = session.sessionExercises.map((se, idx) => {
+        const isPassed = passedExerciseIds.has(se.exerciseId);
+        return {
+          exerciseId: se.exerciseId,
+          orderNumber: idx + 1,
+          title: se.exercise.title,
+          description: se.exercise.description,
+          expectedTime: se.exercise.expectedTime,
+          isPassed,
+        };
+      });
+
+      const completedCount = exercises.filter((e) => e.isPassed).length;
+      const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
+
+      return {
+        sessionId: session.sessionId,
+        sessionName: session.sessionName,
+        sessionObjective: session.sessionObjective,
+        duration: totalExpectedTime || session.duration,
+        totalExercises: exercises.length,
+        completedExercises: completedCount,
+        isCompleted: completedCount === exercises.length && exercises.length > 0,
+        exercises,
+      };
+    });
+
+    return result;
+  }
 }
