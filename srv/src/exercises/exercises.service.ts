@@ -292,6 +292,7 @@ export class ExercisesService implements OnModuleInit {
         data: {
           score: aiReview.score,
           exceptionMessage:
+            aiReview.exception_message ?? (runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : null),
             aiReview.exception_message ?? (runResult.stderr || null),
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
