@@ -7,7 +7,11 @@ import { GeminiFeedback } from './CodeWorkspace/GeminiFeedback'
 import { ExerciseHint } from './CodeWorkspace/ExerciseHint'
 import { apiClient } from '../api/client'
 
-export function CodeEditorPage() {
+interface CodeEditorPageProps {
+  exerciseId?: number
+}
+
+export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
   const [geminiResponse, setGeminiResponse] = useState('')
@@ -25,7 +29,7 @@ export function CodeEditorPage() {
       // 1. ส่งโค้ดไปยัง Backend
       const res = await apiClient.post(endpoint, {
         userId: '1',
-        exerciseId: '101',
+        exerciseId: String(exerciseId),
         sourceCode: code,
         hintUsed: false,
       })
@@ -95,7 +99,7 @@ export function CodeEditorPage() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '85vh' }}>
       {/* 1. Header Toolbar */}
       <WorkspaceHeader
-        exerciseId={101}
+        exerciseId={exerciseId}
         isRunning={isRunning}
         runCount={runCount}
         onRun={() => executeAndPoll('/exercises/run')}
@@ -109,7 +113,7 @@ export function CodeEditorPage() {
 
         {/* ฝั่งขวา: คอนโซลแสดงผลลัพธ์, คำใบ้โจทย์ และข้อเสนอแนะ Gemini */}
         <Box sx={{ flex: 0.8, display: 'flex', flexDirection: 'column', gap: 2, minWidth: '320px', minHeight: 0 }}>
-          <ExerciseHint exerciseId={101} />
+          <ExerciseHint exerciseId={exerciseId} />
           <ConsoleOutput output={output} />
           <GeminiFeedback response={geminiResponse} score={score} />
         </Box>

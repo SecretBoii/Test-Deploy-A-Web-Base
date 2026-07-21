@@ -5,6 +5,7 @@ import LevelCard from './components/LevelCard';
 import SessionCard from './components/SessionCard';
 import { DIFFICULTY_LEVELS } from '../../constants/difficulty';
 import type { LevelSummary, SessionDetail } from './types';
+import { apiClient } from '../../api/client';
 
 interface SessionStudentProps {
   userId?: number;
@@ -28,11 +29,10 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
   const fetchLevelsSummary = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:3000/exercises/levels-summary?userId=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setLevelsSummary(data);
-      }
+      const res = await apiClient.get('/exercises/levels-summary', {
+        params: { userId },
+      });
+      setLevelsSummary(res.data);
     } catch (err) {
       console.error('Failed to fetch levels summary:', err);
     } finally {
@@ -45,11 +45,10 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
     setSelectedLevel(level);
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:3000/exercises/level-sessions/${level}?userId=${userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setSessionDetails(data);
-      }
+      const res = await apiClient.get(`/exercises/level-sessions/${level}`, {
+        params: { userId },
+      });
+      setSessionDetails(res.data);
     } catch (err) {
       console.error('Failed to fetch level sessions:', err);
     } finally {
@@ -64,6 +63,7 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
       {!selectedLevel ? (
         <>
           <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>
+            เลือกระดับความยากของบทเรียน (Learning Levels)
           </Typography>
 
           {loading ? (

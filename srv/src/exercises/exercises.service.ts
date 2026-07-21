@@ -98,6 +98,20 @@ export class ExercisesService implements OnModuleInit {
     return obj;
   }
 
+  async getExerciseById(exerciseId: number | string) {
+    const id = Number(exerciseId);
+    if (isNaN(id)) {
+      throw new HttpException('Invalid exercise ID', HttpStatus.BAD_REQUEST);
+    }
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { exerciseId: id },
+    });
+    if (!exercise) {
+      throw new HttpException('Exercise not found', HttpStatus.NOT_FOUND);
+    }
+    return exercise;
+  }
+
   async submitExercise(
     userId: string,
     exerciseId: string,
@@ -200,11 +214,16 @@ export class ExercisesService implements OnModuleInit {
       activityId: activity.activityId,
       eventType: activity.eventType,
       status: activity.status === 'SUCCESS' ? 'success' : activity.status === 'PENDING' ? 'pending' : 'error',
+      rawStatus: activity.status,
       score: activity.score,
       runcount: activity.runCount,
+      runCount: activity.runCount,
       hintused: activity.hintUsed,
+      hintUsed: activity.hintUsed,
       exception_message: activity.exceptionMessage,
+      exceptionMessage: activity.exceptionMessage,
       ai_feedback: activity.aiFeedback,
+      aiFeedback: activity.aiFeedback,
     };
   }
 
@@ -293,7 +312,6 @@ export class ExercisesService implements OnModuleInit {
           score: aiReview.score,
           exceptionMessage:
             aiReview.exception_message ?? (runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : null),
-            aiReview.exception_message ?? (runResult.stderr || null),
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
         },
@@ -462,52 +480,58 @@ export class ExercisesService implements OnModuleInit {
   }
 
   async getLevelsSummary(userId: number = 1) {
-    const levels = [1, 2, 3, 4, 5];
+    try {
+      const levels = [1, 2, 3, 4, 5];
 
-    const results = await Promise.all(
-      levels.map(async (lvl) => {
-        const sessions = await this.prisma.session.findMany({
-          where: { targetLevel: lvl, status: 'active' },
-          include: { sessionExercises: true },
-        });
-
-        const totalSessions = sessions.length;
-        const totalMinutes = sessions.reduce((sum, s) => sum + s.duration, 0);
-        const totalHours = Math.round(totalMinutes / 60) || 6;
-
-        const exerciseIds = sessions.flatMap((s) =>
-          s.sessionExercises.map((se) => se.exerciseId),
-        );
-        const totalExercises = exerciseIds.length;
-
-        let completedExercises = 0;
-        if (exerciseIds.length > 0) {
-          const passedActivities = await this.prisma.activity.groupBy({
-            by: ['exerciseId'],
-            where: {
-              userId: userId,
-              exerciseId: { in: exerciseIds },
-              score: { gt: 0 },
-            },
+      const results = await Promise.all(
+        levels.map(async (lvl) => {
+          const sessions = await (this.prisma.session as any).findMany({
+            where: { targetLevel: lvl, status: 'active' },
+            include: { sessionExercises: true },
           });
-          completedExercises = passedActivities.length;
-        }
 
-        return {
-          level: lvl,
-          totalSessions,
-          totalHours,
-          totalExercises,
-          completedExercises,
-        };
-      }),
-    );
+          const totalSessions = sessions.length;
+          const totalMinutes = sessions.reduce((sum: number, s: any) => sum + s.duration, 0);
+          const totalHours = Math.round(totalMinutes / 60) || 6;
 
-    return results;
+          const exerciseIds = sessions.flatMap((s: any) =>
+            (s.sessionExercises || []).map((se: any) => se.exerciseId),
+          );
+          const totalExercises = exerciseIds.length;
+
+          let completedExercises = 0;
+          if (exerciseIds.length > 0) {
+            const passedActivities = await this.prisma.activity.findMany({
+              where: {
+                userId: userId,
+                exerciseId: { in: exerciseIds },
+                score: { gt: 0 },
+              },
+              select: { exerciseId: true },
+              distinct: ['exerciseId'],
+            });
+            completedExercises = passedActivities.length;
+          }
+
+          return {
+            level: lvl,
+            totalSessions,
+            totalHours,
+            totalExercises,
+            completedExercises,
+          };
+        }),
+      );
+
+      return results;
+    } catch (err) {
+      console.error('Error in getLevelsSummary:', err);
+      throw err;
+    }
   }
 
   async getLevelSessions(level: number, userId: number = 1) {
-    const sessions = await this.prisma.session.findMany({
+    const sessions = await (this.prisma.session as any).findMany({
       where: { targetLevel: level, status: 'active' },
       orderBy: { sessionId: 'asc' },
       include: {
@@ -524,20 +548,20 @@ export class ExercisesService implements OnModuleInit {
     });
     const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
 
-    const result = sessions.map((session) => {
-      const exercises = session.sessionExercises.map((se, idx) => {
+    const result = sessions.map((session: any) => {
+      const exercises = (session.sessionExercises || []).map((se: any, idx: number) => {
         const isPassed = passedExerciseIds.has(se.exerciseId);
         return {
           exerciseId: se.exerciseId,
           orderNumber: idx + 1,
-          title: se.exercise.title,
-          description: se.exercise.description,
-          expectedTime: se.exercise.expectedTime,
+          title: se.exercise?.title || '',
+          description: se.exercise?.description || '',
+          expectedTime: se.exercise?.expectedTime || 5,
           isPassed,
         };
       });
 
-      const completedCount = exercises.filter((e) => e.isPassed).length;
+      const completedCount = exercises.filter((e: any) => e.isPassed).length;
       const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
 
       return {

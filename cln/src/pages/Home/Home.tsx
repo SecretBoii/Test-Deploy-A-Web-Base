@@ -9,7 +9,7 @@ export function Home() {
   const { user } = useAuth()
   const [activeItem, setActiveItem] = useState('Home')
 
-  if (user?.roleId === 2) {
+  if (user?.roleId === 2 || user?.roleId === 3) {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -17,7 +17,10 @@ export function Home() {
     <MainLayout activeItem={activeItem} onItemClick={setActiveItem}>
       <Box>
         {activeItem === 'Home' ? (
-          <StudentDashboard username={user?.username || ''} onSelectExercise={() => {}} />
+          <StudentDashboard
+            username={user?.username || ''}
+            onSelectExercise={() => {}}
+          />
         ) : (
           <h2>{activeItem}</h2>
         )}
