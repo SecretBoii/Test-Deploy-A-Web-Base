@@ -58,7 +58,9 @@ export class ExercisesService implements OnModuleInit {
         return;
       }
 
-      console.log(`[Skills Loader] กำลังโหลดไฟล์เกณฑ์การตรวจจากพิกัด: ${skillsDir}`);
+      console.log(
+        `[Skills Loader] กำลังโหลดไฟล์เกณฑ์การตรวจจากพิกัด: ${skillsDir}`,
+      );
 
       const files = fs.readdirSync(skillsDir);
       for (const file of files) {
@@ -67,10 +69,14 @@ export class ExercisesService implements OnModuleInit {
           const content = fs.readFileSync(filePath, 'utf-8');
           const skillName = path.basename(file, '.md');
           this.skillsGuideline.set(skillName, content);
-          console.log(`[Skills Loader] โหลดสำเร็จ: ${file} (${content.length} ตัวอักษร)`);
+          console.log(
+            `[Skills Loader] โหลดสำเร็จ: ${file} (${content.length} ตัวอักษร)`,
+          );
         }
       }
-      console.log(`[Skills Loader] โหลดเกณฑ์ทั้งหมดเสร็จสิ้น! จำนวน: ${this.skillsGuideline.size} รายการ`);
+      console.log(
+        `[Skills Loader] โหลดเกณฑ์ทั้งหมดเสร็จสิ้น! จำนวน: ${this.skillsGuideline.size} รายการ`,
+      );
     } catch (error) {
       console.error(`[Skills Loader] โหลดขัดข้อง:`, error.message);
     }
@@ -195,14 +201,22 @@ export class ExercisesService implements OnModuleInit {
         where: { exerciseId },
       });
       if (!exercise) {
-        throw new Error(`Exercise ID ${exerciseId} not found for grading process`);
+        throw new Error(
+          `Exercise ID ${exerciseId} not found for grading process`,
+        );
       }
 
       const apiKey = process.env.GEMINI_API_KEY;
       const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
       const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
 
-      const prompt = this.buildGeminiPrompt(sourceCode, runResult, event_type, run_count, exercise);
+      const prompt = this.buildGeminiPrompt(
+        sourceCode,
+        runResult,
+        event_type,
+        run_count,
+        exercise,
+      );
 
       let geminiResponse;
       try {
@@ -214,7 +228,10 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error('Primary model call failed:', apiError.response?.data?.error?.message || apiError.message);
+        console.error(
+          'Primary model call failed:',
+          apiError.response?.data?.error?.message || apiError.message,
+        );
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
           geminiResponse = await firstValueFrom(
@@ -225,7 +242,11 @@ export class ExercisesService implements OnModuleInit {
             ),
           );
         } catch (fallbackError) {
-          console.error('❌ Fallback model call failed:', fallbackError.response?.data?.error?.message || fallbackError.message);
+          console.error(
+            '❌ Fallback model call failed:',
+            fallbackError.response?.data?.error?.message ||
+              fallbackError.message,
+          );
           throw new Error(
             `Gemini grading pipeline failed: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
           );
@@ -239,19 +260,28 @@ export class ExercisesService implements OnModuleInit {
 
       const aiText = candidates[0].content.parts[0].text;
       const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
-      const aiReview = this.parseAiResponse(aiText, defaultScore, event_type, run_count);
+      const aiReview = this.parseAiResponse(
+        aiText,
+        defaultScore,
+        event_type,
+        run_count,
+      );
 
       await this.prisma.activity.update({
         where: { activityId },
         data: {
           score: aiReview.score,
-          exceptionMessage: aiReview.exception_message ?? (runResult.stderr || null),
+          exceptionMessage:
+            aiReview.exception_message ?? (runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : null),
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
         },
       });
     } catch (error) {
-      console.error(`completeGrading Error for Activity ID ${activityId}:`, error.message);
+      console.error(
+        `completeGrading Error for Activity ID ${activityId}:`,
+        error.message,
+      );
       await this.prisma.activity.update({
         where: { activityId },
         data: {
@@ -351,20 +381,18 @@ export class ExercisesService implements OnModuleInit {
     const securityRules = this.getSkillGuideline('security');
     const complexityRules = this.getSkillGuideline('complexity');
     const pep8Rules = this.getSkillGuideline('pep8');
-    const edgeCasesRules = this.getSkillGuideline('edge_cases'); 
+    const edgeCasesRules = this.getSkillGuideline('edge_cases');
 
     let hintLevelInstruction = '';
     if (run_count <= 2) {
       hintLevelInstruction = `
         - Provide only high-level conceptual hints. Do not specify line numbers or point to the exact errors. Do not write any code solutions or code snippets under any circumstances.
       `;
-    }
-    else if (run_count <= 4) {
+    } else if (run_count <= 4) {
       hintLevelInstruction = `
         - Identify the general category of the logical error and narrow down the scope of the erroneous code block. Still, do not write code solutions for the user.
       `;
-    }
-    else { 
+    } else {
       hintLevelInstruction = `
         - Point to the exact line numbers of the errors. Explain the root causes of the bugs clearly. You are allowed to provide code examples or refactoring suggestions to guide them.
       `;
@@ -403,5 +431,4 @@ export class ExercisesService implements OnModuleInit {
       }
     `;
   }
-
 }

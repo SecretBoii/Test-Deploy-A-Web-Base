@@ -9,13 +9,25 @@ export class ExercisesController {
   @Post('run')
   async runCode(@Body() submitExerciseDto: SubmitExerciseDto) {
     const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
-    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'run', hintUsed);
+    return await this.exercisesService.submitExercise(
+      userId,
+      exerciseId,
+      sourceCode,
+      'run',
+      hintUsed,
+    );
   }
 
   @Post('submit')
   async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
     const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
-    return await this.exercisesService.submitExercise(userId, exerciseId, sourceCode, 'submit', hintUsed);
+    return await this.exercisesService.submitExercise(
+      userId,
+      exerciseId,
+      sourceCode,
+      'submit',
+      hintUsed,
+    );
   }
 
   @Get('test-skills')

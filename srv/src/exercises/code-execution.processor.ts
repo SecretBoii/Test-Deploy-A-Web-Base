@@ -24,18 +24,19 @@ export class CodeExecutionProcessor extends WorkerHost {
     const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
 
     const wrapperScript = `
-import sys, subprocess
+import sys, subprocess, os, tempfile
 try:
     data = sys.stdin.read()
     parts = data.split('===INPUTS===')
     code = parts[0].strip()
     inputs = parts[1].strip() if len(parts) > 1 else ''
     
-    with open('/tmp/sol.py', 'w', encoding='utf-8') as f:
+    sol_path = os.path.join(tempfile.gettempdir(), 'sol.py')
+    with open(sol_path, 'w', encoding='utf-8') as f:
         f.write(code)
         
     res = subprocess.run(
-        [sys.executable, '/tmp/sol.py'],
+        [sys.executable, sol_path],
         input=inputs,
         text=True,
         capture_output=True,
@@ -52,70 +53,128 @@ except Exception as e:
     sys.exit(1)
 `.trim();
 
-    const runResult = await new Promise<{ status: string; stdout: string; stderr: string }>((resolve) => {
-      const child = spawn('docker', [
-        'run',
-        '--rm',
-        '-i',
-        '--memory=128m',
-        '--cpus=0.5',
-        'python:3.10-slim',
-        'python',
-        '-c',
-        wrapperScript
-      ]);
+    const runWithDockerOrLocal = (): Promise<{ status: string; stdout: string; stderr: string }> => {
+      return new Promise((resolve) => {
+        let child = spawn('docker', [
+          'run',
+          '--rm',
+          '-i',
+          '--memory=128m',
+          '--cpus=0.5',
+          'python:3.10-slim',
+          'python',
+          '-c',
+          wrapperScript,
+        ]);
 
-      let stdout = '';
-      let stderr = '';
-      let timeoutId: NodeJS.Timeout;
+        let stdout = '';
+        let stderr = '';
+        let resolved = false;
 
-      timeoutId = setTimeout(() => {
-        child.kill();
-        resolve({
-          status: 'Time Limit Exceeded',
-          stdout: stdout,
-          stderr: 'Execution timed out (5s limit exceeded)',
+        const timeoutId = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            child.kill();
+            resolve({
+              status: 'Time Limit Exceeded',
+              stdout,
+              stderr: 'Execution timed out (5s limit exceeded)',
+            });
+          }
+        }, 5000);
+
+        const handleLocalFallback = () => {
+          if (resolved) return;
+          clearTimeout(timeoutId);
+          console.log('[CodeExecution] Fallback to local python process...');
+          
+          const localChild = spawn('python', ['-c', wrapperScript]);
+          let localStdout = '';
+          let localStderr = '';
+
+          const localTimeoutId = setTimeout(() => {
+            if (!resolved) {
+              resolved = true;
+              localChild.kill();
+              resolve({
+                status: 'Time Limit Exceeded',
+                stdout: localStdout,
+                stderr: 'Execution timed out (5s limit exceeded)',
+              });
+            }
+          }, 5000);
+
+          localChild.stdout.on('data', (d) => (localStdout += d.toString()));
+          localChild.stderr.on('data', (d) => (localStderr += d.toString()));
+
+          localChild.on('close', (code) => {
+            if (resolved) return;
+            resolved = true;
+            clearTimeout(localTimeoutId);
+            resolve({
+              status: code !== 0 ? 'Runtime Error' : 'Accepted',
+              stdout: localStdout,
+              stderr: localStderr,
+            });
+          });
+
+          const mockInputs = '5\n10\n15\n20\nstudent\n';
+          localChild.stdin.write(sourceCode + '\n===INPUTS===\n' + mockInputs);
+          localChild.stdin.end();
+        };
+
+        child.on('error', () => {
+          handleLocalFallback();
         });
-      }, 5000);
 
-      child.stdout.on('data', (data) => {
-        stdout += data.toString();
+        child.stdout.on('data', (data) => {
+          stdout += data.toString();
+        });
+
+        child.stderr.on('data', (data) => {
+          stderr += data.toString();
+        });
+
+        child.on('close', (code, signal) => {
+          if (resolved) return;
+          if (stderr.includes('Cannot connect to the Docker daemon') || stderr.includes('docker: command not found')) {
+            handleLocalFallback();
+            return;
+          }
+
+          resolved = true;
+          clearTimeout(timeoutId);
+
+          if (signal === 'SIGTERM' || signal === 'SIGKILL' || child.killed) {
+            resolve({
+              status: 'Time Limit Exceeded',
+              stdout,
+              stderr: 'Execution timed out (5s limit exceeded)',
+            });
+          } else if (code !== 0) {
+            resolve({
+              status: 'Runtime Error',
+              stdout,
+              stderr,
+            });
+          } else {
+            resolve({
+              status: 'Accepted',
+              stdout,
+              stderr,
+            });
+          }
+        });
+
+        const mockInputs = '5\n10\n15\n20\nstudent\n';
+        const payload = sourceCode + '\n===INPUTS===\n' + mockInputs;
+
+        child.stdin.write(payload);
+        child.stdin.end();
       });
+    };
 
-      child.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      child.on('close', (code, signal) => {
-        clearTimeout(timeoutId);
-
-        if (signal === 'SIGTERM' || signal === 'SIGKILL' || child.killed) {
-          resolve({
-            status: 'Time Limit Exceeded',
-            stdout: stdout,
-            stderr: 'Execution timed out (5s limit exceeded)',
-          });
-        } else if (code !== 0) {
-          resolve({
-            status: 'Runtime Error',
-            stdout: stdout,
-            stderr: stderr,
-          });
-        } else {
-          resolve({
-            status: 'Accepted',
-            stdout: stdout,
-            stderr: stderr,
-          });
-        }
-      });
-
-      const mockInputs = "5\n10\n15\n20\nstudent\n";
-      const payload = sourceCode + "\n===INPUTS===\n" + mockInputs;
-
-      child.stdin.write(payload);
-      child.stdin.end();
-    });
+    const runResult = await runWithDockerOrLocal();
 
     await this.exercisesService.completeGrading(
       activityId,
