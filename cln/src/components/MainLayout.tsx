@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Navigate, Outlet } from 'react-router-dom'
-import { Box, Drawer } from '@mui/material'
+import { Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { Box } from '@mui/material'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
 import { useAuth } from '../context/AuthContext'
@@ -11,24 +11,43 @@ interface MainLayoutProps {
   onItemClick?: (name: string) => void
 }
 
-export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainLayoutProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const { user, logout } = useAuth();
+const MENU_ROUTE_MAP: Record<string, string> = {
+  Home: '/home',
+  Dashboard: '/dashboard',
+  Sessions: '/sessions',
+}
+
+export function MainLayout({ children, activeItem }: MainLayoutProps) {
+  const [desktopSidebarOpen, setDesktopSidebarOpen] = useState(true)
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const location = useLocation()
 
   if (!user) {
     return <Navigate to="/" replace />
   }
 
   const handleLogout = () => {
-    console.log('Logging out...')
-    logout();
+    logout()
+  }
+
+  const handleToggleSidebar = () => {
+    setDesktopSidebarOpen(!desktopSidebarOpen)
   }
 
   const handleItemClick = (name: string) => {
-    if (onItemClick) {
-      onItemClick(name)
+    const route = MENU_ROUTE_MAP[name]
+    if (route) {
+      navigate(route)
     }
-    setMobileMenuOpen(false)
+  }
+
+  // Determine current active item from URL path if not explicitly provided
+  let currentActiveItem = activeItem
+  if (!currentActiveItem) {
+    if (location.pathname.startsWith('/sessions')) currentActiveItem = 'Sessions'
+    else if (location.pathname.startsWith('/dashboard')) currentActiveItem = 'Dashboard'
+    else currentActiveItem = 'Home'
   }
 
   return (
@@ -41,61 +60,42 @@ export function MainLayout({ children, activeItem = 'Home', onItemClick }: MainL
         fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
       }}
     >
-      {/* Sidebar - Desktop Layout */}
+      {/* Sidebar - Web Layout */}
       <Box
         component="aside"
         sx={{
-          width: 280,
-          minWidth: 280,
-          display: { xs: 'none', md: 'flex' },
+          width: desktopSidebarOpen ? 280 : 0,
+          minWidth: desktopSidebarOpen ? 280 : 0,
+          display: 'flex',
           flexDirection: 'column',
           height: '100vh',
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          borderRight: '1px solid #e2e8f0',
+          borderRight: desktopSidebarOpen ? '1px solid #e2e8f0' : 'none',
           background: 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%)',
+          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden',
         }}
       >
-        <Sidebar
-          activeItem={activeItem}
-          onItemClick={handleItemClick}
-          user={user}
-          onLogout={handleLogout}
-        />
+        <Box sx={{ width: 280, height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Sidebar
+            activeItem={currentActiveItem}
+            onItemClick={handleItemClick}
+            user={user}
+            onLogout={handleLogout}
+          />
+        </Box>
       </Box>
-
-      {/* Sidebar - Mobile Layout using MUI Drawer */}
-      <Drawer
-        anchor="left"
-        open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        sx={{
-          display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': {
-            width: 280,
-            boxSizing: 'border-box',
-            background: 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 100%)',
-            borderRight: '1px solid #e2e8f0',
-          },
-        }}
-      >
-        <Sidebar
-          activeItem={activeItem}
-          onItemClick={handleItemClick}
-          user={user}
-          onLogout={handleLogout}
-        />
-      </Drawer>
 
       {/* Main Content Layout */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Top Navbar */}
-        <Navbar onMenuClick={() => setMobileMenuOpen(true)} user={user} />
+        <Navbar onMenuClick={handleToggleSidebar} user={user} />
 
         {/* Content Area */}
         <Box sx={{ flexGrow: 1, p: { xs: 2.5, md: 4 } }}>
-          {children || <Outlet />}
+          {children}
         </Box>
       </Box>
     </Box>

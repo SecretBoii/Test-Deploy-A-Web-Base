@@ -26,17 +26,19 @@ model Education {
 }
 
 model Userprofile {
-  userId            Int        @id @default(autoincrement()) @map("user_id")
-  username          String     @db.VarChar(100)
-  password          String     @db.VarChar(100)
-  gender            String     @db.VarChar(10)
-  dateOfBirth       DateTime   @map("date_of_birth") @db.Date
-  educationId       Int        @map("education_id")
-  roleId            Int        @map("role_id")
-  registerTimestamp DateTime   @default(now()) @map("register_timestamp") @db.Timestamp(6)
+  userId            Int                  @id @default(autoincrement()) @map("user_id")
+  username          String               @db.VarChar(100)
+  password          String               @db.VarChar(255) // ขยายเป็น 255 รองรับ hash ยาวในอนาคต
+  gender            String               @db.VarChar(10)
+  dateOfBirth       DateTime             @map("date_of_birth") @db.Date
+  educationId       Int                  @map("education_id")
+  roleId            Int                  @map("role_id")
+  image             String?
+  registerTimestamp DateTime             @default(now()) @map("register_timestamp") @db.Timestamp(6)
   activities        Activity[]
-  education         Education  @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
-  role              Role       @relation(fields: [roleId], references: [roleId], onDelete: NoAction, onUpdate: NoAction)
+  userSessions      UserSessionProgress[]
+  education         Education            @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
+  role              Role                 @relation(fields: [roleId], references: [roleId], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("user_profile")
 }
@@ -60,29 +62,46 @@ model Exercise {
 }
 
 model Session {
-  sessionId        Int               @id @default(autoincrement()) @map("session_id")
-  sessionName      String            @map("session_name") @db.VarChar(100)
-  sessionObjective String            @map("session_objective") @db.VarChar(100)
-  targetLevel      String            @map("target_level") @db.VarChar(50)
+  sessionId        Int                   @id @default(autoincrement()) @map("session_id")
+  sessionName      String                @map("session_name") @db.VarChar(100)
+  sessionObjective String                @map("session_objective") @db.VarChar(100)
+  targetLevel      Int                   @map("target_level") // เปลี่ยนจาก String เป็น Int (1..5)
   duration         Int
-  status           String            @db.VarChar(50)
-  createdAt        DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt        DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  status           String                @db.VarChar(50)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt        DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   activities       Activity[]
   sessionExercises SessionExercise[]
+  userSessions     UserSessionProgress[]
 
   @@map("session")
 }
 
 model SessionExercise {
-  sessionId  Int      @map("session_id")
-  exerciseId Int      @map("exercise_id")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  exercise   Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade, onUpdate: NoAction)
-  session    Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
+  sessionId     Int      @map("session_id")
+  exerciseId    Int      @map("exercise_id")
+  sequenceOrder Int      @default(1) @map("sequence_order") // เพิ่มลำดับข้อโจทย์ (1, 2, 3...)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  exercise      Exercise @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade, onUpdate: NoAction)
+  session       Session  @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([sessionId, exerciseId])
   @@map("session_exercise")
+}
+
+// ตารางใหม่สำหรับบันทึกความก้าวหน้า Session รายบุคคล
+model UserSessionProgress {
+  userId      Int         @map("user_id")
+  sessionId   Int         @map("session_id")
+  status      String      @default("IN_PROGRESS") @db.VarChar(50) // IN_PROGRESS, COMPLETED
+  startedAt   DateTime    @default(now()) @map("started_at") @db.Timestamp(6)
+  completedAt DateTime?   @map("completed_at") @db.Timestamp(6)
+  updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  session     Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
+  user        Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([userId, sessionId])
+  @@map("user_session_progress")
 }
 
 model Activity {

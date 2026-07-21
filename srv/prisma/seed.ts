@@ -3,11 +3,12 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 import * as bcrypt from 'bcrypt';
 import 'dotenv/config';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
-
 
 async function main() {
   try {
@@ -42,7 +43,7 @@ async function main() {
     });
     console.log('Education seeded.');
 
-    // 3. Seed Userprofile
+    // 3. Seed Userprofile (แปลงรหัสผ่านด้วย bcrypt Hash)
     const users = [
       {
         userId: 1,
@@ -89,89 +90,18 @@ async function main() {
     console.log('Userprofiles seeded.');
 
     // 4. Seed Exercises
-    const exercises = [
-      {
-        exerciseId: 101,
-        title: 'หาพื้นที่รูปสี่เหลี่ยม',
-        description: 'เขียนโปรแกรมรับค่ากว้างและยาว แล้วแสดงผลลัพธ์เป็นพื้นที่ของรูปสี่เหลี่ยม',
-        topic: 'Variables & Basic Arithmetic',
-        objective: 'ฝึกการใช้งานตัวแปรและการคำนวณคณิตศาสตร์เบื้องต้น (คูณกว้างยาว)',
-        difficultyLevel: 1,
-        expectedTime: 10,
-        status: 'active',
-        hint: 'ใช้สูตร width * height',
-      },
-      {
-        exerciseId: 102,
-        title: 'การคำนวณหาค่าแฟกทอเรียล (Factorial)',
-        description: 'เขียนโปรแกรมคำนวณหาค่า Factorial (n!) โดยการเขียนฟังก์ชัน Recursive',
-        topic: 'Recursion',
-        objective: 'ต้องเขียนโดยใช้ฟังก์ชันแบบเรียกตัวเอง (Recursion) เท่านั้น ห้ามใช้คำสั่ง loop เช่น for หรือ while เด็ดขาด',
-        difficultyLevel: 2,
-        expectedTime: 15,
-        status: 'active',
-        hint: 'n * factorial(n - 1) base case คือ n <= 1',
-      }
-    ];
-    for (const ex of exercises) {
-      await prisma.exercise.upsert({
-        where: { exerciseId: ex.exerciseId },
-        update: {
-          title: ex.title,
-          description: ex.description,
-          topic: ex.topic,
-          objective: ex.objective,
-          hint: ex.hint,
-        },
-        create: ex,
-      });
-    }
+    console.log('Seeding exercises from python-exercises.sql...');
+    const sqlPath = path.join(__dirname, '../../python-exercises.sql');
+    const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
+    await prisma.$executeRawUnsafe(sqlContent);
     console.log('Exercises seeded.');
 
-    // 5. Seed Session
-    const session = {
-      sessionId: 1,
-      sessionName: 'บทเรียนที่ 1: พื้นฐาน Python',
-      sessionObjective: 'เรียนรู้เรื่องตัวแปรและการคำนวณเบื้องต้น',
-      targetLevel: 'Beginner',
-      duration: 60,
-      status: 'active',
-    };
-    await prisma.session.upsert({
-      where: { sessionId: session.sessionId },
-      update: {},
-      create: session,
-    });
-    console.log('Session seeded.');
-
-    // 6. Seed SessionExercise
-    await prisma.sessionExercise.upsert({
-      where: {
-        sessionId_exerciseId: {
-          sessionId: 1,
-          exerciseId: 101,
-        },
-      },
-      update: {},
-      create: {
-        sessionId: 1,
-        exerciseId: 101,
-      },
-    });
-    await prisma.sessionExercise.upsert({
-      where: {
-        sessionId_exerciseId: {
-          sessionId: 1,
-          exerciseId: 102,
-        },
-      },
-      update: {},
-      create: {
-        sessionId: 1,
-        exerciseId: 102,
-      },
-    });
-    console.log('SessionExercise links seeded.');
+    // 5. Seed Custom Sessions & SessionExercises from custom-sessions.sql
+    console.log('Seeding custom sessions...');
+    const customSessionsPath = path.join(__dirname, '../../custom-sessions.sql');
+    const customSessionsSql = fs.readFileSync(customSessionsPath, 'utf-8');
+    await prisma.$executeRawUnsafe(customSessionsSql);
+    console.log('Custom Sessions seeded successfully!');
 
     console.log('Seeding finished successfully!');
   } catch (error) {

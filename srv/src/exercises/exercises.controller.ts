@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 import { SubmitExerciseDto } from './dto';
 
@@ -38,5 +38,21 @@ export class ExercisesController {
   @Get('status/:activityId')
   async getStatus(@Param('activityId') activityId: string) {
     return await this.exercisesService.getStatus(Number(activityId));
+  }
+}
+
+  // API ดึงความก้าวหน้าสรุปของแต่ละ Level
+  @Get('levels-summary')
+  async getLevelsSummary(@Query('userId') userId?: string) {
+    return await this.exercisesService.getLevelsSummary(userId ? Number(userId) : 1);
+  }
+
+  // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session
+  @Get('level-sessions/:level')
+  async getLevelSessions(
+    @Param('level') level: string,
+    @Query('userId') userId?: string,
+  ) {
+    return await this.exercisesService.getLevelSessions(Number(level), userId ? Number(userId) : 1);
   }
 }

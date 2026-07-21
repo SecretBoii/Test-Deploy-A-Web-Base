@@ -143,7 +143,7 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      await this.codeQueue.add('execute', {
+      const job = await this.codeQueue.add('execute', {
         activityId: activity.activityId,
         userId: Number(userId),
         exerciseId: Number(exerciseId),
@@ -154,11 +154,30 @@ export class ExercisesService implements OnModuleInit {
         hintUsed,
       });
 
+      // รอให้การรันในคิวและ Gemini ประเมินผลเสร็จสิ้น
+      await job.waitUntilFinished(this.queueEvents);
+
+      // ดึงข้อมูลผลลัพธ์ที่ประมวลผลเสร็จแล้ว
+      const updatedActivity = await this.prisma.activity.findUnique({
+        where: { activityId: activity.activityId },
+      });
+
+      if (!updatedActivity) {
+        throw new HttpException('Activity log not found after execution', HttpStatus.NOT_FOUND);
+      }
+
       return {
         success: true,
-        message: 'Code submitted to execution queue successfully!',
-        activityId: activity.activityId,
-        status: 'PENDING',
+        activityId: updatedActivity.activityId,
+        eventType: updatedActivity.eventType,
+        
+        // ฟิลด์ผลลัพธ์ตามที่ต้องการ
+        status: updatedActivity.status === 'SUCCESS' ? 'success' : updatedActivity.status === 'PENDING' ? 'pending' : 'error',
+        score: updatedActivity.score,
+        runcount: updatedActivity.runCount,
+        hintused: updatedActivity.hintUsed,
+        exception_message: updatedActivity.exceptionMessage,
+        ai_feedback: updatedActivity.aiFeedback,
       };
     } catch (error) {
       throw new HttpException(
@@ -179,12 +198,13 @@ export class ExercisesService implements OnModuleInit {
     return {
       success: true,
       activityId: activity.activityId,
-      status: activity.status,
-      score: activity.score,
-      exceptionMessage: activity.exceptionMessage,
-      aiFeedback: activity.aiFeedback,
-      runCount: activity.runCount,
       eventType: activity.eventType,
+      status: activity.status === 'SUCCESS' ? 'success' : activity.status === 'PENDING' ? 'pending' : 'error',
+      score: activity.score,
+      runcount: activity.runCount,
+      hintused: activity.hintUsed,
+      exception_message: activity.exceptionMessage,
+      ai_feedback: activity.aiFeedback,
     };
   }
 
@@ -273,6 +293,7 @@ export class ExercisesService implements OnModuleInit {
           score: aiReview.score,
           exceptionMessage:
             aiReview.exception_message ?? (runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : null),
+            aiReview.exception_message ?? (runResult.stderr || null),
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
         },
@@ -382,6 +403,7 @@ export class ExercisesService implements OnModuleInit {
     const complexityRules = this.getSkillGuideline('complexity');
     const pep8Rules = this.getSkillGuideline('pep8');
     const edgeCasesRules = this.getSkillGuideline('edge_cases');
+    const dynamicRubricRules = this.getSkillGuideline('dynamic_rubric');
 
     let hintLevelInstruction = '';
     if (run_count <= 2) {
@@ -417,18 +439,119 @@ export class ExercisesService implements OnModuleInit {
       [Complexity/Big-O Check] ${complexityRules}
       [PEP 8 Cleanliness Check] ${pep8Rules}
       [Edge Cases Check] ${edgeCasesRules}
+      [Dynamic Rubric Check] ${dynamicRubricRules}
       
       Hint rules you MUST follow for this run count:
       ${hintLevelInstruction}
 
       ====================================================
       CRITICAL INSTRUCTIONS FOR RESPONSE (JSON ONLY):
-      Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros. The response must exactly follow this JSON schema:
+      Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros.
+      Both "exception_message" and "ai_feedback" MUST be extremely concise, direct, and straight-to-the-point, with no unnecessary explanations or fluff.
+      
+      - For "exception_message": If a compilation or runtime error occurred, provide only the short name/type of the exception (e.g. "ValueError" or "SyntaxError"). Do not explain the exception. If no error occurred, use null.
+      - For "ai_feedback": Summarize the security, complexity/Big-O, PEP 8 cleanliness, and edge cases in a very brief, direct, and compact manner. Use a maximum of 1-2 short bullet points. Avoid general filler sentences or polite remarks. Keep it under 30 words total.
+
+      The response must exactly follow this JSON schema:
       {
         "score": <overall evaluation score as an integer from 0 to 100>,
-        "exception_message": "<short exception name if compile/runtime error occurred, otherwise null>",
-        "ai_feedback": "<compiled feedback summarizing security, complexity/Big-O, PEP 8 compliance, and debugging tips according to the hint rules above>"
+        "exception_message": "<extremely short exception type or null>",
+        "ai_feedback": "<highly concise, direct, bulleted feedback without fluff (max 30 words)>"
       }
     `;
+  }
+
+  async getLevelsSummary(userId: number = 1) {
+    const levels = [1, 2, 3, 4, 5];
+
+    const results = await Promise.all(
+      levels.map(async (lvl) => {
+        const sessions = await this.prisma.session.findMany({
+          where: { targetLevel: lvl, status: 'active' },
+          include: { sessionExercises: true },
+        });
+
+        const totalSessions = sessions.length;
+        const totalMinutes = sessions.reduce((sum, s) => sum + s.duration, 0);
+        const totalHours = Math.round(totalMinutes / 60) || 6;
+
+        const exerciseIds = sessions.flatMap((s) =>
+          s.sessionExercises.map((se) => se.exerciseId),
+        );
+        const totalExercises = exerciseIds.length;
+
+        let completedExercises = 0;
+        if (exerciseIds.length > 0) {
+          const passedActivities = await this.prisma.activity.groupBy({
+            by: ['exerciseId'],
+            where: {
+              userId: userId,
+              exerciseId: { in: exerciseIds },
+              score: { gt: 0 },
+            },
+          });
+          completedExercises = passedActivities.length;
+        }
+
+        return {
+          level: lvl,
+          totalSessions,
+          totalHours,
+          totalExercises,
+          completedExercises,
+        };
+      }),
+    );
+
+    return results;
+  }
+
+  async getLevelSessions(level: number, userId: number = 1) {
+    const sessions = await this.prisma.session.findMany({
+      where: { targetLevel: level, status: 'active' },
+      orderBy: { sessionId: 'asc' },
+      include: {
+        sessionExercises: {
+          orderBy: { sequenceOrder: 'asc' },
+          include: { exercise: true },
+        },
+      },
+    });
+
+    const userActivities = await this.prisma.activity.findMany({
+      where: { userId: userId, score: { gt: 0 } },
+      select: { exerciseId: true },
+    });
+    const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
+
+    const result = sessions.map((session) => {
+      const exercises = session.sessionExercises.map((se, idx) => {
+        const isPassed = passedExerciseIds.has(se.exerciseId);
+        return {
+          exerciseId: se.exerciseId,
+          orderNumber: idx + 1,
+          title: se.exercise.title,
+          description: se.exercise.description,
+          expectedTime: se.exercise.expectedTime,
+          isPassed,
+        };
+      });
+
+      const completedCount = exercises.filter((e) => e.isPassed).length;
+      const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
+
+      return {
+        sessionId: session.sessionId,
+        sessionName: session.sessionName,
+        sessionObjective: session.sessionObjective,
+        duration: totalExpectedTime || session.duration,
+        totalExercises: exercises.length,
+        completedExercises: completedCount,
+        isCompleted: completedCount === exercises.length && exercises.length > 0,
+        exercises,
+      };
+    });
+
+    return result;
   }
 }

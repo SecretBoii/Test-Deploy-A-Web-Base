@@ -1,5 +1,5 @@
-import { Search, Bell, Users, Menu } from 'lucide-react'
-import { Avatar, IconButton, Badge, Box, InputBase } from '@mui/material'
+import { Bell, Users, Menu } from 'lucide-react'
+import { Avatar, IconButton, Badge, Box } from '@mui/material'
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -26,52 +26,18 @@ export function Navbar({ onMenuClick, user }: NavbarProps) {
         zIndex: 80,
       }}
     >
-      {/* Left search & menu toggle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1, maxWidth: 480 }}>
+      {/* Left menu toggle */}
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
         <IconButton
           onClick={onMenuClick}
           aria-label="Open menu"
           sx={{
             color: '#475569',
             mr: 1,
-            display: { xs: 'inline-flex', md: 'none' },
           }}
         >
           <Menu size={22} />
         </IconButton>
-
-        <Box
-          sx={{
-            position: 'relative',
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            bgcolor: '#f1f5f9',
-            borderRadius: '10px',
-            px: 2,
-            py: 0.5,
-            border: '1px solid transparent',
-            transition: 'all 0.2s ease',
-            '&:focus-within': {
-              bgcolor: '#ffffff',
-              borderColor: '#4f46e5',
-              boxShadow: '0 0 0 4px rgba(79, 70, 229, 0.1)',
-            },
-          }}
-        >
-          <Search style={{ color: '#94a3b8', marginRight: 10 }} size={18} />
-          <InputBase
-            placeholder="Search..."
-            fullWidth
-            sx={{
-              fontSize: '14px',
-              color: '#0f172a',
-              input: {
-                padding: '8px 0',
-              },
-            }}
-          />
-        </Box>
       </Box>
 
       {/* Right action items */}
