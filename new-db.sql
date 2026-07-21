@@ -7,13 +7,14 @@
 -- ─────────────────────────────────────────────────────────────
 -- DROP TABLES (เพื่อ reset ก่อน create ใหม่)
 -- ─────────────────────────────────────────────────────────────
-DROP TABLE IF EXISTS activity          CASCADE;
-DROP TABLE IF EXISTS session_exercise  CASCADE;
-DROP TABLE IF EXISTS session           CASCADE;
-DROP TABLE IF EXISTS exercise          CASCADE;
-DROP TABLE IF EXISTS user_profile      CASCADE;
-DROP TABLE IF EXISTS education         CASCADE;
-DROP TABLE IF EXISTS role              CASCADE;
+DROP TABLE IF EXISTS activity              CASCADE;
+DROP TABLE IF EXISTS user_session_progress CASCADE;
+DROP TABLE IF EXISTS session_exercise      CASCADE;
+DROP TABLE IF EXISTS session               CASCADE;
+DROP TABLE IF EXISTS exercise              CASCADE;
+DROP TABLE IF EXISTS user_profile          CASCADE;
+DROP TABLE IF EXISTS education             CASCADE;
+DROP TABLE IF EXISTS role                  CASCADE;
 
 
 -- ─────────────────────────────────────────────────────────────
@@ -42,7 +43,7 @@ CREATE TABLE education (
 CREATE TABLE user_profile (
     user_id             SERIAL        PRIMARY KEY,
     username            VARCHAR(100)  NOT NULL,
-    password            VARCHAR(100)  NOT NULL,
+    password            VARCHAR(255)  NOT NULL,
     gender              VARCHAR(10)   NOT NULL,
     date_of_birth       DATE          NOT NULL,
     education_id        INT           NOT NULL REFERENCES education(education_id),
@@ -77,7 +78,7 @@ CREATE TABLE session (
     session_id        SERIAL        PRIMARY KEY,
     session_name      VARCHAR(100)  NOT NULL,
     session_objective VARCHAR(100)  NOT NULL,
-    target_level      VARCHAR(50)   NOT NULL,
+    target_level      INT           NOT NULL,
     duration          INT           NOT NULL,
     status            VARCHAR(50)   NOT NULL,
     created_at        TIMESTAMP     NOT NULL DEFAULT NOW(),
@@ -89,10 +90,25 @@ CREATE TABLE session (
 -- TABLE: session_exercise  (junction / many-to-many)
 -- ─────────────────────────────────────────────────────────────
 CREATE TABLE session_exercise (
-    session_id   INT       NOT NULL REFERENCES session(session_id)   ON DELETE CASCADE,
-    exercise_id  INT       NOT NULL REFERENCES exercise(exercise_id) ON DELETE CASCADE,
-    created_at   TIMESTAMP NOT NULL DEFAULT NOW(),
+    session_id     INT       NOT NULL REFERENCES session(session_id)   ON DELETE CASCADE,
+    exercise_id    INT       NOT NULL REFERENCES exercise(exercise_id) ON DELETE CASCADE,
+    sequence_order INT       NOT NULL DEFAULT 1,
+    created_at     TIMESTAMP NOT NULL DEFAULT NOW(),
     PRIMARY KEY (session_id, exercise_id)
+);
+
+
+-- ─────────────────────────────────────────────────────────────
+-- TABLE: user_session_progress
+-- ─────────────────────────────────────────────────────────────
+CREATE TABLE user_session_progress (
+    user_id       INT         NOT NULL REFERENCES user_profile(user_id) ON DELETE CASCADE,
+    session_id    INT         NOT NULL REFERENCES session(session_id)   ON DELETE CASCADE,
+    status        VARCHAR(50) NOT NULL DEFAULT 'IN_PROGRESS',
+    started_at    TIMESTAMP   NOT NULL DEFAULT NOW(),
+    completed_at  TIMESTAMP,
+    updated_at    TIMESTAMP   NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, session_id)
 );
 
 
@@ -668,11 +684,11 @@ SELECT SETVAL('exercise_exercise_id_seq', (SELECT MAX(exercise_id) FROM exercise
 -- INSERT: session  (5 sessions แยกตาม 5 ระดับของ Bloom's Taxonomy)
 -- ─────────────────────────────────────────────────────────────
 INSERT INTO session (session_id, session_name, session_objective, target_level, duration, status) VALUES
-(1, 'บทเรียนที่ 1: การจดจำและทำความเข้าใจพื้นฐาน Python (Level 1)', 'เรียนรู้ไวยากรณ์พื้นฐาน ตัวแปร และชนิดข้อมูล', 'Level 1', 45,  'active'),
-(2, 'บทเรียนที่ 2: การประยุกต์ใช้งานเบื้องต้น (Level 2)', 'ฝึกการใช้ตัวดำเนินการและเงื่อนไขแบบง่าย', 'Level 2', 60,  'active'),
-(3, 'บทเรียนที่ 3: การวิเคราะห์ลอจิกวนซ้ำและข้อมูลชุด (Level 3)', 'ฝึกฝนเรื่องลูป ลิสต์ และฟังก์ชันเบื้องต้น', 'Level 3', 90,  'active'),
-(4, 'บทเรียนที่ 4: การประเมินค่าและตรวจสอบตรรกะระดับสูง (Level 4)', 'ฝึกตรวจสอบบั๊ก ดักจับ Edge Cases และตรวจสอบรหัส', 'Level 4', 120, 'active'),
-(5, 'บทเรียนที่ 5: การออกแบบอัลกอริทึมและฟังก์ชันซับซ้อน (Level 5)', 'เรียนรู้อัลกอริทึมเรียงลำดับและการเขียน Recursion', 'Level 5', 150, 'active');
+(1, 'บทเรียนที่ 1: การจดจำและทำความเข้าใจพื้นฐาน Python (Level 1)', 'เรียนรู้ไวยากรณ์พื้นฐาน ตัวแปร และชนิดข้อมูล', 1, 45,  'active'),
+(2, 'บทเรียนที่ 2: การประยุกต์ใช้งานเบื้องต้น (Level 2)', 'ฝึกการใช้ตัวดำเนินการและเงื่อนไขแบบง่าย', 2, 60,  'active'),
+(3, 'บทเรียนที่ 3: การวิเคราะห์ลอจิกวนซ้ำและข้อมูลชุด (Level 3)', 'ฝึกฝนเรื่องลูป ลิสต์ และฟังก์ชันเบื้องต้น', 3, 90,  'active'),
+(4, 'บทเรียนที่ 4: การประเมินค่าและตรวจสอบตรรกะระดับสูง (Level 4)', 'ฝึกตรวจสอบบั๊ก ดักจับ Edge Cases และตรวจสอบรหัส', 4, 120, 'active'),
+(5, 'บทเรียนที่ 5: การออกแบบอัลกอริทึมและฟังก์ชันซับซ้อน (Level 5)', 'เรียนรู้อัลกอริทึมเรียงลำดับและการเขียน Recursion', 5, 150, 'active');
 
 SELECT SETVAL('session_session_id_seq', (SELECT MAX(session_id) FROM session));
 
