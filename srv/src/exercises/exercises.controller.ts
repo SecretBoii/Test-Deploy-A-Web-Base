@@ -8,25 +8,27 @@ export class ExercisesController {
 
   @Post('run')
   async runCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
+    const { userId, exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
       userId,
       exerciseId,
       sourceCode,
       'run',
       hintUsed,
+      sessionId,
     );
   }
 
   @Post('submit')
   async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hintUsed } = submitExerciseDto;
+    const { userId, exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
       userId,
       exerciseId,
       sourceCode,
       'submit',
       hintUsed,
+      sessionId,
     );
   }
 

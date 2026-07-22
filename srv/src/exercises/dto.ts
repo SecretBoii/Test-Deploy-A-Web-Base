@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsBoolean } from 'class-validator';
+import { IsNotEmpty, IsString, IsBoolean, IsOptional } from 'class-validator';
 
 export class SubmitExerciseDto {
   @IsNotEmpty({ message: 'userId' })
@@ -16,4 +16,8 @@ export class SubmitExerciseDto {
   @IsNotEmpty({ message: 'hintUsed' })
   @IsBoolean()
   hintUsed: boolean;
+
+  @IsOptional()
+  @IsString()
+  sessionId?: string;
 }

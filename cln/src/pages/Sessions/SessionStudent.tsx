@@ -9,7 +9,7 @@ import { apiClient } from '../../api/client';
 
 interface SessionStudentProps {
   userId?: number;
-  onSelectExercise?: (exerciseId: number) => void;
+  onSelectExercise?: (exerciseId: number, sessionId: number) => void;
 }
 
 export const SessionStudent: React.FC<SessionStudentProps> = ({

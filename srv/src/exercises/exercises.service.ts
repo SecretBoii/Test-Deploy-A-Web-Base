@@ -118,6 +118,7 @@ export class ExercisesService implements OnModuleInit {
     sourceCode: string,
     event_type: string,
     hintUsed: boolean,
+    sessionIdParam?: String ,
   ) {
     try {
       const exercise = await this.prisma.exercise.findUnique({
@@ -136,10 +137,14 @@ export class ExercisesService implements OnModuleInit {
       });
       const run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
 
+      let sessionId = sessionIdParam ? Number(sessionIdParam) : 1;
+
+      if(!sessionIdParam){
       const sessionExercise = await this.prisma.sessionExercise.findFirst({
         where: { exerciseId: Number(exerciseId) },
       });
-      const sessionId = sessionExercise?.sessionId ?? 1;
+      sessionId = sessionExercise?.sessionId ?? 1;
+    }
 
       const activity = await this.prisma.activity.create({
         data: {
