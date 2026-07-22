@@ -19,11 +19,12 @@ export class CodeExecutionProcessor extends WorkerHost {
       event_type: string;
       run_count: number;
       hintUsed: boolean;
+      testInput?: string;
     }>,
   ): Promise<{ status: string; stdout: string; stderr: string }> {
-    const { activityId, exerciseId, sourceCode, event_type, run_count } = job.data;
+    const { activityId, exerciseId, sourceCode, event_type, run_count, testInput } = job.data;
 
-    const wrapperScript = `
+    const wrapperScript = ` 
 import sys, subprocess, os, tempfile
 try:
     data = sys.stdin.read()
@@ -131,7 +132,7 @@ except Exception as e:
           }
         });
 
-        const mockInputs = '5\n10\n15\n20\nstudent\n';
+        const mockInputs = testInput ?? '5\n10\n15\n20\nstudent\n';
         const payload = sourceCode + '\n===INPUTS===\n' + mockInputs;
 
         child.stdin.write(payload);
