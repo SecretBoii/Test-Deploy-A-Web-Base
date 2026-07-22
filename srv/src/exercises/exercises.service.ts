@@ -323,10 +323,12 @@ export class ExercisesService implements OnModuleInit {
         };
       }
 
+      const finalScore = runResult.status === 'Accepted' ? aiReview.score : 0;
+
       await this.prisma.activity.update({
         where: { activityId },
         data: {
-          score: aiReview.score,
+          score: finalScore,
           exceptionMessage: aiReview.exception_message,
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
