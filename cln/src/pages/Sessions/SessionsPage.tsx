@@ -16,8 +16,8 @@ export function SessionsPage() {
     <MainLayout activeItem="Sessions">
       <SessionStudent
         userId={user.userId}
-        onSelectExercise={(exerciseId) => {
-          navigate(`/editor/${exerciseId}`)
+        onSelectExercise={(exerciseId, sessionId) => {
+          navigate(`/editor/${exerciseId}?sessionId=${sessionId}`)
         }}
       />
     </MainLayout>

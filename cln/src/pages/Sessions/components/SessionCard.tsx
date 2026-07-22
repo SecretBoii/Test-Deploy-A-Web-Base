@@ -7,7 +7,7 @@ import ExerciseRow from './ExerciseRow';
 interface SessionCardProps {
   session: SessionDetail;
   levelColor?: string;
-  onSelectExercise?: (exerciseId: number) => void;
+  onSelectExercise?: (exerciseId: number, sessionId: number) => void;
 }
 
 export const SessionCard: React.FC<SessionCardProps> = ({
@@ -86,7 +86,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
       {/* Exercises List รายการโจทย์ย่อย */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 1, borderTop: '1px dashed #e2e8f0' }}>
         {session.exercises.map((ex) => (
-          <ExerciseRow key={ex.exerciseId} exercise={ex} onSelectExercise={onSelectExercise} />
+          <ExerciseRow key={
+          ex.exerciseId} 
+          exercise={ex} 
+          onSelectExercise={(id) => onSelectExercise?.(id, session.sessionId)} />
         ))}
       </Box>
     </Card>

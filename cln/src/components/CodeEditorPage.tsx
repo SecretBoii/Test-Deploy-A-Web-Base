@@ -10,9 +10,10 @@ import { useAuth } from '../context/AuthContext'
 
 interface CodeEditorPageProps {
   exerciseId?: number
+  sessionId?: number
 }
 
-export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
+export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
   const { user } = useAuth()
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
@@ -46,6 +47,7 @@ export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
       const res = await apiClient.post(endpoint, {
         userId: user?.userId ? String(user.userId) : '1',
         exerciseId: String(exerciseId),
+        sessionId: sessionId ? String(sessionId) : undefined,
         sourceCode: code,
         hintUsed: false,
       })
