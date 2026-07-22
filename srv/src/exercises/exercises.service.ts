@@ -270,7 +270,10 @@ export class ExercisesService implements OnModuleInit {
           'Primary model call failed:',
           apiError.response?.data?.error?.message || apiError.response?.data || apiError.message,
         );
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+        const fallbackModel = model === 'gemini-2.0-flash' ? 'gemini-2.0-flash-lite' : 'gemini-2.0-flash';
+        const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/${fallbackModel}:generateContent?key=${apiKey}`;
+        console.log(`[Gemini API] Trying fallback model: ${fallbackModel}`);
         try {
           geminiResponse = await firstValueFrom(
             this.httpService.post(
