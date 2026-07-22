@@ -53,12 +53,14 @@ except Exception as e:
     sys.exit(1)
 `.trim();
 
-    const runWithDockerOrLocal = (): Promise<{ status: string; stdout: string; stderr: string }> => {
+    const runDockerOnly = (): Promise<{ status: string; stdout: string; stderr: string }> => {
       return new Promise((resolve) => {
         let child = spawn('docker', [
           'run',
           '--rm',
           '-i',
+          '--network',
+          'none',
           '--memory=128m',
           '--cpus=0.5',
           'python:3.10-slim',
@@ -81,50 +83,18 @@ except Exception as e:
               stderr: 'Execution timed out (5s limit exceeded)',
             });
           }
-        }, 5000);
+        }, 8000);
 
-        const handleLocalFallback = () => {
-          if (resolved) return;
-          clearTimeout(timeoutId);
-          console.log('[CodeExecution] Fallback to local python process...');
-          
-          const localChild = spawn('python', ['-c', wrapperScript]);
-          let localStdout = '';
-          let localStderr = '';
-
-          const localTimeoutId = setTimeout(() => {
-            if (!resolved) {
-              resolved = true;
-              localChild.kill();
-              resolve({
-                status: 'Time Limit Exceeded',
-                stdout: localStdout,
-                stderr: 'Execution timed out (5s limit exceeded)',
-              });
-            }
-          }, 5000);
-
-          localChild.stdout.on('data', (d) => (localStdout += d.toString()));
-          localChild.stderr.on('data', (d) => (localStderr += d.toString()));
-
-          localChild.on('close', (code) => {
-            if (resolved) return;
+        child.on('error', (err) => {
+          if (!resolved) {
             resolved = true;
-            clearTimeout(localTimeoutId);
+            clearTimeout(timeoutId);
             resolve({
-              status: code !== 0 ? 'Runtime Error' : 'Accepted',
-              stdout: localStdout,
-              stderr: localStderr,
+              status: 'Runtime Error',
+              stdout: '',
+              stderr: `Docker execution error: ${err.message}. Make sure Docker Desktop is running.`,
             });
-          });
-
-          const mockInputs = '5\n10\n15\n20\nstudent\n';
-          localChild.stdin.write(sourceCode + '\n===INPUTS===\n' + mockInputs);
-          localChild.stdin.end();
-        };
-
-        child.on('error', () => {
-          handleLocalFallback();
+          }
         });
 
         child.stdout.on('data', (data) => {
@@ -137,11 +107,6 @@ except Exception as e:
 
         child.on('close', (code, signal) => {
           if (resolved) return;
-          if (stderr.includes('Cannot connect to the Docker daemon') || stderr.includes('docker: command not found')) {
-            handleLocalFallback();
-            return;
-          }
-
           resolved = true;
           clearTimeout(timeoutId);
 
@@ -174,7 +139,7 @@ except Exception as e:
       });
     };
 
-    const runResult = await runWithDockerOrLocal();
+    const runResult = await runDockerOnly();
 
     await this.exercisesService.completeGrading(
       activityId,

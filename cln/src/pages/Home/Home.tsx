@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { MainLayout } from '../../components/MainLayout'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
@@ -7,6 +7,7 @@ import StudentDashboard from './components/StudentHome'
 
 export function Home() {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [activeItem, setActiveItem] = useState('Home')
 
   if (user?.roleId === 2 || user?.roleId === 3) {
@@ -19,7 +20,7 @@ export function Home() {
         {activeItem === 'Home' ? (
           <StudentDashboard
             username={user?.username || ''}
-            onSelectExercise={() => {}}
+            onSelectExercise={(exerciseId) => navigate(`/editor/${exerciseId}`)}
           />
         ) : (
           <h2>{activeItem}</h2>

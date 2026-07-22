@@ -26,7 +26,7 @@ export class ExercisesService implements OnModuleInit {
   onModuleInit() {
     this.queueEvents = new QueueEvents('code-execution', {
       connection: {
-        host: 'localhost',
+        host: '127.0.0.1',
         port: 6379,
       },
     });
@@ -157,7 +157,7 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      const job = await this.codeQueue.add('execute', {
+      await this.codeQueue.add('execute', {
         activityId: activity.activityId,
         userId: Number(userId),
         exerciseId: Number(exerciseId),
@@ -168,30 +168,13 @@ export class ExercisesService implements OnModuleInit {
         hintUsed,
       });
 
-      // รอให้การรันในคิวและ Gemini ประเมินผลเสร็จสิ้น
-      await job.waitUntilFinished(this.queueEvents);
-
-      // ดึงข้อมูลผลลัพธ์ที่ประมวลผลเสร็จแล้ว
-      const updatedActivity = await this.prisma.activity.findUnique({
-        where: { activityId: activity.activityId },
-      });
-
-      if (!updatedActivity) {
-        throw new HttpException('Activity log not found after execution', HttpStatus.NOT_FOUND);
-      }
-
+      // คืนค่า activityId กลับไปให้ Frontend ทันที (ไม่ต้องรอ job ทำงานเสร็จ)
+      // เพื่อให้ Frontend นำ activityId ไป Poll ดูสถานะได้ทันทีโดยไม่ค้างรอ HTTP Response
       return {
         success: true,
-        activityId: updatedActivity.activityId,
-        eventType: updatedActivity.eventType,
-        
-        // ฟิลด์ผลลัพธ์ตามที่ต้องการ
-        status: updatedActivity.status === 'SUCCESS' ? 'success' : updatedActivity.status === 'PENDING' ? 'pending' : 'error',
-        score: updatedActivity.score,
-        runcount: updatedActivity.runCount,
-        hintused: updatedActivity.hintUsed,
-        exception_message: updatedActivity.exceptionMessage,
-        ai_feedback: updatedActivity.aiFeedback,
+        activityId: activity.activityId,
+        eventType: activity.eventType,
+        status: 'pending',
       };
     } catch (error) {
       throw new HttpException(
@@ -257,8 +240,19 @@ export class ExercisesService implements OnModuleInit {
         exercise,
       );
 
+      // 1. บันทึกผลลัพธ์จาก Docker (stdout/stderr) ทันที (ยังคง status = PENDING เพื่อให้ Frontend ยังคง Poll ต่อจนกว่า Gemini จะเสร็จ)
+      const outputMsg = runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : 'โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)';
+      await this.prisma.activity.update({
+        where: { activityId },
+        data: {
+          exceptionMessage: outputMsg,
+        },
+      });
+
+      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemini API
       let geminiResponse;
       try {
+        console.log(`[Gemini API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
         geminiResponse = await firstValueFrom(
           this.httpService.post(
             geminiUrl,
@@ -269,7 +263,7 @@ export class ExercisesService implements OnModuleInit {
       } catch (apiError) {
         console.error(
           'Primary model call failed:',
-          apiError.response?.data?.error?.message || apiError.message,
+          apiError.response?.data?.error?.message || apiError.response?.data || apiError.message,
         );
         const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
         try {
@@ -282,36 +276,42 @@ export class ExercisesService implements OnModuleInit {
           );
         } catch (fallbackError) {
           console.error(
-            '❌ Fallback model call failed:',
-            fallbackError.response?.data?.error?.message ||
-              fallbackError.message,
-          );
-          throw new Error(
-            `Gemini grading pipeline failed: [Primary: ${apiError.response?.data?.error?.message || apiError.message}] [Fallback: ${fallbackError.response?.data?.error?.message || fallbackError.message}]`,
+            'Fallback model call failed:',
+            fallbackError.response?.data?.error?.message || fallbackError.response?.data || fallbackError.message,
           );
         }
       }
 
-      const candidates = geminiResponse.data?.candidates;
-      if (!candidates || candidates.length === 0) {
-        throw new Error('Gemini returned no candidates response');
-      }
+      // 3. เมื่อ Gemini ตอบกลับมา บันทึกคะแนนและคำแนะนำ แล้วปรับ status เป็น SUCCESS
+      let aiReview = {
+        score: runResult.status === 'Accepted' ? 100 : 0,
+        exception_message: outputMsg,
+        ai_feedback: runResult.status === 'Accepted'
+          ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้ว'
+          : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง',
+      };
 
-      const aiText = candidates[0].content.parts[0].text;
-      const defaultScore = runResult.status === 'Accepted' ? 10 : 0;
-      const aiReview = this.parseAiResponse(
-        aiText,
-        defaultScore,
-        event_type,
-        run_count,
-      );
+      const aiText = geminiResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (aiText) {
+        const defaultScore = runResult.status === 'Accepted' ? 100 : 0;
+        const parsed = this.parseAiResponse(
+          aiText,
+          defaultScore,
+          event_type,
+          run_count,
+        );
+        aiReview = {
+          score: parsed.score,
+          exception_message: parsed.exception_message ?? outputMsg,
+          ai_feedback: parsed.ai_feedback ?? aiReview.ai_feedback,
+        };
+      }
 
       await this.prisma.activity.update({
         where: { activityId },
         data: {
           score: aiReview.score,
-          exceptionMessage:
-            aiReview.exception_message ?? (runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : null),
+          exceptionMessage: aiReview.exception_message,
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
         },
@@ -485,7 +485,7 @@ export class ExercisesService implements OnModuleInit {
 
       const results = await Promise.all(
         levels.map(async (lvl) => {
-          const sessions = await (this.prisma.session as any).findMany({
+          const sessions = await this.prisma.session.findMany({
             where: { targetLevel: lvl, status: 'active' },
             include: { sessionExercises: true },
           });
@@ -531,7 +531,7 @@ export class ExercisesService implements OnModuleInit {
   }
 
   async getLevelSessions(level: number, userId: number = 1) {
-    const sessions = await (this.prisma.session as any).findMany({
+    const sessions = await this.prisma.session.findMany({
       where: { targetLevel: level, status: 'active' },
       orderBy: { sessionId: 'asc' },
       include: {

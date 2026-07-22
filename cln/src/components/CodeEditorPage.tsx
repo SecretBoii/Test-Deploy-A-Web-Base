@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
 import { WorkspaceHeader } from './CodeWorkspace/WorkspaceHeader'
 import { CodeEditor } from './CodeWorkspace/CodeEditor'
@@ -6,20 +6,36 @@ import { ConsoleOutput } from './CodeWorkspace/ConsoleOutput'
 import { GeminiFeedback } from './CodeWorkspace/GeminiFeedback'
 import { ExerciseHint } from './CodeWorkspace/ExerciseHint'
 import { apiClient } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 interface CodeEditorPageProps {
   exerciseId?: number
 }
 
 export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
+  const { user } = useAuth()
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
   const [geminiResponse, setGeminiResponse] = useState('')
   const [score, setScore] = useState<number | null>(null)
   const [runCount, setRunCount] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // ทำความสะอาด Interval เมื่อ Component ถูกถอดออก (unmount) ป้องกัน Memory Leak
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current)
+      }
+    }
+  }, [])
 
   const executeAndPoll = async (endpoint: '/exercises/run' | '/exercises/submit') => {
+    // ล้าง Interval เดิมหากยังมีอยู่
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current)
+    }
     setIsRunning(true)
     setOutput('🚀 กำลังรันโค้ดและส่งเข้า Queue...')
     setGeminiResponse('🤖 Gemini กำลังเตรียมวิเคราะห์โค้ดและคำนวณคะแนน...')
@@ -28,7 +44,7 @@ export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
     try {
       // 1. ส่งโค้ดไปยัง Backend
       const res = await apiClient.post(endpoint, {
-        userId: '1',
+        userId: user?.userId ? String(user.userId) : '1',
         exerciseId: String(exerciseId),
         sourceCode: code,
         hintUsed: false,
@@ -43,22 +59,29 @@ export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
 
       // 2. Poll สถานะจาก Backend (/exercises/status/:activityId)
       let attempts = 0
-      const maxAttempts = 25
+      const maxAttempts = 60
 
-      const interval = setInterval(async () => {
+      pollIntervalRef.current = setInterval(async () => {
         attempts++
         try {
           const statusRes = await apiClient.get(`/exercises/status/${activityId}`)
           const data = statusRes.data
 
-          if (data.status === 'SUCCESS' || data.status === 'FAILED') {
-            clearInterval(interval)
+          // แสดงผล Console Output ทันทีที่มีผลลัพธ์จาก Docker (แม้ Gemini จะยังวิเคราะห์ไม่เสร็จ)
+          if (data.exceptionMessage) {
+            setOutput(data.exceptionMessage)
+          }
+
+          const isDone = String(data.status || data.rawStatus).toLowerCase() !== 'pending'
+
+          if (isDone) {
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current)
+              pollIntervalRef.current = null
+            }
             setIsRunning(false)
 
-            // แสดงผล Result (stdout) หรือ Exception (stderr) ใน Console Output
-            if (data.exceptionMessage) {
-              setOutput(data.exceptionMessage)
-            } else {
+            if (!data.exceptionMessage) {
               setOutput('โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)')
             }
 
@@ -79,7 +102,10 @@ export function CodeEditorPage({ exerciseId = 101 }: CodeEditorPageProps) {
               setGeminiResponse('Gemini ประมวลผลเสร็จสิ้นเรียบร้อยแล้ว')
             }
           } else if (attempts >= maxAttempts) {
-            clearInterval(interval)
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current)
+              pollIntervalRef.current = null
+            }
             setIsRunning(false)
             setOutput('⚠️ การประมวลผลใช้เวลานานเกินกำหนด (Timeout)')
             setGeminiResponse('ไม่สามารถรับข้อมูลจาก Gemini ได้ในขณะนี้')
