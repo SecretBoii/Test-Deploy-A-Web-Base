@@ -162,6 +162,13 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
+      const inputMap: Record<number, string> = {
+        101: '5\n10\n',
+        102: '1\n2\n0\n',
+      }
+
+      const testInputs = inputMap[Number(exerciseId)] ?? '5\n10\n15\n20\nstudent\n';
+
       await this.codeQueue.add('execute', {
         activityId: activity.activityId,
         userId: Number(userId),
@@ -171,6 +178,7 @@ export class ExercisesService implements OnModuleInit {
         event_type,
         run_count,
         hintUsed,
+        testInput: testInputs,
       });
 
       // คืนค่า activityId กลับไปให้ Frontend ทันที (ไม่ต้องรอ job ทำงานเสร็จ)
