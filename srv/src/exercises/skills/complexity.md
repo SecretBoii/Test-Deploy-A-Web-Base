@@ -1,4 +1,4 @@
-### ⚡ Complexity & Performance Guidelines
+### Complexity & Performance Guidelines
 
 Analyze the runtime efficiency and spatial characteristics of the student's code using computational and logic metrics:
 

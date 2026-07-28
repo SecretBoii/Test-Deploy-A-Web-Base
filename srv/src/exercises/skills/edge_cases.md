@@ -1,4 +1,4 @@
-### 🧩 Edge Case Resiliency Guidelines
+### Edge Case Resiliency Guidelines
 
 Evaluate how robustly the student's code handles boundary inputs and potential break cases:
 

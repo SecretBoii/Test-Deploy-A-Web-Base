@@ -1,4 +1,4 @@
-### 🎯 Adaptive Hint Guidelines
+### Adaptive Hint Guidelines
 
 Scale the granularity of the feedback/hints provided based on the student's current effort (`run_count`):
 

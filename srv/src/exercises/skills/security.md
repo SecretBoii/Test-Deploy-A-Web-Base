@@ -1,4 +1,4 @@
-### 🛡️ Security Check Guidelines
+### Security Check Guidelines
 
 Analyze the student's Python source code for security vulnerabilities, malicious constructs, or attempts to bypass sandbox restrictions:
 

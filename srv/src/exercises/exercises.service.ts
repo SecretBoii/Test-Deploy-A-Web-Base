@@ -241,11 +241,10 @@ export class ExercisesService implements OnModuleInit {
         );
       }
 
-      const apiKey = process.env.GEMINI_API_KEY;
-      const model = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1/models/${model}:generateContent?key=${apiKey}`;
-
-      const prompt = this.buildGeminiPrompt(
+      const apiKey = process.env.GEMMA_PSU;
+      const model = process.env.GEMMA_MODEL || 'PSU-LLM/psu-gemma';
+ const gemmaUrl = process.env.GEMMA_API_URL || 'https://ai.psu.blue/v1/chat/completions';
+      const prompt = this.buildGemmaPrompt(
         sourceCode,
         runResult,
         event_type,
@@ -253,7 +252,7 @@ export class ExercisesService implements OnModuleInit {
         exercise,
       );
 
-      // 1. บันทึกผลลัพธ์จาก Docker (stdout/stderr) ทันที (ยังคง status = PENDING เพื่อให้ Frontend ยังคง Poll ต่อจนกว่า Gemini จะเสร็จ)
+      // 1. บันทึกผลลัพธ์จาก Docker (stdout/stderr) ทันที (ยังคง status = PENDING เพื่อให้ Frontend ยังคง Poll ต่อจนกว่า Gemma จะเสร็จ)
       const outputMsg = runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : 'โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)';
       await this.prisma.activity.update({
         where: { activityId },
@@ -262,43 +261,41 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemini API
-      let geminiResponse;
+      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API เท่านั้น
+      let gemmaResponse;
       try {
-        console.log(`[Gemini API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
-        geminiResponse = await firstValueFrom(
+        console.log(`[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
+        gemmaResponse = await firstValueFrom(
           this.httpService.post(
-            geminiUrl,
-            { contents: [{ parts: [{ text: prompt }] }] },
-            { headers: { 'Content-Type': 'application/json' } },
+            gemmaUrl,
+            {
+              model: model,
+              messages: [{ role: 'user', content: prompt }],
+              stream: false,
+            },
+            {
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+              },
+            },
           ),
         );
       } catch (apiError) {
         console.error(
-          'Primary model call failed:',
+          'Gemma model call failed:',
           apiError.response?.data?.error?.message || apiError.response?.data || apiError.message,
         );
-
-        const fallbackModel = model === 'gemini-2.0-flash' ? 'gemini-2.0-flash-lite' : 'gemini-2.0-flash';
-        const fallbackUrl = `https://generativelanguage.googleapis.com/v1/models/${fallbackModel}:generateContent?key=${apiKey}`;
-        console.log(`[Gemini API] Trying fallback model: ${fallbackModel}`);
-        try {
-          geminiResponse = await firstValueFrom(
-            this.httpService.post(
-              fallbackUrl,
-              { contents: [{ parts: [{ text: prompt }] }] },
-              { headers: { 'Content-Type': 'application/json' } },
-            ),
-          );
-        } catch (fallbackError) {
-          console.error(
-            'Fallback model call failed:',
-            fallbackError.response?.data?.error?.message || fallbackError.response?.data || fallbackError.message,
-          );
-        }
       }
 
-      // 3. เมื่อ Gemini ตอบกลับมา บันทึกคะแนนและคำแนะนำ แล้วปรับ status เป็น SUCCESS
+      // 3. เมื่อ Gemma ตอบกลับมา บันทึกคะแนนและคำแนะนำ แล้วปรับ status เป็น SUCCESS
+      const aiText = gemmaResponse?.data?.choices?.[0]?.message?.content;
+      
+      // ป้องกันการให้คะแนน 100 แบบสุ่มสี่สุ่มห้า หาก API ยิงไม่ผ่าน
+      if (!aiText) {
+        throw new Error('AI Grading response is empty or Gemma API call failed.');
+      }
+
       let aiReview = {
         score: runResult.status === 'Accepted' ? 100 : 0,
         exception_message: outputMsg,
@@ -307,21 +304,19 @@ export class ExercisesService implements OnModuleInit {
           : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง',
       };
 
-      const aiText = geminiResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (aiText) {
-        const defaultScore = runResult.status === 'Accepted' ? 100 : 0;
-        const parsed = this.parseAiResponse(
-          aiText,
-          defaultScore,
-          event_type,
-          run_count,
-        );
-        aiReview = {
-          score: parsed.score,
-          exception_message: parsed.exception_message ?? outputMsg,
-          ai_feedback: parsed.ai_feedback ?? aiReview.ai_feedback,
-        };
-      }
+      const defaultScore = runResult.status === 'Accepted' ? 100 : 0;
+      const parsed = this.parseAiResponse(
+        aiText,
+        defaultScore,
+        event_type,
+        run_count,
+      );
+      aiReview = {
+        score: parsed.score,
+        exception_message: parsed.exception_message ?? outputMsg,
+        ai_feedback: parsed.ai_feedback ?? aiReview.ai_feedback,
+      };
+
 
       const finalScore = runResult.status === 'Accepted' ? aiReview.score : 0;
 
@@ -428,7 +423,7 @@ export class ExercisesService implements OnModuleInit {
     }
   }
 
-  private buildGeminiPrompt(
+  private buildGemmaPrompt(
     sourceCode: string,
     runResult: { status: string; stdout: string; stderr: string },
     event_type: string,

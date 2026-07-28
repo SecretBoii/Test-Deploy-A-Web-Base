@@ -1,4 +1,4 @@
-### 🧹 Coding Convention & PEP 8 Guidelines
+### Coding Convention & PEP 8 Guidelines
 
 Evaluate the structure and readability of the student's Python code following Python's style guide conventions:
 
