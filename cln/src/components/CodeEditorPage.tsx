@@ -3,7 +3,7 @@ import { Box } from '@mui/material'
 import { WorkspaceHeader } from './CodeWorkspace/WorkspaceHeader'
 import { CodeEditor } from './CodeWorkspace/CodeEditor'
 import { ConsoleOutput } from './CodeWorkspace/ConsoleOutput'
-import { GeminiFeedback } from './CodeWorkspace/GeminiFeedback'
+import { GemmaFeedback } from './CodeWorkspace/GemmaFeedback'
 import { ExerciseHint } from './CodeWorkspace/ExerciseHint'
 import { apiClient } from '../api/client'
 import { useAuth } from '../context/AuthContext'
@@ -17,7 +17,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const { user } = useAuth()
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
-  const [geminiResponse, setGeminiResponse] = useState('')
+  const [gemmaResponse, setGemmaResponse] = useState('')
   const [score, setScore] = useState<number | null>(null)
   const [runCount, setRunCount] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
@@ -38,8 +38,8 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
       clearInterval(pollIntervalRef.current)
     }
     setIsRunning(true)
-    setOutput('🚀 กำลังรันโค้ดและส่งเข้า Queue...')
-    setGeminiResponse('🤖 Gemini กำลังเตรียมวิเคราะห์โค้ดและคำนวณคะแนน...')
+    setOutput('กำลังรันโค้ดและส่งเข้า Queue...')
+    setGemmaResponse('Gemma กำลังเตรียมวิเคราะห์โค้ดและคำนวณคะแนน...')
     setScore(null)
 
     try {
@@ -57,7 +57,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         throw new Error('ไม่ได้รับ Activity ID จากระบบ')
       }
 
-      setOutput('⏳ โค้ดกำลังรันใน Sandbox และรอผลลัพธ์จาก Gemini...')
+      setOutput('โค้ดกำลังรันใน Sandbox และรอผลลัพธ์จาก Gemma...')
 
       // 2. Poll สถานะจาก Backend (/exercises/status/:activityId)
       let attempts = 0
@@ -69,7 +69,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
           const statusRes = await apiClient.get(`/exercises/status/${activityId}`)
           const data = statusRes.data
 
-          // แสดงผล Console Output ทันทีที่มีผลลัพธ์จาก Docker (แม้ Gemini จะยังวิเคราะห์ไม่เสร็จ)
+          // แสดงผล Console Output ทันทีที่มีผลลัพธ์จาก Docker (แม้ Gemma จะยังวิเคราะห์ไม่เสร็จ)
           if (data.exceptionMessage) {
             setOutput(data.exceptionMessage)
           }
@@ -97,11 +97,11 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
               setRunCount(data.runCount)
             }
 
-            // แสดงผล Gemini Feedback
+            // แสดงผล Gemma Feedback
             if (data.aiFeedback) {
-              setGeminiResponse(data.aiFeedback)
+              setGemmaResponse(data.aiFeedback)
             } else {
-              setGeminiResponse('Gemini ประมวลผลเสร็จสิ้นเรียบร้อยแล้ว')
+              setGemmaResponse('Gemma ประมวลผลเสร็จสิ้นเรียบร้อยแล้ว')
             }
           } else if (attempts >= maxAttempts) {
             if (pollIntervalRef.current) {
@@ -109,8 +109,8 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
               pollIntervalRef.current = null
             }
             setIsRunning(false)
-            setOutput('⚠️ การประมวลผลใช้เวลานานเกินกำหนด (Timeout)')
-            setGeminiResponse('ไม่สามารถรับข้อมูลจาก Gemini ได้ในขณะนี้')
+            setOutput('การประมวลผลใช้เวลานานเกินกำหนด (Timeout)')
+            setGemmaResponse('ไม่สามารถรับข้อมูลจาก Gemma ได้ในขณะนี้')
           }
         } catch (pollErr) {
           console.error('Polling status error:', pollErr)
@@ -119,7 +119,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
     } catch (err: any) {
       setIsRunning(false)
       setOutput(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการรันโค้ด')
-      setGeminiResponse('เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI')
+      setGemmaResponse('เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI')
     }
   }
 
@@ -139,11 +139,11 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         {/* ตัว Editor เขียนโค้ด (ฝั่งซ้าย) */}
         <CodeEditor code={code} onChange={setCode} />
 
-        {/* ฝั่งขวา: คอนโซลแสดงผลลัพธ์, คำใบ้โจทย์ และข้อเสนอแนะ Gemini */}
+        {/* ฝั่งขวา: คอนโซลแสดงผลลัพธ์, คำใบ้โจทย์ และข้อเสนอแนะ Gemma */}
         <Box sx={{ flex: 0.8, display: 'flex', flexDirection: 'column', gap: 2, minWidth: '320px', minHeight: 0 }}>
           <ExerciseHint exerciseId={exerciseId} />
           <ConsoleOutput output={output} />
-          <GeminiFeedback response={geminiResponse} score={score} />
+          <GemmaFeedback response={gemmaResponse} score={score} />
         </Box>
       </Box>
     </Box>

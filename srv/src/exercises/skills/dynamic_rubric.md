@@ -1,4 +1,4 @@
-### 🎯 Dynamic Skill & Rubric Guidelines
+### Dynamic Skill & Rubric Guidelines
 
 Evaluate the student's code strictly against the specific learning objectives and criteria defined for this particular exercise:
 

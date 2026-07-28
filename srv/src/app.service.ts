@@ -3,6 +3,6 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class AppService {
   getHello(): string {
-    return 'Python Autograder Server is Running! 🚀';
+    return 'Python Autograder Server is Running!';
   }
 }
