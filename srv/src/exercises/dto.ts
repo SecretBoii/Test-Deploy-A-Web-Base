@@ -1,13 +1,11 @@
-import { IsNotEmpty, IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsString, IsBoolean, IsOptional, IsInt } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class SubmitExerciseDto {
-  @IsNotEmpty({ message: 'userId' })
-  @IsString()
-  userId: string;
-
   @IsNotEmpty({ message: 'exerciseId' })
-  @IsString()
-  exerciseId: string;
+  @IsInt()
+  @Type(() => Number)
+  exerciseId: number;
 
   @IsNotEmpty({ message: 'sourceCode' })
   @IsString()
@@ -18,6 +16,7 @@ export class SubmitExerciseDto {
   hintUsed: boolean;
 
   @IsOptional()
-  @IsString()
-  sessionId?: string;
+  @IsInt()
+  @Type(() => Number)
+  sessionId?: number;
 }

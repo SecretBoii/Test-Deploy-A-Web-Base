@@ -3,7 +3,12 @@ import {
   OnModuleInit,
   HttpException,
   HttpStatus,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  InternalServerErrorException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
@@ -14,6 +19,7 @@ import * as path from 'path';
 
 @Injectable()
 export class ExercisesService implements OnModuleInit {
+  private readonly logger = new Logger(ExercisesService.name);
   private queueEvents: QueueEvents;
   private skillsGuideline = new Map<string, string>();
 
@@ -21,13 +27,14 @@ export class ExercisesService implements OnModuleInit {
     private readonly httpService: HttpService,
     @InjectQueue('code-execution') private readonly codeQueue: Queue,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
 
   onModuleInit() {
     this.queueEvents = new QueueEvents('code-execution', {
       connection: {
-        host: '127.0.0.1',
-        port: 6379,
+        host: this.configService.get<string>('REDIS_HOST') || '127.0.0.1',
+        port: this.configService.get<number>('REDIS_PORT') || 6379,
       },
     });
 
@@ -51,14 +58,14 @@ export class ExercisesService implements OnModuleInit {
       }
 
       if (!skillsDir) {
-        console.warn(
+        this.logger.warn(
           '[Skills Loader] ไม่พบโฟลเดอร์เกณฑ์การตรวจในพิกัดใดๆ:',
           possiblePaths,
         );
         return;
       }
 
-      console.log(
+      this.logger.log(
         `[Skills Loader] กำลังโหลดไฟล์เกณฑ์การตรวจจากพิกัด: ${skillsDir}`,
       );
 
@@ -69,16 +76,16 @@ export class ExercisesService implements OnModuleInit {
           const content = fs.readFileSync(filePath, 'utf-8');
           const skillName = path.basename(file, '.md');
           this.skillsGuideline.set(skillName, content);
-          console.log(
+          this.logger.log(
             `[Skills Loader] โหลดสำเร็จ: ${file} (${content.length} ตัวอักษร)`,
           );
         }
       }
-      console.log(
+      this.logger.log(
         `[Skills Loader] โหลดเกณฑ์ทั้งหมดเสร็จสิ้น! จำนวน: ${this.skillsGuideline.size} รายการ`,
       );
     } catch (error) {
-      console.error(`[Skills Loader] โหลดขัดข้อง:`, error.message);
+      this.logger.error(`[Skills Loader] โหลดขัดข้อง:`, error.message);
     }
   }
 
@@ -101,55 +108,55 @@ export class ExercisesService implements OnModuleInit {
   async getExerciseById(exerciseId: number | string) {
     const id = Number(exerciseId);
     if (isNaN(id)) {
-      throw new HttpException('Invalid exercise ID', HttpStatus.BAD_REQUEST);
+      throw new BadRequestException('Invalid exercise ID');
     }
     const exercise = await this.prisma.exercise.findUnique({
       where: { exerciseId: id },
     });
     if (!exercise) {
-      throw new HttpException('Exercise not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Exercise not found');
     }
     return exercise;
   }
 
   async submitExercise(
-    userId: string,
-    exerciseId: string,
+    userId: number,
+    exerciseId: number,
     sourceCode: string,
     event_type: string,
     hintUsed: boolean,
-    sessionIdParam?: String ,
+    sessionIdParam?: number,
   ) {
     try {
       const exercise = await this.prisma.exercise.findUnique({
-        where: { exerciseId: Number(exerciseId) },
+        where: { exerciseId },
       });
       if (!exercise) {
-        throw new HttpException('Exercise not found', HttpStatus.NOT_FOUND);
+        throw new NotFoundException('Exercise not found');
       }
 
       const previousRuns = await this.prisma.activity.count({
         where: {
-          userId: Number(userId),
-          exerciseId: Number(exerciseId),
+          userId,
+          exerciseId,
           eventType: 'run',
         },
       });
       const run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
 
-      let sessionId = sessionIdParam ? Number(sessionIdParam) : 1;
+      let sessionId = sessionIdParam ? sessionIdParam : 1;
 
       if(!sessionIdParam){
-      const sessionExercise = await this.prisma.sessionExercise.findFirst({
-        where: { exerciseId: Number(exerciseId) },
-      });
-      sessionId = sessionExercise?.sessionId ?? 1;
-    }
+        const sessionExercise = await this.prisma.sessionExercise.findFirst({
+          where: { exerciseId },
+        });
+        sessionId = sessionExercise?.sessionId ?? 1;
+      }
 
       const activity = await this.prisma.activity.create({
         data: {
-          userId: Number(userId),
-          exerciseId: Number(exerciseId),
+          userId,
+          exerciseId,
           sessionId: sessionId,
           startedAt: new Date(),
           submittedAt: new Date(),
@@ -167,13 +174,13 @@ export class ExercisesService implements OnModuleInit {
         102: '1\n2\n0\n',
       }
 
-      const testInputs = inputMap[Number(exerciseId)] ?? '5\n10\n15\n20\nstudent\n';
+      const testInputs = inputMap[exerciseId] ?? '5\n10\n15\n20\nstudent\n';
 
       await this.codeQueue.add('execute', {
         activityId: activity.activityId,
-        userId: Number(userId),
-        exerciseId: Number(exerciseId),
-        sessionId: sessionId,
+        userId,
+        exerciseId,
+        sessionId,
         sourceCode,
         event_type,
         run_count,
@@ -190,10 +197,8 @@ export class ExercisesService implements OnModuleInit {
         status: 'pending',
       };
     } catch (error) {
-      throw new HttpException(
-        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
+      throw new InternalServerErrorException(
+        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,      );
     }
   }
 
@@ -202,7 +207,7 @@ export class ExercisesService implements OnModuleInit {
       where: { activityId },
     });
     if (!activity) {
-      throw new HttpException('Activity log not found', HttpStatus.NOT_FOUND);
+      throw new NotFoundException('Activity log not found');
     }
 
     return {
@@ -212,13 +217,9 @@ export class ExercisesService implements OnModuleInit {
       status: activity.status === 'SUCCESS' ? 'success' : activity.status === 'PENDING' ? 'pending' : 'error',
       rawStatus: activity.status,
       score: activity.score,
-      runcount: activity.runCount,
       runCount: activity.runCount,
-      hintused: activity.hintUsed,
       hintUsed: activity.hintUsed,
-      exception_message: activity.exceptionMessage,
       exceptionMessage: activity.exceptionMessage,
-      ai_feedback: activity.aiFeedback,
       aiFeedback: activity.aiFeedback,
     };
   }
@@ -241,9 +242,9 @@ export class ExercisesService implements OnModuleInit {
         );
       }
 
-      const apiKey = process.env.GEMMA_PSU;
-      const model = process.env.GEMMA_MODEL || 'PSU-LLM/psu-gemma';
- const gemmaUrl = process.env.GEMMA_API_URL || 'https://ai.psu.blue/v1/chat/completions';
+      const apiKey = this.configService.get<string>('GEMMA_PSU');
+      const model = this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
+      const gemmaUrl = this.configService.get<string>('GEMMA_API_URL') || 'https://ai.psu.blue/v1/chat/completions';
       const prompt = this.buildGemmaPrompt(
         sourceCode,
         runResult,
@@ -264,7 +265,7 @@ export class ExercisesService implements OnModuleInit {
       // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API เท่านั้น
       let gemmaResponse;
       try {
-        console.log(`[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
+        this.logger.log(`[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
         gemmaResponse = await firstValueFrom(
           this.httpService.post(
             gemmaUrl,
@@ -282,7 +283,7 @@ export class ExercisesService implements OnModuleInit {
           ),
         );
       } catch (apiError) {
-        console.error(
+        this.logger.error(
           'Gemma model call failed:',
           apiError.response?.data?.error?.message || apiError.response?.data || apiError.message,
         );
@@ -330,7 +331,7 @@ export class ExercisesService implements OnModuleInit {
         },
       });
     } catch (error) {
-      console.error(
+      this.logger.error(
         `completeGrading Error for Activity ID ${activityId}:`,
         error.message,
       );
@@ -538,7 +539,7 @@ export class ExercisesService implements OnModuleInit {
 
       return results;
     } catch (err) {
-      console.error('Error in getLevelsSummary:', err);
+      this.logger.error('Error in getLevelsSummary:', err);
       throw err;
     }
   }

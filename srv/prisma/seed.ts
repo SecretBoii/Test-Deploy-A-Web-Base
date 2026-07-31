@@ -75,7 +75,7 @@ async function main() {
     ];
     for (const u of users) {
       const hashedPassword = bcrypt.hashSync(u.password, 10);
-      await prisma.userprofile.upsert({
+      await prisma.userProfile.upsert({
         where: { userId: u.userId },
         update: {
           username: u.username,

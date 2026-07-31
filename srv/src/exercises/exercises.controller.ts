@@ -1,16 +1,21 @@
-import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 import { SubmitExerciseDto } from './dto';
-
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { CurrentUser } from 'src/auth/current-user-decorator';
+@UseGuards(JwtAuthGuard)
 @Controller('exercises')
 export class ExercisesController {
   constructor(private readonly exercisesService: ExercisesService) {}
 
   @Post('run')
-  async runCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
+  async runCode(
+    @Body() submitExerciseDto: SubmitExerciseDto,
+    @CurrentUser() user: any, 
+    ) {
+    const { exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
-      userId,
+      user.userId,
       exerciseId,
       sourceCode,
       'run',
@@ -20,10 +25,13 @@ export class ExercisesController {
   }
 
   @Post('submit')
-  async submitCode(@Body() submitExerciseDto: SubmitExerciseDto) {
-    const { userId, exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
+  async submitCode(
+    @Body() submitExerciseDto: SubmitExerciseDto,
+    @CurrentUser() user: any,
+    ) {
+    const { exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
-      userId,
+      user.userId,
       exerciseId,
       sourceCode,
       'submit',
@@ -44,17 +52,18 @@ export class ExercisesController {
 
   // API ดึงความก้าวหน้าสรุปของแต่ละ Level (ต้องวางก่อน :id)
   @Get('levels-summary')
-  async getLevelsSummary(@Query('userId') userId?: string) {
-    return await this.exercisesService.getLevelsSummary(userId ? Number(userId) : 1);
+  async getLevelsSummary(@CurrentUser() user: any) {
+    return await 
+    this.exercisesService.getLevelsSummary(user.userId);
   }
 
   // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session (ต้องวางก่อน :id)
   @Get('level-sessions/:level')
   async getLevelSessions(
     @Param('level') level: string,
-    @Query('userId') userId?: string,
+    @CurrentUser() user: any,
   ) {
-    return await this.exercisesService.getLevelSessions(Number(level), userId ? Number(userId) : 1);
+    return await this.exercisesService.getLevelSessions(Number(level), user.userId);
   }
 
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
