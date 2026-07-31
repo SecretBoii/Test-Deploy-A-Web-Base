@@ -1,12 +1,14 @@
 import { Box, Button, CircularProgress, Chip } from '@mui/material'
 import { Play, Send, RotateCw } from 'lucide-react'
 import { ExerciseProblem } from './ExerciseProblem'
+import type { ExerciseDetail } from '../CodeEditorPage'
 
 interface WorkspaceHeaderProps {
   isRunning: boolean
   onRun: () => void
   onSubmit?: () => void
-  exerciseId?: number
+  exerciseData: ExerciseDetail | null
+  loading: boolean
   runCount?: number | null
 }
 
@@ -14,12 +16,13 @@ export function WorkspaceHeader({
   isRunning,
   onRun,
   onSubmit,
-  exerciseId = 101,
+  exerciseData,
+  loading,
   runCount,
 }: WorkspaceHeaderProps) {
   return (
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <ExerciseProblem exerciseId={exerciseId} />
+      <ExerciseProblem exerciseData={exerciseData} loading={loading} />
       <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexShrink: 0 }}>
         {typeof runCount === 'number' && (
           <Chip

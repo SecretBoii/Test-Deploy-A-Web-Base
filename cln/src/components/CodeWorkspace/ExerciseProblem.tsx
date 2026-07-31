@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Box, Typography, Chip, Skeleton, Collapse, IconButton, Tooltip } from '@mui/material'
 import { FileCode, Clock, CheckCircle2, BarChart2, ChevronDown, ChevronUp } from 'lucide-react'
-import { apiClient } from '../../api/client'
 
 interface ExerciseProblemProps {
-  exerciseId?: number
+  exerciseData: ExerciseDetail | null
+  loading: boolean
   title?: string
   description?: string
   topic?: string
@@ -21,27 +21,8 @@ interface ExerciseDetail {
   status?: string
 }
 
-export function ExerciseProblem({ exerciseId, title, description, topic }: ExerciseProblemProps) {
-  const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
-  const [loading, setLoading] = useState(false)
+export function ExerciseProblem({ exerciseData, loading, title, description, topic }: ExerciseProblemProps) {
   const [expanded, setExpanded] = useState(false)
-
-  useEffect(() => {
-    if (exerciseId) {
-      setLoading(true)
-      apiClient
-        .get(`/exercises/${exerciseId}`)
-        .then((res) => {
-          setExerciseData(res.data)
-        })
-        .catch((err) => {
-          console.error('Failed to load exercise problem:', err)
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    }
-  }, [exerciseId])
 
   const displayTitle = title || exerciseData?.title || 'โจทย์แบบฝึกหัด Python'
   const displayTopic = topic || exerciseData?.topic

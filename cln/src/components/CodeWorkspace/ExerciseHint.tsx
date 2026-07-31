@@ -1,39 +1,16 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Box, Typography, Button, Collapse, CircularProgress } from '@mui/material'
 import { Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
-import { apiClient } from '../../api/client'
 
 interface ExerciseHintProps {
-  exerciseId?: number
   hint?: string
+  loading: boolean
 }
 
-export function ExerciseHint({ exerciseId, hint }: ExerciseHintProps) {
+export function ExerciseHint({ hint, loading }: ExerciseHintProps) {
   const [showHint, setShowHint] = useState(false)
-  const [dbHint, setDbHint] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (exerciseId) {
-      setLoading(true)
-      setError(null)
-      apiClient
-        .get(`/exercises/${exerciseId}`)
-        .then((res) => {
-          setDbHint(res.data?.hint || null)
-        })
-        .catch((err) => {
-          console.error('Failed to fetch exercise hint:', err)
-          setError('ไม่สามารถดึงคำใบ้จากระบบได้')
-        })
-        .finally(() => {
-          setLoading(false)
-        })
-    }
-  }, [exerciseId])
-
-  const displayHint = hint || dbHint || (error ? error : 'ยังไม่มีคำใบ้สำหรับโจทย์ข้อนี้')
+  const displayHint = hint || 'ยังไม่มีคำใบ้สำหรับโจทย์ข้อนี้'
 
   return (
     <Box
@@ -91,7 +68,7 @@ export function ExerciseHint({ exerciseId, hint }: ExerciseHintProps) {
           ) : (
             <Typography
               sx={{
-                color: error ? '#f87171' : '#fef3c7',
+                color: '#fef3c7',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
                 fontSize: '13px',
                 whiteSpace: 'pre-wrap',

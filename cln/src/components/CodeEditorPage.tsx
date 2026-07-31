@@ -13,6 +13,19 @@ interface CodeEditorPageProps {
   sessionId?: number
 }
 
+export interface ExerciseDetail {
+  exerciseId: number
+  title: string
+  description: string
+  topic: string
+  objective: string
+  difficultyLevel: number
+  expectedTime: number
+  status?: string
+  hint: string
+}
+
+
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
   const { user } = useAuth()
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
@@ -21,8 +34,27 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const [score, setScore] = useState<number | null>(null)
   const [runCount, setRunCount] = useState<number | null>(null)
   const [isRunning, setIsRunning] = useState(false)
+  const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
+  const [loadingExercise, setLoadingExercise] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  useEffect(() => {
+    if (exerciseId) {
+      setLoadingExercise(true)
+      apiClient
+        .get(`/exercises/${exerciseId}`)
+        .then((res) => {
+          setExerciseData(res.data)
+        })
+        .catch((err) => {
+          console.error('Failed to load exercise:', err)
+        })
+        .finally(() => {
+          setLoadingExercise(false)
+        })
+    }
+  }, [exerciseId])
+  
   // ทำความสะอาด Interval เมื่อ Component ถูกถอดออก (unmount) ป้องกัน Memory Leak
   useEffect(() => {
     return () => {
@@ -126,7 +158,8 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '85vh' }}>
       {/* 1. Header Toolbar */}
       <WorkspaceHeader
-        exerciseId={exerciseId}
+        exerciseData={exerciseData}
+        loading={loadingExercise}
         isRunning={isRunning}
         runCount={runCount}
         onRun={() => executeAndPoll('/exercises/run')}
@@ -140,7 +173,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
 
         {/* ฝั่งขวา: คอนโซลแสดงผลลัพธ์, คำใบ้โจทย์ และข้อเสนอแนะ Gemma */}
         <Box sx={{ flex: 0.8, display: 'flex', flexDirection: 'column', gap: 2, minWidth: '320px', minHeight: 0 }}>
-          <ExerciseHint exerciseId={exerciseId} />
+          <ExerciseHint hint={exerciseData?.hint} loading={loadingExercise} />
           <ConsoleOutput output={output} />
           <GemmaFeedback response={gemmaResponse} score={score} />
         </Box>
