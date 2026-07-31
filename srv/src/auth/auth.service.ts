@@ -10,8 +10,8 @@ export class AuthService {
         private jwtService: JwtService, 
     ) {}
 
-    async vallidateUser(username: string, pass: string): Promise<any> {
-        const user = await this.prisma.userprofile.findFirst({
+    async validateUser(username: string, pass: string): Promise<any> {
+        const user = await this.prisma.userProfile.findFirst({
             where: { username },
         });
 

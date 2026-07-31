@@ -10,7 +10,7 @@ datasource db {
 model Role {
   roleId   Int           @id @default(autoincrement()) @map("role_id")
   roleName String        @map("role_name") @db.VarChar(50)
-  users    Userprofile[]
+  users    UserProfile[]
 
   @@map("role")
 }
@@ -20,12 +20,12 @@ model Education {
   university  String        @db.VarChar(100)
   faculty     String        @db.VarChar(100)
   major       String        @db.VarChar(100)
-  users       Userprofile[]
+  users       UserProfile[]
 
   @@map("education")
 }
 
-model Userprofile {
+model UserProfile {
   userId            Int                  @id @default(autoincrement()) @map("user_id")
   username          String               @db.VarChar(100)
   password          String               @db.VarChar(255) // ขยายเป็น 255 รองรับ hash ยาวในอนาคต
@@ -33,7 +33,6 @@ model Userprofile {
   dateOfBirth       DateTime             @map("date_of_birth") @db.Date
   educationId       Int                  @map("education_id")
   roleId            Int                  @map("role_id")
-  image             String?
   registerTimestamp DateTime             @default(now()) @map("register_timestamp") @db.Timestamp(6)
   activities        Activity[]
   userSessions      UserSessionProgress[]
@@ -98,7 +97,7 @@ model UserSessionProgress {
   completedAt DateTime?   @map("completed_at") @db.Timestamp(6)
   updatedAt   DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   session     Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
-  user        Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
+  user        UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([userId, sessionId])
   @@map("user_session_progress")
@@ -122,7 +121,7 @@ model Activity {
   createdAt        DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
   exercise         Exercise    @relation(fields: [exerciseId], references: [exerciseId], onDelete: Cascade, onUpdate: NoAction)
   session          Session     @relation(fields: [sessionId], references: [sessionId], onDelete: Cascade, onUpdate: NoAction)
-  user             Userprofile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
+  user             UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("activity")
 }

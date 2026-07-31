@@ -45,7 +45,6 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
     try {
       // 1. ส่งโค้ดไปยัง Backend
       const res = await apiClient.post(endpoint, {
-        userId: user?.userId ? String(user.userId) : '1',
         exerciseId: String(exerciseId),
         sessionId: sessionId ? String(sessionId) : undefined,
         sourceCode: code,
