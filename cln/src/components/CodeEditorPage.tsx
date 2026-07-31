@@ -6,7 +6,6 @@ import { ConsoleOutput } from './CodeWorkspace/ConsoleOutput'
 import { GemmaFeedback } from './CodeWorkspace/GemmaFeedback'
 import { ExerciseHint } from './CodeWorkspace/ExerciseHint'
 import { apiClient } from '../api/client'
-import { useAuth } from '../context/AuthContext'
 
 interface CodeEditorPageProps {
   exerciseId?: number
@@ -27,7 +26,6 @@ export interface ExerciseDetail {
 
 
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
-  const { user } = useAuth()
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
   const [gemmaResponse, setGemmaResponse] = useState('')
