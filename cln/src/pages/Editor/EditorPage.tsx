@@ -1,6 +1,6 @@
 import { useParams, Navigate, useSearchParams } from 'react-router-dom'
-import { MainLayout } from '../../components/MainLayout'
-import { CodeEditorPage } from '../../components/CodeEditorPage'
+import { MainLayout } from '../../components/Layout/MainLayout'
+import { CodeEditorPage } from '../../components/Shared/CodeEditorPage'
 import { useAuth } from '../../context/AuthContext'
 
 export function EditorPage() {

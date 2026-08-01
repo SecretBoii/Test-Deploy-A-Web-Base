@@ -36,6 +36,7 @@ export function LoginFormFields({
         onChange={(e) => onChangeUsername(e.target.value)}
         autoComplete="off"
         slotProps={{
+          htmlInput: { 'aria-label': 'Username' },
           input: {
             startAdornment: (
               <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
@@ -71,6 +72,7 @@ export function LoginFormFields({
           onChange={(e) => onChangePassword(e.target.value)}
           autoComplete="new-password"
           slotProps={{
+            htmlInput: { 'aria-label': 'Password' },
             input: {
               startAdornment: (
                 <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>

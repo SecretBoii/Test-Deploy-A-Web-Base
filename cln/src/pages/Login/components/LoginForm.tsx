@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 import { LoginFormFields } from './LoginFormFields'
+import { useNavigate } from 'react-router-dom'
 
 interface LoginFormProps {
   username: string
@@ -18,6 +19,8 @@ export function LoginForm({
   onChangePassword,
   onSubmit,
 }: LoginFormProps) {
+  const navigate = useNavigate()
+
   return (
     <Box
       sx={{
@@ -82,8 +85,8 @@ export function LoginForm({
         <Box sx={{ textAlign: 'center', fontSize: '14px', fontWeight: 600, color: '#64748b' }}>
           Don't you have an account?{' '}
           <Box
-            component="a"
-            href="#signup"
+            component="span"
+            onClick={() => navigate('/register')}
             sx={{
               color: '#4f46e5',
               textDecoration: 'none',

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { login } from '../../api'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
-import { LoginMockupPane } from './components/LoginMockupPane'
+import { LoginRegisterMockupPane } from '../../components/Shared/LoginRegisterMockupPane'
 import { LoginForm } from './components/LoginForm'
 
 export function Login() {
@@ -50,7 +50,7 @@ export function Login() {
       }}
     >
       {/* Left Pane - Presentation and Mockup Cards */}
-      <LoginMockupPane />
+      <LoginRegisterMockupPane />
 
       {/* Right Pane - Login Form */}
       <LoginForm

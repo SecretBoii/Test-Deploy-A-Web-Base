@@ -1,7 +1,7 @@
 import { Box } from '@mui/material'
 import { Award, Play, MousePointer } from 'lucide-react'
 
-export function LoginMockupPane() {
+export function LoginRegisterMockupPane() {
   return (
     <Box
       sx={{

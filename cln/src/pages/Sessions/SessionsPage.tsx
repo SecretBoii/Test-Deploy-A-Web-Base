@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from 'react-router-dom'
-import { MainLayout } from '../../components/MainLayout'
+import { MainLayout } from '../../components/Layout/MainLayout'
 import SessionStudent from './SessionStudent'
 import { useAuth } from '../../context/AuthContext'
 
