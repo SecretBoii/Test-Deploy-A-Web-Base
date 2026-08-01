@@ -3,7 +3,7 @@ import { Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { Box } from '@mui/material'
 import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../../context/AuthContext'
 
 interface MainLayoutProps {
   children?: React.ReactNode

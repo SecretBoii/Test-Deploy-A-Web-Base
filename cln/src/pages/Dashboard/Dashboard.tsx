@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { MainLayout } from '../../components/MainLayout'
+import { MainLayout } from '../../components/Layout/MainLayout'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
 import TeacherDashboard from './components/TeacherDashboard'

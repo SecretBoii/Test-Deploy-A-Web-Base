@@ -1,7 +1,7 @@
 import { Box, Button, CircularProgress, Chip } from '@mui/material'
 import { Play, Send, RotateCw } from 'lucide-react'
 import { ExerciseProblem } from './ExerciseProblem'
-import type { ExerciseDetail } from '../CodeEditorPage'
+import type { ExerciseDetail } from '../Shared/CodeEditorPage'
 
 interface WorkspaceHeaderProps {
   isRunning: boolean

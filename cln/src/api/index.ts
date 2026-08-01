@@ -4,3 +4,8 @@ export const login = async (username: string, password: string) => {
   const response = await apiClient.post('/login', { username, password });
   return response.data;
 };
+
+export const register = async (registerData: any) => {
+  const response = await apiClient.post('/register', registerData);
+  return response.data;
+}

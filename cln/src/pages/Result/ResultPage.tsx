@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Box, Typography, Button, CircularProgress, Grid } from '@mui/material'
-import { MainLayout } from '../../components/MainLayout'
+import { MainLayout } from '../../components/Layout/MainLayout'
 import { apiClient } from '../../api/client'
 import { ArrowLeft } from 'lucide-react'
 
@@ -59,17 +59,19 @@ export function ResultPage() {
   useEffect(() => {
     if (!data) return
     let active = true
+    
+    const { targetLevel, sessionId, exerciseId } = data
 
     async function determineNextExercise() {
       try {
-        const res = await apiClient.get(`/exercises/level-sessions/${data.targetLevel}`)
+        const res = await apiClient.get(`/exercises/level-sessions/${targetLevel}`)
         if (!active) return
 
         const sessions = res.data
-        const currentSession = sessions.find((s: any) => s.sessionId === data.sessionId)
+        const currentSession = sessions.find((s: any) => s.sessionId === sessionId)
         if (currentSession) {
           const exercises = currentSession.exercises
-          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === data.exerciseId)
+          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === exerciseId)
           
           if (currentIndex !== -1 && currentIndex + 1 < exercises.length) {
             setNextExerciseId(exercises[currentIndex + 1].exerciseId)

@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { WorkspaceHeader } from './CodeWorkspace/WorkspaceHeader'
-import { CodeEditor } from './CodeWorkspace/CodeEditor'
-import { ConsoleOutput } from './CodeWorkspace/ConsoleOutput'
-import { GemmaFeedback } from './CodeWorkspace/GemmaFeedback'
-import { ExerciseHint } from './CodeWorkspace/ExerciseHint'
-import { apiClient } from '../api/client'
+import { WorkspaceHeader } from '../CodeWorkspace/WorkspaceHeader'
+import { CodeEditor } from '../CodeWorkspace/CodeEditor'
+import { ConsoleOutput } from '../CodeWorkspace/ConsoleOutput'
+import { GemmaFeedback } from '../CodeWorkspace/GemmaFeedback'
+import { ExerciseHint } from '../CodeWorkspace/ExerciseHint'
+import { apiClient } from '../../api/client'
 
 interface CodeEditorPageProps {
   exerciseId?: number
