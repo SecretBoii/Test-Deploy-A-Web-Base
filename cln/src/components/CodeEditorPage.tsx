@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Box } from '@mui/material'
+import { useNavigate } from 'react-router-dom'
 import { WorkspaceHeader } from './CodeWorkspace/WorkspaceHeader'
 import { CodeEditor } from './CodeWorkspace/CodeEditor'
 import { ConsoleOutput } from './CodeWorkspace/ConsoleOutput'
@@ -26,6 +27,7 @@ export interface ExerciseDetail {
 
 
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
+  const navigate = useNavigate();
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
   const [gemmaResponse, setGemmaResponse] = useState('')
@@ -111,6 +113,11 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
               pollIntervalRef.current = null
             }
             setIsRunning(false)
+
+            if (endpoint === '/exercises/submit') {
+              navigate(`/result/${activityId}`)
+              return
+            }
 
             if (!data.exceptionMessage) {
               setOutput('โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)')

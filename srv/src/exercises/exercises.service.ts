@@ -12,10 +12,12 @@ import { ConfigService } from '@nestjs/config';
 import { HttpService } from '@nestjs/axios';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, QueueEvents } from 'bullmq';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, last } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import { session } from 'passport';
+import { SourceCode } from 'eslint';
 
 @Injectable()
 export class ExercisesService implements OnModuleInit {
@@ -153,10 +155,52 @@ export class ExercisesService implements OnModuleInit {
         sessionId = sessionExercise?.sessionId ?? 1;
       }
 
+      if (event_type === 'submit') {
+        const latestRun = await this.prisma.activity.findFirst({
+          where: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            eventType: 'run',
+          },
+          orderBy: {
+            submittedAt: 'desc',
+          },
+        });
+
+        if (!latestRun) {
+          throw new BadRequestException('กรุณากด Run Code เพื่อทดสอบโค้ดและตรวจผลลัพธ์ก่อนส่งคำตอบ');
+        }
+
+        const activity = await this.prisma.activity.create({
+          data: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            sessionId: sessionId,
+            startedAt: new Date(),
+            submittedAt: new Date(),
+            hintUsed: latestRun.hintUsed,
+            answer: latestRun.answer,
+            score: latestRun.score,
+            status: 'SUCCESS',
+            eventType: 'submit',
+            runCount: run_count,
+            exceptionMessage: latestRun.exceptionMessage,
+            aiFeedback: latestRun.aiFeedback,
+          },
+        });
+
+        return {
+          success: true,
+          activityId: activity.activityId,
+          eventType: activity.eventType,
+          status: 'success',
+        };
+      }
+
       const activity = await this.prisma.activity.create({
         data: {
-          userId,
-          exerciseId,
+          userId: Number(userId),
+          exerciseId: Number(exerciseId),
           sessionId: sessionId,
           startedAt: new Date(),
           submittedAt: new Date(),
@@ -168,6 +212,8 @@ export class ExercisesService implements OnModuleInit {
           runCount: run_count,
         },
       });
+
+      
 
       const inputMap: Record<number, string> = {
         101: '5\n10\n',
@@ -205,6 +251,10 @@ export class ExercisesService implements OnModuleInit {
   async getStatus(activityId: number) {
     const activity = await this.prisma.activity.findUnique({
       where: { activityId },
+      include: {
+        exercise: true,
+        session: true,
+      }
     });
     if (!activity) {
       throw new NotFoundException('Activity log not found');
@@ -221,6 +271,12 @@ export class ExercisesService implements OnModuleInit {
       hintUsed: activity.hintUsed,
       exceptionMessage: activity.exceptionMessage,
       aiFeedback: activity.aiFeedback,
+      exerciseId: activity.exerciseId,
+      sessionId: activity.sessionId,
+      sourceCode: activity.answer,
+      exerciseTitle: activity.exercise?.title,
+      exerciseDescription: activity.exercise?.description,
+      targetLevel: activity.session?.targetLevel,
     };
   }
 

@@ -9,6 +9,7 @@ import SessionsPage from './pages/Sessions/SessionsPage.tsx'
 import EditorPage from './pages/Editor/EditorPage.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import ProtectedRoute from './components/ProtectedRoute.tsx'
+import ResultPage from './pages/Result/ResultPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/sessions" element={<SessionsPage />} />
             <Route path="/editor/:exerciseId" element={<EditorPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/result/:activityId" element={<ResultPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
