@@ -24,7 +24,7 @@ export function WorkspaceHeader({
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <ExerciseProblem exerciseData={exerciseData} loading={loading} />
       <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexShrink: 0 }}>
-        {typeof runCount === 'number' && (
+        {typeof runCount === 'number' && runCount > 0 &&(
           <Chip
             icon={<RotateCw size={14} color="#0284c7" />}
             label={`จำนวนครั้งที่รัน: ${runCount}`}

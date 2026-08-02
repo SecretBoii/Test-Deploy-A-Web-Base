@@ -128,6 +128,7 @@ export class ExercisesService implements OnModuleInit {
     event_type: string,
     hintUsed: boolean,
     sessionIdParam?: number,
+    runCountParam?: number,
   ) {
     try {
       const exercise = await this.prisma.exercise.findUnique({
@@ -144,7 +145,9 @@ export class ExercisesService implements OnModuleInit {
           eventType: 'run',
         },
       });
-      const run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
+      
+      let run_count = typeof runCountParam === 'number' ? runCountParam : (event_type === 'run' ? previousRuns + 1 : previousRuns);
+      
 
       let sessionId = sessionIdParam ? sessionIdParam : 1;
 
