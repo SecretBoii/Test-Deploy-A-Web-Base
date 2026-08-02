@@ -5,16 +5,21 @@ import { MainLayout } from '../../components/Layout/MainLayout'
 import { apiClient } from '../../api/client'
 import { ArrowLeft } from 'lucide-react'
 
-// Import subcomponents
+// Import redesigned subcomponents
 import { ScoreSummaryCard } from './components/ScoreSummaryCard'
 import { AiFeedbackCard } from './components/AiFeedbackCard'
 import { ConsoleOutputCard } from './components/ConsoleOutputCard'
 import { CodeReviewEditor } from './components/CodeReviewEditor'
+import { RunResultsCard } from './components/RunResultsCard'
 
 interface ActivityStatus {
   success: boolean
-  score: number
+  activityId: number
+  eventType: string
   status: string
+  score: number
+  runCount: number
+  hintUsed: boolean
   exceptionMessage: string | null
   aiFeedback: string | null
   exerciseId: number
@@ -23,6 +28,8 @@ interface ActivityStatus {
   exerciseTitle: string
   exerciseDescription: string
   targetLevel: number
+  startedAt: string
+  submittedAt: string
 }
 
 export function ResultPage() {
@@ -32,7 +39,6 @@ export function ResultPage() {
   const [loading, setLoading] = useState(true)
   const [nextExerciseId, setNextExerciseId] = useState<number | null>(null)
 
-  // 1. ดึงสถานะของ Activity การตรวจโค้ด
   useEffect(() => {
     let active = true
     async function fetchResult() {
@@ -55,23 +61,20 @@ export function ResultPage() {
     }
   }, [activityId])
 
-  // 2. ดึงข้อมูลรายชื่อข้อใน Session เพื่อคำนวณข้อถัดไป (Next Exercise)
   useEffect(() => {
     if (!data) return
     let active = true
-    
-    const { targetLevel, sessionId, exerciseId } = data
 
     async function determineNextExercise() {
       try {
-        const res = await apiClient.get(`/exercises/level-sessions/${targetLevel}`)
+        const res = await apiClient.get(`/exercises/level-sessions/${data.targetLevel}`)
         if (!active) return
 
         const sessions = res.data
-        const currentSession = sessions.find((s: any) => s.sessionId === sessionId)
+        const currentSession = sessions.find((s: any) => s.sessionId === data.sessionId)
         if (currentSession) {
           const exercises = currentSession.exercises
-          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === exerciseId)
+          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === data.exerciseId)
           
           if (currentIndex !== -1 && currentIndex + 1 < exercises.length) {
             setNextExerciseId(exercises[currentIndex + 1].exerciseId)
@@ -115,17 +118,18 @@ export function ResultPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <Box sx={{ maxWidth: '1000px', margin: '0 auto', p: 1 }}>
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 3, bgcolor: '#f8fafc', minHeight: '90vh' }}>
         
         {/* Header Section */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
             ผลการประเมิน: {data.exerciseTitle}
           </Typography>
           <Button 
             startIcon={<ArrowLeft size={16} />} 
             onClick={() => navigate('/sessions')}
             variant="outlined"
+            sx={{ borderRadius: '8px', textTransform: 'none', borderColor: '#cbd5e1', color: '#64748b' }}
           >
             กลับหน้ารวมบทเรียน
           </Button>
@@ -133,22 +137,36 @@ export function ResultPage() {
 
         {/* Content Layout */}
         <Grid container spacing={3}>
-          {/* Left Column: Score, AI Feedback, Exception message */}
-          <Grid size={{ xs: 12, md: 5 }} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* Left Column: Sidebar Details Card */}
+          <Grid size={{ xs: 12, md: 4 }}>
             <ScoreSummaryCard
               score={data.score}
               isPassed={isPassed}
               exerciseId={data.exerciseId}
               sessionId={data.sessionId}
               nextExerciseId={nextExerciseId}
+              runCount={data.runCount}
+              hintUsed={data.hintUsed}
+              startedAt={data.startedAt}
+              submittedAt={data.submittedAt}
             />
-            <AiFeedbackCard feedback={data.aiFeedback} />
-            <ConsoleOutputCard exceptionMessage={data.exceptionMessage} />
           </Grid>
 
-          {/* Right Column: Submitted Code read-only Monaco Editor */}
-          <Grid size={{ xs: 12, md: 7 }}>
+          {/* Right Column: Run results, code, feedback and exception */}
+          <Grid size={{ xs: 12, md: 8 }} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {/* 1. ผลลัพธ์การรัน (Run Results) */}
+            <RunResultsCard 
+              actualOutput={data.exceptionMessage} 
+            />
+
+            {/* 2. โค้ดที่ส่ง (Monaco Editor) */}
             <CodeReviewEditor sourceCode={data.sourceCode} />
+
+            {/* 3. คำแนะนำจาก AI */}
+            <AiFeedbackCard feedback={data.aiFeedback} />
+
+            {/* 4. Exception Message Toggle */}
+            <ConsoleOutputCard exceptionMessage={data.exceptionMessage} />
           </Grid>
         </Grid>
       </Box>
