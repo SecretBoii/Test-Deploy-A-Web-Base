@@ -535,16 +535,18 @@ export class ExercisesService implements OnModuleInit {
       ====================================================
       CRITICAL INSTRUCTIONS FOR RESPONSE (JSON ONLY):
       Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros.
-      Both "exception_message" and "ai_feedback" MUST be extremely concise, direct, and straight-to-the-point, with no unnecessary explanations or fluff.
       
       - For "exception_message": If a compilation or runtime error occurred, provide only the short name/type of the exception (e.g. "ValueError" or "SyntaxError"). Do not explain the exception. If no error occurred, use null.
-      - For "ai_feedback": Summarize the security, complexity/Big-O, PEP 8 cleanliness, and edge cases in a very brief, direct, and compact manner. Use a maximum of 1-2 short bullet points. Avoid general filler sentences or polite remarks. Keep it under 30 words total.
+      - For "ai_feedback": ให้ตอบเป็นข้อความประโยคภาษาไทยปกติที่เป็นธรรมชาติและกระชับในการแนะนำผู้เรียน (ห้ามตอบเป็นหัวข้อขีดลบภาษาอังกฤษเด็ดขาด)
+        * หากโค้ดยังไม่ผ่านเกณฑ์ หรือทำเงื่อนไขไม่ครบตามโจทย์: ให้ระบุจุดที่บกพร่องตรงๆ โดยขึ้นต้นประโยคทำนองว่า "ยังทำไม่ครบตามโจทย์..." หรือ "ควรปรับปรุงโค้ดส่วน..." แล้วตามด้วยคำแนะนำที่สั้นและกระชับ
+        * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมสั้นๆ และเสนอแนะจุดที่พัฒนาเพิ่มเติมได้ เช่น "โค้ดถูกต้องและทำงานได้ดีครับ แต่ควรเพิ่ม comment เพื่อความอ่านง่ายขึ้น"
+        * ให้ควบคุมความยาวให้อยู่ในช่วง 1-2 ประโยคสั้นๆ กระชับและได้ใจความที่สุด
 
       The response must exactly follow this JSON schema:
       {
         "score": <overall evaluation score as an integer from 0 to 100>,
         "exception_message": "<extremely short exception type or null>",
-        "ai_feedback": "<highly concise, direct, bulleted feedback without fluff (max 30 words)>"
+        "ai_feedback": "<highly concise, friendly Thai feedback sentence (max 30 words)>"
       }
     `;
   }
