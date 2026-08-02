@@ -488,7 +488,7 @@ export class ExercisesService implements OnModuleInit {
     runResult: { status: string; stdout: string; stderr: string },
     event_type: string,
     run_count: number,
-    exercise: { title: string; topic: string; objective: string },
+    exercise: { title: string; description: string; topic: string; objective: string },
   ): string {
     const securityRules = this.getSkillGuideline('security');
     const complexityRules = this.getSkillGuideline('complexity');
@@ -514,6 +514,7 @@ export class ExercisesService implements OnModuleInit {
     return ` 
       Evaluate the student's Python program based on the following information:
       Exercise Title: "${exercise.title}"
+      Exercise Description: "${exercise.description}"
       Topic: "${exercise.topic}"
       Objective/Rubric: "${exercise.objective}"
       
@@ -526,6 +527,7 @@ export class ExercisesService implements OnModuleInit {
       - Error: ${runResult.stderr || 'None'}
 
       Additional rules to evaluate (use these criteria):
+      [Correctness Check] Evaluate the student's code and execution output based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic is completely correct, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch such as printing "Hello Python" or "hello python" instead of "Welcome to Python", or slightly incorrect output format), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and explain in the feedback what is slightly incorrect. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
       [Security Check] ${securityRules}
       [Complexity/Big-O Check] ${complexityRules}
       [PEP 8 Cleanliness Check] ${pep8Rules}
@@ -539,11 +541,12 @@ export class ExercisesService implements OnModuleInit {
       CRITICAL INSTRUCTIONS FOR RESPONSE (JSON ONLY):
       Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros.
       
+      - For "score": <overall evaluation score as an integer from 0 to 100>,
       - For "exception_message": If a compilation or runtime error occurred, provide only the short name/type of the exception (e.g. "ValueError" or "SyntaxError"). Do not explain the exception. If no error occurred, use null.
       - For "ai_feedback": ให้ตอบเป็นข้อความประโยคภาษาไทยปกติที่เป็นธรรมชาติและกระชับในการแนะนำผู้เรียน (ห้ามตอบเป็นหัวข้อขีดลบภาษาอังกฤษเด็ดขาด)
         * หากโค้ดยังไม่ผ่านเกณฑ์ หรือทำเงื่อนไขไม่ครบตามโจทย์: ให้ระบุจุดที่บกพร่องตรงๆ โดยขึ้นต้นประโยคทำนองว่า "ยังทำไม่ครบตามโจทย์..." หรือ "ควรปรับปรุงโค้ดส่วน..." แล้วตามด้วยคำแนะนำที่สั้นและกระชับ
         * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมสั้นๆ และเสนอแนะจุดที่พัฒนาเพิ่มเติมได้ เช่น "โค้ดถูกต้องและทำงานได้ดีครับ แต่ควรเพิ่ม comment เพื่อความอ่านง่ายขึ้น"
-        * ให้ควบคุมความยาวให้อยู่ในช่วง 1-2 ประโยคสั้นๆ กระชับและได้ใจความที่สุด
+        * ให้ควบคุมความยาวใหอยูในช่วง 1-2 ประโยคสั้นๆ กระชับและได้ใจความที่สุด
 
       The response must exactly follow this JSON schema:
       {
