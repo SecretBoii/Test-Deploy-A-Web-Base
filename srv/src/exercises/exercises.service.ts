@@ -583,7 +583,10 @@ export class ExercisesService implements OnModuleInit {
               where: {
                 userId: userId,
                 exerciseId: { in: exerciseIds },
-                score: { gt: 0 },
+                OR: [
+                  { eventType: 'submit' },
+                  { score: { gt: 0 } },
+                ],
               },
               select: { exerciseId: true },
               distinct: ['exerciseId'],
@@ -621,7 +624,13 @@ export class ExercisesService implements OnModuleInit {
     });
 
     const userActivities = await this.prisma.activity.findMany({
-      where: { userId: userId, score: { gt: 0 } },
+      where: {
+        userId: userId,
+        OR: [
+          { eventType: 'submit' },
+          { score: { gt: 0 } },
+        ],
+      },
       select: { exerciseId: true },
     });
     const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
