@@ -32,12 +32,18 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const [output, setOutput] = useState('')
   const [gemmaResponse, setGemmaResponse] = useState('')
   const [score, setScore] = useState<number | null>(null)
-  const [runCount, setRunCount] = useState<number | null>(null)
+  const [runCount, setRunCount] = useState<number>(0)
   const [isRunning, setIsRunning] = useState(false)
   const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
   const [loadingExercise, setLoadingExercise] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  useEffect(() => {
+    const sessionKey = `run_count_exercise_${exerciseId}`
+    const storedVal = sessionStorage.getItem(sessionKey)
+    setRunCount(storedVal ? parseInt(storedVal, 10) : 0)
+  }, [exerciseId])
+  
   useEffect(() => {
     if (exerciseId) {
       setLoadingExercise(true)
@@ -74,6 +80,14 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
     setGemmaResponse('Gemma กำลังเตรียมวิเคราะห์โค้ดและคำนวณคะแนน...')
     setScore(null)
 
+    let nextRunCount = runCount
+    if (endpoint === '/exercises/run') {
+      nextRunCount = runCount + 1
+      setRunCount(nextRunCount)
+    }
+
+    sessionStorage.setItem(`run_count_exercise_${exerciseId}`, String(nextRunCount));
+
     try {
       // 1. ส่งโค้ดไปยัง Backend
       const res = await apiClient.post(endpoint, {
@@ -81,6 +95,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         sessionId: sessionId ? String(sessionId) : undefined,
         sourceCode: code,
         hintUsed: false,
+        runCount: nextRunCount,
       })
 
       const activityId = res.data.activityId
@@ -115,6 +130,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
             setIsRunning(false)
 
             if (endpoint === '/exercises/submit') {
+              sessionStorage.removeItem(`run_count_exercise_${exerciseId}`);
               navigate(`/result/${activityId}`)
               return
             }

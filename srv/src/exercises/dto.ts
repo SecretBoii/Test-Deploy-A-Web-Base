@@ -19,4 +19,9 @@ export class SubmitExerciseDto {
   @IsInt()
   @Type(() => Number)
   sessionId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  runCount?: number;
 }

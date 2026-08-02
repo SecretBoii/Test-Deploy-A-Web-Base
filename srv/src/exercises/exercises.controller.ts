@@ -13,7 +13,7 @@ export class ExercisesController {
     @Body() submitExerciseDto: SubmitExerciseDto,
     @CurrentUser() user: any, 
     ) {
-    const { exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
+    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
       user.userId,
       exerciseId,
@@ -21,6 +21,7 @@ export class ExercisesController {
       'run',
       hintUsed,
       sessionId,
+      runCount,
     );
   }
 
@@ -29,7 +30,7 @@ export class ExercisesController {
     @Body() submitExerciseDto: SubmitExerciseDto,
     @CurrentUser() user: any,
     ) {
-    const { exerciseId, sourceCode, hintUsed, sessionId } = submitExerciseDto;
+    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } = submitExerciseDto;
     return await this.exercisesService.submitExercise(
       user.userId,
       exerciseId,
@@ -37,6 +38,7 @@ export class ExercisesController {
       'submit',
       hintUsed,
       sessionId,
+      runCount,
     );
   }
 
