@@ -607,6 +607,8 @@ export class ExercisesService implements OnModuleInit {
             totalHours,
             totalExercises,
             completedExercises,
+            sessionName: sessions.length > 0 ? sessions[0].sessionName : undefined,
+            sessionObjective: sessions.length > 0 ? sessions[0].sessionObjective : undefined,
           };
         }),
       );
