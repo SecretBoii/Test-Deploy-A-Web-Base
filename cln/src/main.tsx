@@ -11,6 +11,7 @@ import EditorPage from './pages/Editor/EditorPage.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import ProtectedRoute from './components/Auth/ProtectedRoute.tsx'
 import ResultPage from './pages/Result/ResultPage.tsx'
+import HistoryPage from './pages/History/HistoryPage.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -25,6 +26,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/editor/:exerciseId" element={<EditorPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/result/:activityId" element={<ResultPage />} />
+            <Route path="/history" element={<HistoryPage />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

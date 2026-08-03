@@ -15,6 +15,7 @@ const MENU_ROUTE_MAP: Record<string, string> = {
   Home: '/home',
   Dashboard: '/dashboard',
   Sessions: '/sessions',
+  History: '/history',
 }
 
 export function MainLayout({ children, activeItem }: MainLayoutProps) {
@@ -47,6 +48,7 @@ export function MainLayout({ children, activeItem }: MainLayoutProps) {
   if (!currentActiveItem) {
     if (location.pathname.startsWith('/sessions')) currentActiveItem = 'Sessions'
     else if (location.pathname.startsWith('/dashboard')) currentActiveItem = 'Dashboard'
+    else if (location.pathname.startsWith('/history')) currentActiveItem = 'History'
     else currentActiveItem = 'Home'
   }
 

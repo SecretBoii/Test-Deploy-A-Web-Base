@@ -42,7 +42,7 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
 
     const fetchHistory = async () => {
       try {
-        const res = await apiClient.get('/exercises/history')
+        const res = await apiClient.get('/exercises/history?limit=5')
         setHistory(res.data || [])
       } catch (err) {
         console.error('Failed to fetch history:', err)
