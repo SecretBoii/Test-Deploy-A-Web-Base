@@ -115,7 +115,7 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
             </Button>
 
             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: currentMeta?.color || '#0f172a' }}>
-              {currentMeta?.label} — {currentMeta?.description}
+              {currentMeta?.label} — {(sessionDetails[0]?.sessionName || currentMeta?.description || '').replace(/^บทเรียนที่\s*\d+\s*:\s*/, '')}
             </Typography>
           </Box>
 

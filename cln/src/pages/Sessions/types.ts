@@ -24,4 +24,6 @@ export interface LevelSummary {
   totalHours: number;
   totalExercises: number;
   completedExercises: number;
+  sessionName?: string;
+  sessionObjective?: string;
 }

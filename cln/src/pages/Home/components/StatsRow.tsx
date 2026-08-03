@@ -44,17 +44,17 @@ export function StatsRow({ username, stats }: StatsRowProps) {
             boxShadow: 'none',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>
               แบบฝึกหัดทั้งหมด
             </Typography>
-            <CheckCircleOutlineIcon sx={{ color: '#cbd5e1', fontSize: 20 }} />
+            <CheckCircleOutlineIcon sx={{ color: '#cbd5e1', fontSize: 25 }} />
           </Box>
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline' }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline', fontSize: 38 }}>
               {stats?.completedExercises ?? 0}
             </Typography>
             <Typography variant="body2" component="span" sx={{ color: '#64748b', ml: 0.5 }}>
@@ -84,17 +84,17 @@ export function StatsRow({ username, stats }: StatsRowProps) {
             boxShadow: 'none',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>
               ผ่านแล้ว
             </Typography>
-            <CheckCircleOutlineIcon sx={{ color: '#cbd5e1', fontSize: 20 }} />
+            <CheckCircleOutlineIcon sx={{ color: '#cbd5e1', fontSize: 25 }} />
           </Box>
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800 }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, fontSize: 38 }}>
               {stats?.completedExercises ?? 0}
             </Typography>
             <Typography variant="caption" sx={{ color: '#059669', fontWeight: 600, display: 'block', mt: 1 }}>
@@ -113,17 +113,17 @@ export function StatsRow({ username, stats }: StatsRowProps) {
             boxShadow: 'none',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>
               คะแนนเฉลี่ย
             </Typography>
-            <BarChartIcon sx={{ color: '#f1f5f9', backgroundColor: '#e2e8f0', borderRadius: '4px', fontSize: 20 }} />
+            <BarChartIcon sx={{ color: '#f1f5f9', backgroundColor: '#e2e8f0', borderRadius: '4px', fontSize: 25 }} />
           </Box>
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline' }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline', fontSize: 38 }}>
               {stats?.averageScore ?? 0}
             </Typography>
             <Typography variant="body2" component="span" sx={{ fontWeight: 700, ml: 0.5 }}>
@@ -145,17 +145,17 @@ export function StatsRow({ username, stats }: StatsRowProps) {
             boxShadow: 'none',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>
               ความต่อเนื่อง
             </Typography>
-            <LocalFireDepartmentIcon sx={{ color: '#cbd5e1', fontSize: 20 }} />
+            <LocalFireDepartmentIcon sx={{ color: '#cbd5e1', fontSize: 25 }} />
           </Box>
-          <Box sx={{ mt: 1 }}>
-            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline' }}>
+          <Box>
+            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline', fontSize: 38 }}>
               {stats?.streakDays ?? 0}
             </Typography>
             <Typography variant="body2" component="span" sx={{ color: '#64748b', ml: 0.5 }}>
