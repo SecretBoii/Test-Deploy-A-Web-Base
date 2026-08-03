@@ -70,8 +70,9 @@ export class ExercisesController {
   }
 
   @Get('history')
-  async getHistory(@CurrentUser() user: any) {
-    return await this.exercisesService.getHistory(user.userId);
+  async getHistory(@CurrentUser() user: any, @Query('limit')limit?: string) {
+    const limitNum = limit ? Number(limit) : undefined;
+    return await this.exercisesService.getHistory(user.userId, limitNum);
   }
 
   // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session (ต้องวางก่อน :id)

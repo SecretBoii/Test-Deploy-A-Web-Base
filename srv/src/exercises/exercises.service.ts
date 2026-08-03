@@ -854,12 +854,12 @@ export class ExercisesService implements OnModuleInit {
     }
   }
 
-  async getHistory(userId: number) {
+  async getHistory(userId: number, limit?: number) {
     try {
       return await this.prisma.activity.findMany({
         where: { userId },
         orderBy: { submittedAt: 'desc' },
-        take: 5,
+        ...(limit ? { take: limit } : {}),
         include: {
           exercise: true,
           session: true,
