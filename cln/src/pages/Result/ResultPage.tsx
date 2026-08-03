@@ -62,19 +62,21 @@ export function ResultPage() {
   }, [activityId])
 
   useEffect(() => {
-    if (!data) return
+    const currentData = data
+    if (!currentData) return
     let active = true
 
     async function determineNextExercise() {
+      if (!currentData) return
       try {
-        const res = await apiClient.get(`/exercises/level-sessions/${data.targetLevel}`)
+        const res = await apiClient.get(`/exercises/level-sessions/${currentData.targetLevel}`)
         if (!active) return
 
         const sessions = res.data
-        const currentSession = sessions.find((s: any) => s.sessionId === data.sessionId)
+        const currentSession = sessions.find((s: any) => s.sessionId === currentData.sessionId)
         if (currentSession) {
           const exercises = currentSession.exercises
-          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === data.exerciseId)
+          const currentIndex = exercises.findIndex((ex: any) => ex.exerciseId === currentData.exerciseId)
           
           if (currentIndex !== -1 && currentIndex + 1 < exercises.length) {
             setNextExerciseId(exercises[currentIndex + 1].exerciseId)

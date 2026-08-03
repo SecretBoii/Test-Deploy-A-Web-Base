@@ -10,11 +10,13 @@ import { apiClient } from '../../api/client';
 interface SessionStudentProps {
   userId?: number;
   onSelectExercise?: (exerciseId: number, sessionId: number) => void;
+  initialLevel?: number | null;
 }
 
 export const SessionStudent: React.FC<SessionStudentProps> = ({
   userId = 1,
   onSelectExercise,
+  initialLevel = null,
 }) => {
   const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
   const [levelsSummary, setLevelsSummary] = useState<LevelSummary[]>([]);
@@ -55,6 +57,14 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialLevel) {
+      handleSelectLevel(initialLevel);
+    } else {
+      setSelectedLevel(null);
+    }
+  }, [initialLevel, userId]);
 
   const currentMeta = selectedLevel ? DIFFICULTY_LEVELS[selectedLevel] : null;
 

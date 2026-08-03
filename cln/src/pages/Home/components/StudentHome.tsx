@@ -1,95 +1,87 @@
-import { Box, Typography, Card } from '@mui/material'
+import { useState, useEffect } from 'react'
+import { Box } from '@mui/material'
+import { apiClient } from '../../../api/client'
+import { StatsRow } from './StatsRow'
+import { RecentSessions } from './RecentSessions'
+import { LevelProgress } from './LevelProgress'
+import { LatestResults } from './LatestResults'
 
 interface StudentHomeProps {
   username: string
-  onSelectExercise: (exerciseId: number) => void
+  onSelectExercise: (exerciseId: number, sessionId?: number) => void
 }
 
-export function StudentHome({}: StudentHomeProps) {
+export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHomeProps) {
+  const [recentSessions, setRecentSessions] = useState<any[]>([])
+  const [loadingRecent, setLoadingRecent] = useState<boolean>(true)
+  const [stats, setStats] = useState<any>(null)
+  const [history, setHistory] = useState<any[]>([])
+  const [levelsSummary, setLevelsSummary] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchRecentSession = async () => {
+      try {
+        setLoadingRecent(true)
+        const res = await apiClient.get('/exercises/recent-session')
+        setRecentSessions(res.data || [])
+      } catch (err) {
+        console.error('Failed to fetch recent session:', err)
+      } finally {
+        setLoadingRecent(false)
+      }
+    }
+
+    const fetchDashboardStats = async () => {
+      try {
+        const res = await apiClient.get('/exercises/dashboard-stats')
+        setStats(res.data)
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err)
+      }
+    }
+
+    const fetchHistory = async () => {
+      try {
+        const res = await apiClient.get('/exercises/history')
+        setHistory(res.data || [])
+      } catch (err) {
+        console.error('Failed to fetch history:', err)
+      }
+    }
+
+    const fetchLevelsSummary = async () => {
+      try {
+        const res = await apiClient.get('/exercises/levels-summary')
+        setLevelsSummary(res.data || [])
+      } catch (err) {
+        console.error('Failed to fetch levels summary:', err)
+      }
+    }
+
+    fetchRecentSession()
+    fetchDashboardStats()
+    fetchHistory()
+    fetchLevelsSummary()
+  }, [])
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a' }}>
+      {/* 1. Header Greeting & Stats Cards Row */}
+      <StatsRow username={username} stats={stats} />
 
-      {/* 1. Stats Row (4 Empty Containers) */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
-          gap: 2.5,
-        }}
-      >
-        {[...Array(4)].map((_, idx) => (
-          <Card
-            key={idx}
-            sx={{
-              height: 110,
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              bgcolor: '#ffffff',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            }}
-          />
-        ))}
-      </Box>
-
-      {/* 2. Progress by Level Section (Empty Container with 5 sub-boxes) */}
-      <Card sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)' }}>
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 700, color: '#1e293b', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}
-        >
-        </Typography>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(5, 1fr)' },
-            gap: 2,
-          }}
-        >
-          {[...Array(5)].map((_, idx) => (
-            <Box
-              key={idx}
-              sx={{
-                height: 130,
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                bgcolor: '#f8fafc',
-              }}
-            />
-          ))}
-        </Box>
-      </Card>
-
-      {/* 3. Session กำลังเรียน Section (Empty Container Box) */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
-        </Typography>
-        <Card
-          sx={{
-            minHeight: 320,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-          }}
+      {/* 2. Middle Section: Recent Sessions & Level Progress */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
+        <RecentSessions
+          loadingRecent={loadingRecent}
+          recentSessions={recentSessions}
         />
+        <LevelProgress levelsSummary={levelsSummary} />
       </Box>
 
-      {/* 4. ผลล่าสุด Section (Empty Container Box) */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
-        </Typography>
-        <Card
-          sx={{
-            minHeight: 160,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-          }}
-        />
-      </Box>
+      {/* 3. Bottom Section: Latest Results Table */}
+      <LatestResults history={history} onSelectExercise={onSelectExercise} />
     </Box>
   )
 }
+
 export default StudentHome
