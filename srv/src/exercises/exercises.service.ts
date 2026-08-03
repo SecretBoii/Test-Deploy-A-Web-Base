@@ -19,6 +19,15 @@ import * as path from 'path';
 import { session } from 'passport';
 import { SourceCode } from 'eslint';
 
+// Map จากตัวเลข Level (Frontend) → String ที่เก็บในฐานข้อมูล
+const LEVEL_MAP: Record<number, string> = {
+  1: 'Basic',
+  2: 'Intermediate',
+  3: 'Advanced',
+  4: 'Advanced',
+  5: 'Advanced',
+};
+
 @Injectable()
 export class ExercisesService implements OnModuleInit {
   private readonly logger = new Logger(ExercisesService.name);
@@ -563,6 +572,7 @@ export class ExercisesService implements OnModuleInit {
 
       const results = await Promise.all(
         levels.map(async (lvl) => {
+          const levelString = LEVEL_MAP[lvl];
           const sessions = await this.prisma.session.findMany({
             where: { targetLevel: lvl, status: 'active' },
             include: { sessionExercises: true },
@@ -656,4 +666,200 @@ export class ExercisesService implements OnModuleInit {
 
     return result;
   }
+
+  private async isSessionCompleted(userId: number, sessionId: number): Promise<boolean> {
+    const session = await this.prisma.session.findUnique({
+      where: { sessionId },
+      include: {
+        sessionExercises: true,
+      },
+    });
+    if (!session || !session.sessionExercises || session.sessionExercises.length === 0) {
+      return true;
+    }
+
+    const exerciseIds = session.sessionExercises.map((se) => se.exerciseId);
+    const passedActivitiesCount = await this.prisma.activity.findMany({
+      where: {
+        userId,
+        exerciseId: { in: exerciseIds },
+        score: { gt: 0 },
+      },
+      select: { exerciseId: true },
+      distinct: ['exerciseId'],
+    }).then(res => res.length);
+
+    return passedActivitiesCount === exerciseIds.length;
+  }
+
+  async getRecentSession(userId: number) {
+    try {
+      // 1. หา Sessions ล่าสุดที่ผู้ใช้เคยส่ง Activity (เรียงจากใหม่ไปเก่า)
+      const recentActivities = await this.prisma.activity.findMany({
+        where: { userId },
+        orderBy: { submittedAt: 'desc' },
+        select: { sessionId: true },
+      });
+      
+      const targetSessionIds: number[] = [];
+      for (const act of recentActivities) {
+        if (act.sessionId && !targetSessionIds.includes(act.sessionId)) {
+          const isCompleted = await this.isSessionCompleted(userId, act.sessionId);
+          if (!isCompleted) {
+            targetSessionIds.push(act.sessionId);
+            if (targetSessionIds.length >= 3) break;
+          }
+        }
+      }
+
+      // 2. ถ้ายังไม่ครบ 3 ให้หาจาก UserSessionProgress
+      if (targetSessionIds.length < 3) {
+        const recentProgress = await this.prisma.userSessionProgress.findMany({
+          where: { userId },
+          orderBy: { updatedAt: 'desc' },
+          select: { sessionId: true },
+        });
+        for (const prog of recentProgress) {
+          if (prog.sessionId && !targetSessionIds.includes(prog.sessionId)) {
+            const isCompleted = await this.isSessionCompleted(userId, prog.sessionId);
+            if (!isCompleted) {
+              targetSessionIds.push(prog.sessionId);
+              if (targetSessionIds.length >= 3) break;
+            }
+          }
+        }
+      }
+
+      // 3. ถ้ายังไม่ครบ 3 ให้ backfill จาก Session ทั้งหมดที่มีสถานะ active
+      if (targetSessionIds.length < 3) {
+        const activeSessions = await this.prisma.session.findMany({
+          where: { status: 'active' },
+          orderBy: [
+            { targetLevel: 'asc' },
+            { sessionId: 'asc' },
+          ],
+          select: { sessionId: true },
+        });
+        for (const sess of activeSessions) {
+          if (sess.sessionId && !targetSessionIds.includes(sess.sessionId)) {
+            const isCompleted = await this.isSessionCompleted(userId, sess.sessionId);
+            if (!isCompleted) {
+              targetSessionIds.push(sess.sessionId);
+              if (targetSessionIds.length >= 3) break;
+            }
+          }
+        }
+      }
+
+      // 4. ดึงข้อมูลรายละเอียดของแต่ละ Session และหาความก้าวหน้า
+      const result = [];
+      for (const targetSessionId of targetSessionIds) {
+        const session = await this.prisma.session.findUnique({
+          where: { sessionId: targetSessionId },
+          include: {
+            sessionExercises: {
+              orderBy: { sequenceOrder: 'asc' },
+              include: { exercise: true },
+            },
+          },
+        });
+
+        if (!session) continue;
+
+        // หาโจทย์ที่ผ่านแล้วของ User ใน session นี้
+        const userActivities = await this.prisma.activity.findMany({
+          where: { 
+            userId, 
+            sessionId: targetSessionId,
+            score: { gt: 0 } 
+          },
+          select: { exerciseId: true },
+        });
+        const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
+
+        const exercises = (session.sessionExercises || []).map((se: any, idx: number) => {
+          const isPassed = passedExerciseIds.has(se.exerciseId);
+          return {
+            exerciseId: se.exerciseId,
+            orderNumber: idx + 1,
+            title: se.exercise?.title || '',
+            description: se.exercise?.description || '',
+            expectedTime: se.exercise?.expectedTime || 5,
+            isPassed,
+          };
+        });
+
+        const completedCount = exercises.filter((e: any) => e.isPassed).length;
+        const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
+
+        result.push({
+          sessionId: session.sessionId,
+          sessionName: session.sessionName,
+          sessionObjective: session.sessionObjective,
+          duration: totalExpectedTime || session.duration,
+          totalExercises: exercises.length,
+          completedExercises: completedCount,
+          targetLevel: session.targetLevel,
+          exercises,
+        });
+      }
+
+      return result;
+    } catch (err) {
+      this.logger.error('Error in getRecentSession:', err);
+      throw err;
+    }
+  }
+
+  async getDashboardStats(userId: number) {
+    try {
+      const totalExercises = await this.prisma.exercise.count({
+        where: { status: 'active' },
+      });
+
+      const completedActivities = await this.prisma.activity.findMany({
+        where: {
+          userId,
+          score: { gt: 0 },
+        },
+        select: { exerciseId: true },
+        distinct: ['exerciseId'],
+      });
+      const completedExercises = completedActivities.length;
+
+      const submissions = await this.prisma.activity.aggregate({
+        where: { userId, eventType: 'submit' },
+        _avg: { score: true },
+      });
+      const averageScore = Math.round(submissions._avg.score || 0);
+
+      return {
+        totalExercises,
+        completedExercises,
+        averageScore,
+        streakDays: 5,
+      };
+    } catch (err) {
+      this.logger.error('Error in getDashboardStats:', err);
+      throw err;
+    }
+  }
+
+  async getHistory(userId: number) {
+    try {
+      return await this.prisma.activity.findMany({
+        where: { userId },
+        orderBy: { submittedAt: 'desc' },
+        take: 5,
+        include: {
+          exercise: true,
+          session: true,
+        },
+      });
+    } catch (err) {
+      this.logger.error('Error in getHistory:', err);
+      throw err;
+    }
+  }
 }
+

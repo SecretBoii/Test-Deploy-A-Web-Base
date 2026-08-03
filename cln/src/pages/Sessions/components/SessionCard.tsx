@@ -27,7 +27,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
         boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.04)',
-        fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+        fontFamily: "'Kanit', sans-serif",
         display: 'flex',
         flexDirection: 'column',
         gap: 2.5,
@@ -87,9 +87,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 1, borderTop: '1px dashed #e2e8f0' }}>
         {session.exercises.map((ex) => (
           <ExerciseRow key={
-          ex.exerciseId} 
-          exercise={ex} 
-          onSelectExercise={(id) => onSelectExercise?.(id, session.sessionId)} />
+            ex.exerciseId}
+            exercise={ex}
+            onSelectExercise={(id) => onSelectExercise?.(id, session.sessionId)} />
         ))}
       </Box>
     </Card>

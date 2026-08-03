@@ -20,7 +20,10 @@ export function Home() {
         {activeItem === 'Home' ? (
           <StudentDashboard
             username={user?.username || ''}
-            onSelectExercise={(exerciseId) => navigate(`/editor/${exerciseId}`)}
+            onSelectExercise={(exerciseId, sessionId) => {
+              const url = sessionId ? `/editor/${exerciseId}?sessionId=${sessionId}` : `/editor/${exerciseId}`
+              navigate(url)
+            }}
           />
         ) : (
           <h2>{activeItem}</h2>

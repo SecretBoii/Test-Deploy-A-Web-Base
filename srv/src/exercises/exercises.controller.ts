@@ -52,11 +52,26 @@ export class ExercisesController {
     return await this.exercisesService.getStatus(Number(activityId));
   }
 
+  @Get('recent-session')
+  async getRecentSession(@CurrentUser() user: any) {
+    return await this.exercisesService.getRecentSession(user.userId);
+  }
+
   // API ดึงความก้าวหน้าสรุปของแต่ละ Level (ต้องวางก่อน :id)
   @Get('levels-summary')
   async getLevelsSummary(@CurrentUser() user: any) {
     return await 
     this.exercisesService.getLevelsSummary(user.userId);
+  }
+
+  @Get('dashboard-stats')
+  async getDashboardStats(@CurrentUser() user: any) {
+    return await this.exercisesService.getDashboardStats(user.userId);
+  }
+
+  @Get('history')
+  async getHistory(@CurrentUser() user: any) {
+    return await this.exercisesService.getHistory(user.userId);
   }
 
   // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session (ต้องวางก่อน :id)
