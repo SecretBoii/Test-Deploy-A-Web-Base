@@ -36,6 +36,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const [isRunning, setIsRunning] = useState(false)
   const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
   const [loadingExercise, setLoadingExercise] = useState(false)
+  const [hintUsed, setHintUsed] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -47,6 +48,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   useEffect(() => {
     if (exerciseId) {
       setLoadingExercise(true)
+      setHintUsed(false)
       apiClient
         .get(`/exercises/${exerciseId}`)
         .then((res) => {
@@ -94,7 +96,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         exerciseId: String(exerciseId),
         sessionId: sessionId ? String(sessionId) : undefined,
         sourceCode: code,
-        hintUsed: false,
+        hintUsed: hintUsed,
         runCount: nextRunCount,
       })
 
@@ -194,7 +196,12 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
 
         {/* ฝั่งขวา: คอนโซลแสดงผลลัพธ์, คำใบ้โจทย์ และข้อเสนอแนะ Gemma */}
         <Box sx={{ flex: 0.8, display: 'flex', flexDirection: 'column', gap: 2, minWidth: '320px', minHeight: 0 }}>
-          <ExerciseHint hint={exerciseData?.hint} loading={loadingExercise} />
+          <ExerciseHint 
+            hint={exerciseData?.hint} 
+            loading={loadingExercise} 
+            hintUsed={hintUsed}
+            onUseHint={() => setHintUsed(true)}
+          />
           <ConsoleOutput output={output} />
           <GemmaFeedback response={gemmaResponse} score={score} />
         </Box>
