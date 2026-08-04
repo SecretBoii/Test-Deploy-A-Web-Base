@@ -74,6 +74,7 @@ export class AuthService {
             where: { userId },
             include: {
                 education: true,
+                role: true,
             },
         });
         if (!user) {
@@ -140,6 +141,7 @@ export class AuthService {
             gender: user.gender,
             dateOfBirth: user.dateOfBirth,
             registerTimestamp: user.registerTimestamp,
+            roleName: user.role?.roleName || '',
             education: {
                 university: user.education?.university || '-',
                 faculty: user.education?.faculty || '-',

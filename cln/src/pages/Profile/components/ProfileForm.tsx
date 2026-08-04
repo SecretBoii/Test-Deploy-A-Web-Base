@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { 
   Box, 
   Card, 
@@ -16,7 +16,8 @@ interface ProfileFormProps {
   faculty: string;
   major: string;
   registerTimestamp?: string;
-  formatThaiYear: (date?: string) => string;
+  formatDate: (date?: string) => string;
+  roleName?: string;
 }
 
 export function ProfileForm({
@@ -27,7 +28,8 @@ export function ProfileForm({
   faculty,
   major,
   registerTimestamp,
-  formatThaiYear
+  formatDate,
+  roleName
 }: ProfileFormProps) {
   // จัดข้อความเพศให้แสดงผลสวยงามเป็นภาษาไทย
   const displayGender = () => {
@@ -61,10 +63,10 @@ export function ProfileForm({
             {username}
           </Typography>
           <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
-            น.ศ. คณะ{faculty || '-'} - สาขา{major || '-'}
+            {roleName || '-'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5 }}>
-            สมัครเมื่อ: {formatThaiYear(registerTimestamp)}
+            สมัครเมื่อ: {formatDate(registerTimestamp)}
           </Typography>
         </Box>
       </Box>

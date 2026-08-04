@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Grid, CircularProgress } from '@mui/material';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
@@ -32,6 +32,7 @@ interface ProfileDetails {
   gender: string;
   dateOfBirth: string;
   registerTimestamp: string;
+  roleName?: string;
   education: Education;
   stats: Stats;
 }
@@ -48,6 +49,7 @@ export function ProfilePage() {
   const [university, setUniversity] = useState('');
   const [faculty, setFaculty] = useState('');
   const [major, setMajor] = useState('');
+  const [roleName, setRoleName] = useState('');
 
   useEffect(() => {
     fetchProfileDetails();
@@ -76,6 +78,7 @@ export function ProfilePage() {
       setUniversity(data.education?.university || '');
       setFaculty(data.education?.faculty || '');
       setMajor(data.education?.major || '');
+      setRoleName(data.roleName || '');
     } catch (err: any) {
       console.error('Failed to fetch profile details:', err);
     } finally {
@@ -83,15 +86,15 @@ export function ProfilePage() {
     }
   };
 
-  // จัดรูปแบบปีพุทธศักราช พ.ศ. 2 หลัก (เช่น 09/11/66)
-  const formatThaiYear = (dateString?: string) => {
+  // Format Gregorian date AD (e.g. 21/07/26)
+  const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '-';
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
-    const yearThaiShort = String(date.getFullYear() + 543).slice(-2);
-    return `${day}/${month}/${yearThaiShort}`;
+    const yearShort = String(date.getFullYear()).slice(-2);
+    return `${day}/${month}/${yearShort}`;
   };
 
   if (loading) {
@@ -118,7 +121,8 @@ export function ProfilePage() {
               faculty={faculty}
               major={major}
               registerTimestamp={profile?.registerTimestamp}
-              formatThaiYear={formatThaiYear}
+              formatDate={formatDate}
+              roleName={roleName}
             />
           </Grid>
 
