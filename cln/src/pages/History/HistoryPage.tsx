@@ -186,7 +186,7 @@ export function HistoryPage() {
             />
             {/* วาด Component ตารางข้อมูลหลัก */}
             <HistoryTable
-              submissions={submissions}
+              history={history}
               getLevelBadge={getLevelBadge}
               formatThaiDateTime={formatThaiDateTime}
             />
