@@ -183,12 +183,43 @@ export class ExercisesService implements OnModuleInit {
           throw new BadRequestException('กรุณากด Run Code เพื่อทดสอบโค้ดและตรวจผลลัพธ์ก่อนส่งคำตอบ');
         }
 
+        // Find the most recent submit activity for this user and exercise to measure current attempt time
+        const latestSubmit = await this.prisma.activity.findFirst({
+          where: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            eventType: 'submit',
+          },
+          orderBy: {
+            submittedAt: 'desc',
+          },
+        });
+
+        // Find the oldest run since the last submission (or overall if no previous submission exists)
+        const oldestRun = await this.prisma.activity.findFirst({
+          where: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            eventType: 'run',
+            ...(latestSubmit ? {
+              submittedAt: {
+                gt: latestSubmit.submittedAt,
+              },
+            } : {}),
+          },
+          orderBy: {
+            submittedAt: 'asc',
+          },
+        });
+
+        const startedAtTime = oldestRun ? oldestRun.startedAt : new Date();
+
         const activity = await this.prisma.activity.create({
           data: {
             userId: Number(userId),
             exerciseId: Number(exerciseId),
             sessionId: sessionId,
-            startedAt: new Date(),
+            startedAt: startedAtTime,
             submittedAt: new Date(),
             hintUsed: latestRun.hintUsed,
             answer: latestRun.answer,
@@ -289,6 +320,8 @@ export class ExercisesService implements OnModuleInit {
       exerciseTitle: activity.exercise?.title,
       exerciseDescription: activity.exercise?.description,
       targetLevel: activity.session?.targetLevel,
+      startedAt: activity.startedAt,
+      submittedAt: activity.submittedAt,
     };
   }
 
