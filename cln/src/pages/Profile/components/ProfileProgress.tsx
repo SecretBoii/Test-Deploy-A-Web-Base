@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Card, Typography, LinearProgress } from '@mui/material';
 import { Star } from 'lucide-react';
 

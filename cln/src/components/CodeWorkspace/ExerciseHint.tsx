@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Box, Typography, Button, Collapse, CircularProgress } from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { Lightbulb, ChevronDown } from 'lucide-react'
@@ -6,6 +5,8 @@ import { Lightbulb, ChevronDown } from 'lucide-react'
 interface ExerciseHintProps {
   hint?: string
   loading: boolean
+  hintUsed: boolean
+  onUseHint: () => void
 }
 
 const HintContainer = styled(Box)(() => ({
@@ -101,9 +102,7 @@ const HintContentText = styled(Typography)(() => ({
   lineHeight: 1.6
 }));
 
-export function ExerciseHint({ hint, loading }: ExerciseHintProps) {
-  const [showHint, setShowHint] = useState(false)
-
+export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHintProps) {
   const displayHint = hint || 'ยังไม่มีคำใบ้สำหรับโจทย์ข้อนี้'
 
   return (
@@ -112,25 +111,46 @@ export function ExerciseHint({ hint, loading }: ExerciseHintProps) {
         <HintTitle variant="subtitle2">
           <Lightbulb size={18} color="#fbbf24" /> คำใบ้สำหรับโจทย์ (Hint)
         </HintTitle>
-        <HintToggleButton
-          size="small"
-          onClick={() => setShowHint(!showHint)}
-          disabled={loading}
-        >
-          {loading ? (
-            <CircularProgress size={14} color="inherit" />
-          ) : (
-            <>
-              {showHint ? 'ซ่อนคำใบ้' : 'ดูคำใบ้'}
-              <ChevronIconWrapper expanded={showHint}>
-                <ChevronDown size={14} />
-              </ChevronIconWrapper>
-            </>
-          )}
-        </HintToggleButton>
+        {hintUsed ? (
+          <Box sx={{ 
+            color: '#fbbf24', 
+            fontSize: '0.75rem', 
+            fontWeight: 700, 
+            fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif", 
+            display: 'inline-flex', 
+            alignItems: 'center', 
+            border: '1px solid rgba(251, 191, 36, 0.3)', 
+            borderRadius: '20px', 
+            paddingLeft: '14px',
+            paddingRight: '14px',
+            paddingTop: '4px',
+            paddingBottom: '4px',
+            backgroundColor: 'rgba(251, 191, 36, 0.08)',
+            boxShadow: '0 0 8px rgba(251, 191, 36, 0.15)'
+          }}>
+            เปิดใช้งานแล้ว
+          </Box>
+        ) : (
+          <HintToggleButton
+            size="small"
+            onClick={onUseHint}
+            disabled={loading}
+          >
+            {loading ? (
+              <CircularProgress size={14} color="inherit" />
+            ) : (
+              <>
+                ดูคำใบ้
+                <ChevronIconWrapper expanded={false}>
+                  <ChevronDown size={14} />
+                </ChevronIconWrapper>
+              </>
+            )}
+          </HintToggleButton>
+        )}
       </HintHeader>
 
-      <Collapse in={showHint}>
+      <Collapse in={hintUsed}>
         <HintExpandedCard>
           {loading ? (
             <HintContentText sx={{ color: '#94a3b8' }}>
