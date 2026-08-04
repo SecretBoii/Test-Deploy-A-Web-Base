@@ -23,13 +23,14 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
           <Table>
             <TableHead sx={{ bgcolor: '#eff6ff' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>แบบฝึกหัด</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>เซสชั่น</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>ระดับ</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>จำนวนการรัน</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>คะแนน</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>ผลตรวจ</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>วันที่และเวลา</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>EXERCISE</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>SESSION</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>LEVEL</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>RUN COUNT</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>SCORE</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>EVENT</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>STATUS</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>DATE & TIME</TableCell>
                 <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}></TableCell>
               </TableRow>
             </TableHead>
@@ -46,6 +47,7 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                     hour: '2-digit',
                     minute: '2-digit',
                   });
+                  const isAccepted = row.score >= 80;
                   
                   return (
                     <TableRow key={row.activityId} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
@@ -58,24 +60,65 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                       <TableCell sx={{ color: diffColor, fontWeight: 600, fontSize: '0.85rem' }}>
                         {levelLabel}
                       </TableCell>
-                      <TableCell sx={{ color: '#334155', fontWeight: 600, fontSize: '0.85rem' }}>
-                        {row.runCount}
+                      <TableCell align="center" sx={{ color: '#334155', fontWeight: 600, fontSize: '0.85rem' }}>
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            width: 24,
+                            height: 24,
+                            borderRadius: '50%',
+                            border: row.eventType === 'submit' ? '1px solid #cbd5e1' : '1px solid #fdba74',
+                            bgcolor: row.eventType === 'submit' ? '#f8fafc' : '#fff7ed',
+                            color: row.eventType === 'submit' ? '#475569' : '#ea580c',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {row.runCount}
+                        </Box>
                       </TableCell>
-                      <TableCell sx={{ color: '#0284c7', fontWeight: 700, fontSize: '0.85rem' }}>
+                      <TableCell sx={{ color: isAccepted ? '#10b981' : '#d97706', fontWeight: 700, fontSize: '0.85rem' }}>
                         {row.score}
                       </TableCell>
                       <TableCell>
-                        <Typography
-                          variant="caption"
+                        <Box
                           sx={{
-                            color: row.eventType === 'submit' ? (row.score > 0 ? '#16a34a' : '#ef4444') : '#64748b',
-                            fontWeight: 600,
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: '50px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            bgcolor: row.eventType === 'submit' ? '#eff6ff' : '#f1f5f9',
+                            color: row.eventType === 'submit' ? '#2563eb' : '#64748b',
+                            border: row.eventType === 'submit' ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
                           }}
                         >
-                          {row.eventType === 'submit' ? (row.score > 0 ? 'Passed' : 'Failed') : 'Run Code'}
-                        </Typography>
+                          {row.eventType === 'submit' ? 'Submit' : 'Run Code'}
+                        </Box>
                       </TableCell>
-                      <TableCell sx={{ color: '#64748b', fontSize: '0.8rem' }}>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: '50px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            bgcolor: isAccepted ? '#ecfdf5' : '#fff1f2',
+                            color: isAccepted ? '#10b981' : '#f43f5e',
+                            border: isAccepted ? '1px solid #a7f3d0' : '1px solid #fecdd3',
+                          }}
+                        >
+                          {isAccepted ? 'Passed' : 'Failed'}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ color: '#64748b', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         {formattedDate}
                       </TableCell>
                       <TableCell>
@@ -92,7 +135,7 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={8} align="center" sx={{ py: 3, color: '#64748b' }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 3, color: '#64748b' }}>
                     ยังไม่มีประวัติการทำแบบฝึกหัด
                   </TableCell>
                 </TableRow>
