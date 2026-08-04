@@ -1,9 +1,10 @@
-import { Controller, Post, Body, Res, Req, UseGuards, UnauthorizedException, Get, BadRequestException } from '@nestjs/common'
+import { Controller, Post, Body, Res, Req, UseGuards, UnauthorizedException, Get, BadRequestException, Put } from '@nestjs/common'
 import * as express from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/profile.dto';
 
 @Controller()
 export class AuthController{
@@ -55,4 +56,17 @@ export class AuthController{
             throw new BadRequestException(error.message);
         }
     }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('profile/details')
+    async getProfileDetails(@Req() req: any) {
+        return this.authService.getProfileDetails(req.user.userId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Put('profile/edit')
+    async updateProfile(@Req() req: any, @Body() dto: UpdateProfileDto) {
+        return this.authService.updateProfile(req.user.userId, dto);
+    }
+
 }
