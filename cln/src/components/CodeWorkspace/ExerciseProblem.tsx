@@ -45,7 +45,7 @@ const ExerciseTitle = styled(Typography)(() => ({
   fontWeight: 800,
   color: '#0f172a',
   fontSize: '1.15rem',
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif"
+  fontFamily: 'inherit'
 }));
 
 const ExpandButton = styled(IconButton, {
@@ -64,7 +64,7 @@ const DescriptionText = styled(Typography, {
   color: '#334155',
   fontSize: '13.5px',
   lineHeight: 1.6,
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+  fontFamily: 'inherit',
   marginTop: '4px', // 0.5
   ...(!expanded && {
     overflow: 'hidden',
@@ -94,14 +94,14 @@ const ObjectiveTitle = styled(Typography)(() => ({
   display: 'flex',
   alignItems: 'center',
   gap: '8px', // 1
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif"
+  fontFamily: 'inherit'
 }));
 
 const ObjectiveBody = styled(Typography)(() => ({
   color: '#475569', 
   fontSize: '13px', 
   lineHeight: 1.6,
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif"
+  fontFamily: 'inherit'
 }));
 
 export function ExerciseProblem({ exerciseData, loading, title, description, topic }: ExerciseProblemProps) {

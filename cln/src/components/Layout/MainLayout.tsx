@@ -61,7 +61,6 @@ export function MainLayout({ children, activeItem }: MainLayoutProps) {
         minHeight: '100vh',
         width: '100%',
         bgcolor: '#f8fafc',
-        fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
       }}
     >
       {/* Sidebar - Web Layout */}

@@ -139,7 +139,7 @@ export function ScoreSummaryCard({
             fontWeight: 900, 
             color: isPassed ? '#10b981' : '#ef4444', 
             lineHeight: 1.1,
-            fontFamily: 'Inter, sans-serif',
+            fontFamily: 'inherit',
             letterSpacing: '-0.02em',
             textShadow: isPassed 
               ? '0 4px 12px rgba(16, 185, 129, 0.1)' 

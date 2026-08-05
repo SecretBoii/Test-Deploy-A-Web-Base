@@ -37,7 +37,7 @@ const HintTitle = styled(Typography)(() => ({
   display: 'flex',
   alignItems: 'center',
   gap: '8px', // gap: 1
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+  fontFamily: 'inherit',
   '& svg': {
     filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.45))'
   }
@@ -55,7 +55,7 @@ const HintToggleButton = styled(Button)(() => ({
   textTransform: 'none',
   fontWeight: 700,
   fontSize: '0.75rem',
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+  fontFamily: 'inherit',
   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
   backgroundColor: 'rgba(251, 191, 36, 0.04)',
   display: 'inline-flex',
@@ -96,7 +96,7 @@ const HintExpandedCard = styled(Box)(() => ({
 
 const HintContentText = styled(Typography)(() => ({
   color: '#fef3c7',
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+  fontFamily: 'inherit',
   fontSize: '13px',
   whiteSpace: 'pre-wrap',
   lineHeight: 1.6
@@ -116,7 +116,7 @@ export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHin
             color: '#fbbf24', 
             fontSize: '0.75rem', 
             fontWeight: 700, 
-            fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif", 
+            fontFamily: 'inherit', 
             display: 'inline-flex', 
             alignItems: 'center', 
             border: '1px solid rgba(251, 191, 36, 0.3)', 

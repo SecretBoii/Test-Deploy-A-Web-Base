@@ -27,7 +27,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
         boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.04)',
-        fontFamily: "'Kanit', sans-serif",
+        fontFamily: 'inherit',
         display: 'flex',
         flexDirection: 'column',
         gap: 2.5,

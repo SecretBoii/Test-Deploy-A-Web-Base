@@ -18,7 +18,7 @@ export const ExerciseRow: React.FC<ExerciseRowProps> = ({ exercise, onSelectExer
         border: '1.5px solid',
         borderColor: exercise.isPassed ? '#a7f3d0' : '#f1f5f9',
         bgcolor: exercise.isPassed ? '#f0fdf4' : '#ffffff',
-        fontFamily: "'Kanit', sans-serif",
+        fontFamily: 'inherit',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

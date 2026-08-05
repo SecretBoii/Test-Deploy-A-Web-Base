@@ -38,7 +38,7 @@ const GemmaTitle = styled(Typography)(() => ({
   display: 'flex', 
   alignItems: 'center', 
   gap: '8px',
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif",
+  fontFamily: 'inherit',
   '& svg': {
     filter: 'drop-shadow(0 0 4px rgba(165, 180, 252, 0.65))',
     color: '#818cf8'
@@ -57,7 +57,7 @@ const FeedbackCard = styled(Box)(() => ({
 
 const FeedbackText = styled(Typography)(() => ({
   color: '#e2e8f0', 
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif", 
+  fontFamily: 'inherit', 
   fontSize: '13px', 
   whiteSpace: 'pre-wrap', 
   lineHeight: 1.6
