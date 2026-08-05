@@ -36,7 +36,7 @@ const TerminalTitle = styled(Typography)(() => ({
   display: 'flex',
   alignItems: 'center',
   gap: '6px',
-  fontFamily: "'Prompt', 'Plus Jakarta Sans', sans-serif"
+  fontFamily: 'inherit'
 }));
 
 const TerminalContent = styled(Box)(() => ({

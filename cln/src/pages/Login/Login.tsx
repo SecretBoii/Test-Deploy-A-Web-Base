@@ -41,7 +41,6 @@ export function Login() {
         minHeight: '100vh',
         width: '100%',
         bgcolor: '#ffffff',
-        fontFamily: "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
         boxSizing: 'border-box',
         flexDirection: { xs: 'column', md: 'row' },
         '@media (prefers-color-scheme: dark)': {

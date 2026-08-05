@@ -13,26 +13,37 @@ import ProtectedRoute from './components/Auth/ProtectedRoute.tsx'
 import ResultPage from './pages/Result/ResultPage.tsx'
 import HistoryPage from './pages/History/HistoryPage.tsx'
 import ProfilePage from './pages/Profile/ProfilePage.tsx'
+import { createTheme, ThemeProvider } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+
+const theme = createTheme({
+  typography: {
+    fontFamily: "'Roboto', 'Leelawadee UI', sans-serif",
+  },
+})
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<Home />} />
-            <Route path="/sessions" element={<SessionsPage />} />
-            <Route path="/editor/:exerciseId" element={<EditorPage />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/result/:activityId" element={<ResultPage />} />
-            <Route path="/history" element={<HistoryPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/home" element={<Home />} />
+              <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/editor/:exerciseId" element={<EditorPage />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/result/:activityId" element={<ResultPage />} />
+              <Route path="/history" element={<HistoryPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+  </ThemeProvider>
   </StrictMode>,
 )

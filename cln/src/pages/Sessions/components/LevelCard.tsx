@@ -43,7 +43,7 @@ export const LevelCard: React.FC<LevelCardProps> = ({ progressData, onClick }) =
         position: 'relative',
         overflow: 'hidden',
         transition: 'all 0.2s ease',
-        fontFamily: "'Kanit', sans-serif",
+        fontFamily: "inherit",
         '&:hover': {
           transform: 'translateY(-2px)',
           boxShadow: '0 4px 12px rgba(15, 23, 42, 0.04)',
