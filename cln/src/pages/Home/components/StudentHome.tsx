@@ -65,7 +65,7 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
   }, [])
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
       {/* 1. Header Greeting & Stats Cards Row */}
       <StatsRow username={username} stats={stats} />
 

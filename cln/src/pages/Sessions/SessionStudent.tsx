@@ -69,7 +69,7 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
   const currentMeta = selectedLevel ? DIFFICULTY_LEVELS[selectedLevel] : null;
 
   return (
-    <Box sx={{ p: 2.5, maxWidth: 1100, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+    <Box sx={{ p: 2.5, maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
       {!selectedLevel ? (
         <>
           <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>
