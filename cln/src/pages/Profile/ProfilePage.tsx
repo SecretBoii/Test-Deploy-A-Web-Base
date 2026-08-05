@@ -109,7 +109,7 @@ export function ProfilePage() {
 
   return (
     <MainLayout activeItem="Profile">
-      <Box sx={{ maxWidth: '1200px', mx: 'auto', p: 1 }}>
+      <Box sx={{ maxWidth: '1280px', mx: 'auto', p: 1, width: '100%' }}>
         <Grid container spacing={3}>
           {/* ส่วนซ้าย: กล่องแสดงข้อมูลผู้ใช้แบบอ่านอย่างเดียว */}
           <Grid size={{ xs: 12, md: 7 }}>

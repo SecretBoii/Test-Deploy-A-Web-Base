@@ -120,7 +120,7 @@ export function ResultPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto', p: 3, bgcolor: '#f8fafc', minHeight: '90vh' }}>
+      <Box sx={{ maxWidth: '1280px', margin: '0 auto', p: 3, bgcolor: '#f8fafc', minHeight: '90vh', width: '100%' }}>
         
         {/* Header Section */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
