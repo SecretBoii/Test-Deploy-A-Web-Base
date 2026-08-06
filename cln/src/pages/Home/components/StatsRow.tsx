@@ -1,7 +1,6 @@
 import { Box, Typography, Card, LinearProgress } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutlined';
 import BarChartIcon from '@mui/icons-material/BarChart';
-import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
 interface StatsRowProps {
   username: string;
@@ -22,7 +21,7 @@ export function StatsRow({ username, stats }: StatsRowProps) {
           ยินดีต้อนรับกลับ, {username}.
         </Typography>
         <Typography variant="body2" sx={{ color: '#64748b' }}>
-          คุณทำได้ดีมาก มารักษาความต่อเนื่องกันเถอะ
+          คุณทำได้ดีมาก มาฝึกฝนและพัฒนาฝีมือกันต่อเถอะ!
         </Typography>
       </Box>
 
@@ -30,7 +29,7 @@ export function StatsRow({ username, stats }: StatsRowProps) {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(3, 1fr)' },
           gap: 2.5,
         }}
       >
@@ -132,51 +131,6 @@ export function StatsRow({ username, stats }: StatsRowProps) {
             <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 1 }}>
               จากทุกโจทย์
             </Typography>
-          </Box>
-        </Card>
-
-        {/* Stat Card 4 */}
-        <Card
-          sx={{
-            p: 2.5,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: 16 }}>
-              ความต่อเนื่อง
-            </Typography>
-            <LocalFireDepartmentIcon sx={{ color: '#cbd5e1', fontSize: 25 }} />
-          </Box>
-          <Box>
-            <Typography variant="h5" sx={{ fontWeight: 800, display: 'inline', fontSize: 38 }}>
-              {stats?.streakDays ?? 0}
-            </Typography>
-            <Typography variant="body2" component="span" sx={{ color: '#64748b', ml: 0.5 }}>
-              วัน
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 0.5, mt: 1.5 }}>
-              {[...Array(7)].map((_, idx) => {
-                const active = idx < (stats?.streakDays ?? 0);
-                return (
-                  <Box
-                    key={idx}
-                    sx={{
-                      flex: 1,
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: active ? '#2563eb' : '#eff6ff',
-                    }}
-                  />
-                );
-              })}
-            </Box>
           </Box>
         </Card>
       </Box>

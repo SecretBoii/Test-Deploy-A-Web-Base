@@ -1,4 +1,5 @@
 import { Box, Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 
 interface LatestResultsProps {
@@ -7,13 +8,19 @@ interface LatestResultsProps {
 }
 
 export function LatestResults({ history, onSelectExercise }: LatestResultsProps) {
+  const navigate = useNavigate();
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
           ผลล่าสุด
         </Typography>
-        <Button size="small" sx={{ color: '#2563eb', textTransform: 'none', fontWeight: 600 }}>
+        <Button
+          size="small"
+          onClick={() => navigate('/history')}
+          sx={{ color: '#2563eb', textTransform: 'none', fontWeight: 600 }}
+        >
           ดูทั้งหมด
         </Button>
       </Box>
