@@ -6,6 +6,9 @@ interface RegisterFormProps {
   step: number
   username: string
   password: string
+  firstName: string
+  lastName: string
+  email: string
   gender: string
   dateOfBirth: string
   university: string
@@ -15,6 +18,9 @@ interface RegisterFormProps {
   success: string
   onChangeUsername: (val: string) => void
   onChangePassword: (val: string) => void
+  onChangeFirstName: (val: string) => void
+  onChangeLastName: (val: string) => void
+  onChangeEmail: (val: string) => void
   onChangeGender: (val: string) => void
   onChangeDateOfBirth: (val: string) => void
   onChangeUniversity: (val: string) => void
@@ -29,6 +35,9 @@ export function RegisterForm({
   step,
   username,
   password,
+  firstName,
+  lastName,
+  email,
   gender,
   dateOfBirth,
   university,
@@ -38,6 +47,9 @@ export function RegisterForm({
   success,
   onChangeUsername,
   onChangePassword,
+  onChangeFirstName,
+  onChangeLastName,
+  onChangeEmail,
   onChangeGender,
   onChangeDateOfBirth,
   onChangeUniversity,
@@ -96,7 +108,7 @@ export function RegisterForm({
           </Box>
           <Box component="p" sx={{ fontSize: '14px', color: '#64748b', fontWeight: 500, margin: 0 }}>
             {step === 1 
-              ? 'Please choose your username and password.' 
+              ? 'Please choose your username, password, and email.' 
               : step === 2 
                 ? 'Please fill in your basic personal details.' 
                 : 'Please select your academic information.'}
@@ -108,6 +120,9 @@ export function RegisterForm({
           step={step}
           username={username}
           password={password}
+          firstName={firstName}
+          lastName={lastName}
+          email={email}
           gender={gender}
           dateOfBirth={dateOfBirth}
           university={university}
@@ -117,6 +132,9 @@ export function RegisterForm({
           success={success}
           onChangeUsername={onChangeUsername}
           onChangePassword={onChangePassword}
+          onChangeFirstName={onChangeFirstName}
+          onChangeLastName={onChangeLastName}
+          onChangeEmail={onChangeEmail}
           onChangeGender={onChangeGender}
           onChangeDateOfBirth={onChangeDateOfBirth}
           onChangeUniversity={onChangeUniversity}

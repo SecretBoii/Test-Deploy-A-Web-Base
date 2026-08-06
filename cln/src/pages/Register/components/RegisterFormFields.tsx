@@ -1,10 +1,13 @@
 import { TextField, Button, Box, MenuItem, InputAdornment } from '@mui/material'
-import { User, Lock, Calendar, School, BookOpen, GraduationCap, Smile } from 'lucide-react'
+import { User, Lock, Mail, Calendar, School, BookOpen, GraduationCap, Smile } from 'lucide-react'
 
 interface RegisterFormFieldsProps {
   step: number
   username: string
   password: string
+  firstName: string
+  lastName: string
+  email: string
   gender: string
   dateOfBirth: string
   university: string
@@ -14,6 +17,9 @@ interface RegisterFormFieldsProps {
   success: string
   onChangeUsername: (val: string) => void
   onChangePassword: (val: string) => void
+  onChangeFirstName: (val: string) => void
+  onChangeLastName: (val: string) => void
+  onChangeEmail: (val: string) => void
   onChangeGender: (val: string) => void
   onChangeDateOfBirth: (val: string) => void
   onChangeUniversity: (val: string) => void
@@ -28,6 +34,9 @@ export function RegisterFormFields({
   step,
   username,
   password,
+  firstName,
+  lastName,
+  email,
   gender,
   dateOfBirth,
   university,
@@ -37,6 +46,9 @@ export function RegisterFormFields({
   success,
   onChangeUsername,
   onChangePassword,
+  onChangeFirstName,
+  onChangeLastName,
+  onChangeEmail,
   onChangeGender,
   onChangeDateOfBirth,
   onChangeUniversity,
@@ -129,12 +141,112 @@ export function RegisterFormFields({
               },
             }}
           />
+
+          {/* Email */}
+          <TextField
+            fullWidth
+            type="email"
+            placeholder="email@example.com"
+            value={email}
+            onChange={(e) => onChangeEmail(e.target.value)}
+            autoComplete="off"
+            slotProps={{
+              htmlInput: { 'aria-label': 'Email' },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
+                    <Mail size={20} />
+                  </InputAdornment>
+                ),
+                style: {
+                  borderRadius: 12,
+                  height: 52,
+                  fontSize: 15,
+                },
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '@media (prefers-color-scheme: dark)': {
+                  '& fieldset': { borderColor: '#1e293b' },
+                  '&:hover fieldset': { borderColor: '#334155' },
+                  color: '#f3f4f6',
+                },
+              },
+            }}
+          />
         </Box>
       )}
 
       {/* ================= ขั้นตอนที่ 2 (Personal Info) ================= */}
       {step === 2 && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          {/* First Name */}
+          <TextField
+            fullWidth
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => onChangeFirstName(e.target.value)}
+            autoComplete="off"
+            slotProps={{
+              htmlInput: { 'aria-label': 'First Name' },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
+                    <User size={20} />
+                  </InputAdornment>
+                ),
+                style: {
+                  borderRadius: 12,
+                  height: 52,
+                  fontSize: 15,
+                },
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '@media (prefers-color-scheme: dark)': {
+                  '& fieldset': { borderColor: '#1e293b' },
+                  '&:hover fieldset': { borderColor: '#334155' },
+                  color: '#f3f4f6',
+                },
+              },
+            }}
+          />
+
+          {/* Last Name */}
+          <TextField
+            fullWidth
+            placeholder="Last Name"
+            value={lastName}
+            onChange={(e) => onChangeLastName(e.target.value)}
+            autoComplete="off"
+            slotProps={{
+              htmlInput: { 'aria-label': 'Last Name' },
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
+                    <User size={20} />
+                  </InputAdornment>
+                ),
+                style: {
+                  borderRadius: 12,
+                  height: 52,
+                  fontSize: 15,
+                },
+              },
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '@media (prefers-color-scheme: dark)': {
+                  '& fieldset': { borderColor: '#1e293b' },
+                  '&:hover fieldset': { borderColor: '#334155' },
+                  color: '#f3f4f6',
+                },
+              },
+            }}
+          />
+
           {/* Gender */}
           <TextField
             fullWidth
@@ -392,6 +504,7 @@ export function RegisterFormFields({
         {step === 1 ? (
           // ปุ่ม "Next" สำหรับข้ามไปขั้นตอนที่ 2
           <Button
+            key="next-step1"
             fullWidth
             type="button"
             variant="contained"
@@ -417,6 +530,7 @@ export function RegisterFormFields({
           // ปุ่ม "Back" และ "Next" สำหรับขั้นตอนที่ 2
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
+              key="back-step2"
               fullWidth
               type="button"
               variant="outlined"
@@ -448,6 +562,7 @@ export function RegisterFormFields({
               Back
             </Button>
             <Button
+              key="next-step2"
               fullWidth
               type="button"
               variant="contained"
@@ -475,6 +590,7 @@ export function RegisterFormFields({
           // ปุ่ม "Back" และ "Sign Up" สำหรับขั้นตอนที่ 3 (ส่งแบบฟอร์ม)
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
+              key="back-step3"
               fullWidth
               type="button"
               variant="outlined"
@@ -506,6 +622,7 @@ export function RegisterFormFields({
               Back
             </Button>
             <Button
+              key="submit-step3"
               fullWidth
               type="submit"
               variant="contained"
