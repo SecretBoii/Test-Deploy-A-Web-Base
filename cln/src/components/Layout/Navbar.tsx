@@ -1,5 +1,5 @@
-import { Bell, Users, Menu } from 'lucide-react'
-import { Avatar, IconButton, Badge, Box } from '@mui/material'
+import { Menu } from 'lucide-react'
+import { Avatar, IconButton, Box, Typography } from '@mui/material'
 
 interface NavbarProps {
   onMenuClick: () => void
@@ -7,9 +7,10 @@ interface NavbarProps {
     username: string
     roleId: number
   }
+  activeItem?: string
 }
 
-export function Navbar({ onMenuClick, user }: NavbarProps) {
+export function Navbar({ onMenuClick, user, activeItem }: NavbarProps) {
   return (
     <Box
       component="header"
@@ -26,8 +27,8 @@ export function Navbar({ onMenuClick, user }: NavbarProps) {
         zIndex: 80,
       }}
     >
-      {/* Left menu toggle */}
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      {/* Left menu toggle & Breadcrumbs */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <IconButton
           onClick={onMenuClick}
           aria-label="Open menu"
@@ -38,44 +39,63 @@ export function Navbar({ onMenuClick, user }: NavbarProps) {
         >
           <Menu size={22} />
         </IconButton>
+
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              fontWeight: 500,
+              color: '#64748b',
+              letterSpacing: '-0.1px',
+            }}
+          >
+            Python Exercise
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              color: '#cbd5e1',
+              mx: 1.25,
+              userSelect: 'none',
+            }}
+          >
+            /
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '14px',
+              fontWeight: 600,
+              color: '#0f172a',
+              letterSpacing: '-0.1px',
+            }}
+          >
+            {activeItem || 'Dashboard'}
+          </Typography>
+        </Box>
       </Box>
 
       {/* Right action items */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 3 }}>
-        <IconButton
-          aria-label="Users list"
-          sx={{
-            color: '#475569',
-            '&:hover': { bgcolor: '#f1f5f9' },
-          }}
-        >
-          <Users size={20} />
-        </IconButton>
-
-        <IconButton
-          aria-label="Notifications"
-          sx={{
-            color: '#475569',
-            '&:hover': { bgcolor: '#f1f5f9' },
-          }}
-        >
-          <Badge variant="dot" color="error">
-            <Bell size={20} />
-          </Badge>
-        </IconButton>
-
         <Avatar
           alt={user.username}
-          src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
           sx={{
             cursor: 'pointer',
+            bgcolor: '#eff6ff',
+            color: '#2563eb',
+            fontWeight: 700,
+            fontSize: '1rem',
             border: '2px solid #e2e8f0',
             width: 36,
             height: 36,
-            transition: 'transform 0.2s ease',
-            '&:hover': { transform: 'scale(1.05)' },
+            transition: 'transform 0.2s ease, border-color 0.2s ease',
+            '&:hover': {
+              transform: 'scale(1.05)',
+              borderColor: '#2563eb',
+            },
           }}
-        />
+        >
+          {user.username?.charAt(0).toUpperCase() || 'U'}
+        </Avatar>
       </Box>
     </Box>
   )

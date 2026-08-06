@@ -94,7 +94,7 @@ export function MainLayout({ children, activeItem }: MainLayoutProps) {
       {/* Main Content Layout */}
       <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         {/* Top Navbar */}
-        <Navbar onMenuClick={handleToggleSidebar} user={user} />
+        <Navbar onMenuClick={handleToggleSidebar} user={user} activeItem={currentActiveItem} />
 
         {/* Content Area */}
         <Box sx={{ flexGrow: 1, p: { xs: 2.5, md: 4 } }}>
