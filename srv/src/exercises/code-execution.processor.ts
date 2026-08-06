@@ -3,6 +3,8 @@ import { Job } from 'bullmq';
 import { spawn } from 'child_process';
 import { ExercisesService } from './exercises.service';
 
+const TIMEOUT_LIMIT = 5; // กำหนด 5 วินาที
+
 @Processor('code-execution', { concurrency: 4 })
 export class CodeExecutionProcessor extends WorkerHost {
   constructor(private readonly exercisesService: ExercisesService) {
@@ -22,7 +24,14 @@ export class CodeExecutionProcessor extends WorkerHost {
       testInput?: string;
     }>,
   ): Promise<{ status: string; stdout: string; stderr: string }> {
-    const { activityId, exerciseId, sourceCode, event_type, run_count, testInput } = job.data;
+    const {
+      activityId,
+      exerciseId,
+      sourceCode,
+      event_type,
+      run_count,
+      testInput,
+    } = job.data;
 
     const wrapperScript = ` 
 import sys, subprocess, os, tempfile
@@ -41,20 +50,24 @@ try:
         input=inputs,
         text=True,
         capture_output=True,
-        timeout=4
+        timeout=${TIMEOUT_LIMIT}
     )
     sys.stdout.write(res.stdout)
     sys.stderr.write(res.stderr)
     sys.exit(res.returncode)
 except subprocess.TimeoutExpired:
-    sys.stderr.write('Time Limit Exceeded (Timeout 4s)')
+    sys.stderr.write('Time Limit Exceeded (Timeout ${TIMEOUT_LIMIT}s)')
     sys.exit(124)
 except Exception as e:
     sys.stderr.write(str(e))
     sys.exit(1)
 `.trim();
 
-    const runDockerOnly = (): Promise<{ status: string; stdout: string; stderr: string }> => {
+    const runDockerOnly = (): Promise<{
+      status: string;
+      stdout: string;
+      stderr: string;
+    }> => {
       return new Promise((resolve) => {
         let child = spawn('docker', [
           'run',
@@ -81,10 +94,10 @@ except Exception as e:
             resolve({
               status: 'Time Limit Exceeded',
               stdout,
-              stderr: 'Execution timed out (5s limit exceeded)',
+              stderr: `Execution timed out (${TIMEOUT_LIMIT}s limit exceeded)`,
             });
           }
-        }, 8000);
+        }, TIMEOUT_LIMIT * 1000 + 1000); // ตั้งเวลารอ Node.js ให้ทำงานจนเสร็จ
 
         child.on('error', (err) => {
           if (!resolved) {
@@ -115,7 +128,7 @@ except Exception as e:
             resolve({
               status: 'Time Limit Exceeded',
               stdout,
-              stderr: 'Execution timed out (5s limit exceeded)',
+              stderr: `Execution timed out (${TIMEOUT_LIMIT}s limit exceeded)`,
             });
           } else if (code !== 0) {
             resolve({
