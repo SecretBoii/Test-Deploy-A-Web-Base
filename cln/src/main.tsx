@@ -7,6 +7,7 @@ import Register from './pages/Register/Register.tsx'
 import Home from './pages/Home/Home.tsx'
 import Dashboard from './pages/Dashboard/Dashboard.tsx'
 import SessionsPage from './pages/Sessions/SessionsPage.tsx'
+import LevelDetailPage from './pages/Sessions/LevelDetailPage.tsx'
 import EditorPage from './pages/Editor/EditorPage.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import ProtectedRoute from './components/Auth/ProtectedRoute.tsx'
@@ -34,6 +35,7 @@ createRoot(document.getElementById('root')!).render(
             <Route element={<ProtectedRoute />}>
               <Route path="/home" element={<Home />} />
               <Route path="/sessions" element={<SessionsPage />} />
+              <Route path="/sessions/:levelId" element={<LevelDetailPage />} />
               <Route path="/editor/:exerciseId" element={<EditorPage />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/result/:activityId" element={<ResultPage />} />
