@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Box, Grid, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Typography } from '@mui/material';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
 import { ProfileForm } from './components/ProfileForm';
@@ -118,47 +118,54 @@ export function ProfilePage() {
 
   return (
     <MainLayout activeItem="Profile">
-      <Box sx={{ maxWidth: '1280px', mx: 'auto', p: 1, width: '100%' }}>
-        <Grid container spacing={3}>
-          {/* ส่วนซ้าย: กล่องแสดงข้อมูลผู้ใช้แบบอ่านอย่างเดียว */}
-          <Grid size={{ xs: 12, md: 7 }}>
-            <ProfileForm
-              username={username}
-              firstName={firstName}
-              lastName={lastName}
-              email={email}
-              gender={gender}
-              dateOfBirth={dateOfBirth}
-              university={university}
-              faculty={faculty}
-              major={major}
-              registerTimestamp={profile?.registerTimestamp}
-              formatDate={formatDate}
-              roleName={roleName}
-            />
-          </Grid>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3.5,
+          color: '#0f172a',
+          maxWidth: '1280px',
+          margin: '0 auto',
+          width: '100%',
+        }}
+      >
+        {/* 1. Header Greeting */}
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a' }}>
+            บัญชีผู้ใช้งาน
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748b' }}>
+            ข้อมูลโปรไฟล์ สถิติการเรียน และระดับทักษะความเชี่ยวชาญภาษา Python ของคุณ
+          </Typography>
+        </Box>
 
-          {/* ส่วนขวา: ข้อมูลสถิติและความก้าวหน้าของวิชาเรียน */}
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Grid container spacing={3}>
-              {/* การ์ดสถิติ */}
-              <Grid size={{ xs: 12 }}>
-                <ProfileStats
-                  solvedExercises={profile?.stats?.solvedExercises || 0}
-                  totalExercises={profile?.stats?.totalExercises || 0}
-                  averageScore={profile?.stats?.averageScore || 0}
-                  successSubmissions={profile?.stats?.successSubmissions || 0}
-                  averageRuns={profile?.stats?.averageRuns || 0}
-                />
-              </Grid>
+        {/* 2. Stats Cards Row (ปรับแสดงเป็น 4 การ์ดแนวนอนพรีเมียมแบบเดียวกับหน้าแรก) */}
+        <ProfileStats
+          solvedExercises={profile?.stats?.solvedExercises || 0}
+          totalExercises={profile?.stats?.totalExercises || 0}
+          averageScore={profile?.stats?.averageScore || 0}
+          successSubmissions={profile?.stats?.successSubmissions || 0}
+          averageRuns={profile?.stats?.averageRuns || 0}
+        />
 
-              {/* การ์ดความก้าวหน้าตามความยาก (Progress Bars) */}
-              <Grid size={{ xs: 12 }}>
-                <ProfileProgress progress={levelsProgress} />
-              </Grid>
-            </Grid>
-          </Grid>
-        </Grid>
+        {/* 3. Middle Section: Profile Info (ซ้าย 2/3) & Level Progress (ขวา 1/3) */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3 }}>
+          <ProfileForm
+            username={username}
+            firstName={firstName}
+            lastName={lastName}
+            email={email}
+            gender={gender}
+            dateOfBirth={dateOfBirth}
+            university={university}
+            faculty={faculty}
+            major={major}
+            registerTimestamp={profile?.registerTimestamp}
+            formatDate={formatDate}
+            roleName={roleName}
+          />
+          <ProfileProgress progress={levelsProgress} />
+        </Box>
       </Box>
     </MainLayout>
   );
