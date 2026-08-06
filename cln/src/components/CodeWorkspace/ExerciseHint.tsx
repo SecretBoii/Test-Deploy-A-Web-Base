@@ -10,17 +10,17 @@ interface ExerciseHintProps {
 }
 
 const HintContainer = styled(Box)(() => ({
-  background: '#0f172a',
+  background: 'var(--bg)',
   borderRadius: '12px',
-  border: '1px solid rgba(251, 191, 36, 0.15)',
+  border: '1px solid var(--border)',
   padding: '16px', // p: 2
   display: 'flex',
   flexDirection: 'column',
-  boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--shadow)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    borderColor: 'rgba(251, 191, 36, 0.3)',
-    boxShadow: '0 0 12px rgba(251, 191, 36, 0.08), 0 4px 15px -3px rgba(0, 0, 0, 0.15)',
+    borderColor: 'var(--border)',
+    boxShadow: 'var(--shadow)',
   }
 }));
 
@@ -31,7 +31,7 @@ const HintHeader = styled(Box)(() => ({
 }));
 
 const HintTitle = styled(Typography)(() => ({
-  color: '#fbbf24',
+  color: '#d97706',
   fontWeight: 700,
   fontSize: '0.875rem',
   display: 'flex',
@@ -39,14 +39,14 @@ const HintTitle = styled(Typography)(() => ({
   gap: '8px', // gap: 1
   fontFamily: 'inherit',
   '& svg': {
-    filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.45))'
+    filter: 'drop-shadow(0 0 2px rgba(245, 158, 11, 0.15))'
   }
 }));
 
 const HintToggleButton = styled(Button)(() => ({
-  color: '#fbbf24',
-  borderColor: 'rgba(251, 191, 36, 0.2)',
-  border: '1px solid rgba(251, 191, 36, 0.15)',
+  color: '#d97706',
+  borderColor: 'rgba(217, 119, 6, 0.3)',
+  border: '1px solid',
   borderRadius: '20px', // pill shape
   paddingLeft: '14px',
   paddingRight: '14px',
@@ -57,22 +57,23 @@ const HintToggleButton = styled(Button)(() => ({
   fontSize: '0.75rem',
   fontFamily: 'inherit',
   transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-  backgroundColor: 'rgba(251, 191, 36, 0.04)',
+  backgroundColor: 'rgba(217, 119, 6, 0.05)',
   display: 'inline-flex',
   alignItems: 'center',
   gap: '4px',
   '&:hover': {
-    borderColor: '#fbbf24',
-    backgroundColor: 'rgba(251, 191, 36, 0.1)',
+    borderColor: '#d97706',
+    backgroundColor: 'rgba(217, 119, 6, 0.12)',
     transform: 'translateY(-1px) scale(1.03)',
-    boxShadow: '0 0 8px rgba(251, 191, 36, 0.2)',
+    boxShadow: '0 0 8px rgba(245, 158, 11, 0.1)',
   },
   '&:active': {
     transform: 'translateY(1px) scale(0.96)',
   },
   '&.Mui-disabled': {
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-    color: 'rgba(255, 255, 255, 0.25)',
+    borderColor: 'var(--border)',
+    color: 'var(--text)',
+    opacity: 0.5
   }
 }));
 
@@ -87,15 +88,15 @@ const ChevronIconWrapper = styled(Box, {
 
 const HintExpandedCard = styled(Box)(() => ({
   marginTop: '12px', // mt: 1.5
-  backgroundColor: '#020617',
+  backgroundColor: 'var(--code-bg)',
   borderRadius: '8px',
   padding: '12px', // p: 1.5
-  border: '1px solid rgba(245, 158, 11, 0.3)',
-  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.5)'
+  border: '1px solid var(--border)',
+  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.05)'
 }));
 
 const HintContentText = styled(Typography)(() => ({
-  color: '#fef3c7',
+  color: 'var(--text-h)',
   fontFamily: 'inherit',
   fontSize: '13px',
   whiteSpace: 'pre-wrap',
@@ -109,24 +110,24 @@ export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHin
     <HintContainer>
       <HintHeader>
         <HintTitle variant="subtitle2">
-          <Lightbulb size={18} color="#fbbf24" /> คำใบ้สำหรับโจทย์ (Hint)
+          <Lightbulb size={18} color="#d97706" /> คำใบ้สำหรับโจทย์ (Hint)
         </HintTitle>
         {hintUsed ? (
           <Box sx={{ 
-            color: '#fbbf24', 
+            color: '#d97706', 
             fontSize: '0.75rem', 
             fontWeight: 700, 
             fontFamily: 'inherit', 
             display: 'inline-flex', 
             alignItems: 'center', 
-            border: '1px solid rgba(251, 191, 36, 0.3)', 
+            border: '1px solid rgba(217, 119, 6, 0.3)', 
             borderRadius: '20px', 
             paddingLeft: '14px',
             paddingRight: '14px',
             paddingTop: '4px',
             paddingBottom: '4px',
-            backgroundColor: 'rgba(251, 191, 36, 0.08)',
-            boxShadow: '0 0 8px rgba(251, 191, 36, 0.15)'
+            backgroundColor: 'rgba(217, 119, 6, 0.05)',
+            boxShadow: '0 0 8px rgba(245, 158, 11, 0.05)'
           }}>
             เปิดใช้งานแล้ว
           </Box>
@@ -153,7 +154,7 @@ export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHin
       <Collapse in={hintUsed}>
         <HintExpandedCard>
           {loading ? (
-            <HintContentText sx={{ color: '#94a3b8' }}>
+            <HintContentText sx={{ color: 'var(--text)' }}>
               กำลังโหลดคำใบ้จากระบบ...
             </HintContentText>
           ) : (

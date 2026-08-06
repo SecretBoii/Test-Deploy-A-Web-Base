@@ -11,16 +11,16 @@ const GemmaContainer = styled(Box)(() => ({
   flex: 1, 
   display: 'flex', 
   flexDirection: 'column', 
-  backgroundColor: '#0f172a', 
+  backgroundColor: 'var(--bg)', 
   borderRadius: '12px', 
-  border: '1px solid rgba(255, 255, 255, 0.08)', 
+  border: '1px solid var(--border)', 
   padding: '16px', // p: 2
   minHeight: 0,
-  boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--shadow)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    borderColor: 'rgba(129, 140, 248, 0.25)',
-    boxShadow: '0 0 12px rgba(129, 140, 248, 0.05), 0 4px 15px -3px rgba(0, 0, 0, 0.15)',
+    borderColor: 'var(--border)',
+    boxShadow: 'var(--shadow)',
   }
 }));
 
@@ -32,7 +32,7 @@ const GemmaHeader = styled(Box)(() => ({
 }));
 
 const GemmaTitle = styled(Typography)(() => ({
-  color: '#a5b4fc', 
+  color: 'var(--accent)', 
   fontWeight: 800, 
   fontSize: '0.875rem',
   display: 'flex', 
@@ -40,23 +40,23 @@ const GemmaTitle = styled(Typography)(() => ({
   gap: '8px',
   fontFamily: 'inherit',
   '& svg': {
-    filter: 'drop-shadow(0 0 4px rgba(165, 180, 252, 0.65))',
-    color: '#818cf8'
+    filter: 'drop-shadow(0 0 4px var(--accent-bg))',
+    color: 'var(--accent)'
   }
 }));
 
 const FeedbackCard = styled(Box)(() => ({
   flexGrow: 1, 
   overflowY: 'auto', 
-  backgroundColor: '#020617', 
+  backgroundColor: 'var(--code-bg)', 
   borderRadius: '8px', 
   padding: '16px', 
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.45)'
+  border: '1px solid var(--border)',
+  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.05)'
 }));
 
 const FeedbackText = styled(Typography)(() => ({
-  color: '#e2e8f0', 
+  color: 'var(--text-h)', 
   fontFamily: 'inherit', 
   fontSize: '13px', 
   whiteSpace: 'pre-wrap', 
@@ -65,9 +65,9 @@ const FeedbackText = styled(Typography)(() => ({
 
 export function GemmaFeedback({ response, score }: GemmaFeedbackProps) {
   const getScoreBadgeColor = (val: number) => {
-    if (val >= 80) return { bg: 'rgba(16, 185, 129, 0.08)', text: '#34d399', border: 'rgba(16, 185, 129, 0.25)' }
-    if (val >= 50) return { bg: 'rgba(245, 158, 11, 0.08)', text: '#fbbf24', border: 'rgba(245, 158, 11, 0.25)' }
-    return { bg: 'rgba(239, 68, 68, 0.08)', text: '#f87171', border: 'rgba(239, 68, 68, 0.25)' }
+    if (val >= 80) return { bg: 'rgba(16, 185, 129, 0.08)', text: '#059669', border: 'rgba(16, 185, 129, 0.25)' }
+    if (val >= 50) return { bg: 'rgba(245, 158, 11, 0.08)', text: '#d97706', border: 'rgba(245, 158, 11, 0.25)' }
+    return { bg: 'rgba(239, 68, 68, 0.08)', text: '#dc2626', border: 'rgba(239, 68, 68, 0.25)' }
   }
 
   const scoreStyle = typeof score === 'number' ? getScoreBadgeColor(score) : null

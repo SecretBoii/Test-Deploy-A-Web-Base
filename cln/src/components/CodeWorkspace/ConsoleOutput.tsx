@@ -10,16 +10,16 @@ const TerminalContainer = styled(Box)(() => ({
   flex: 1, 
   display: 'flex', 
   flexDirection: 'column', 
-  backgroundColor: '#0f172a', 
+  backgroundColor: 'var(--bg)', 
   borderRadius: '12px', 
-  border: '1px solid rgba(255, 255, 255, 0.08)', 
+  border: '1px solid var(--border)', 
   padding: '16px', 
   minHeight: 0,
-  boxShadow: '0 4px 15px -3px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+  boxShadow: 'var(--shadow)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   '&:hover': {
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    boxShadow: '0 0 12px rgba(255, 255, 255, 0.03), 0 4px 15px -3px rgba(0, 0, 0, 0.15)',
+    borderColor: 'var(--border)',
+    boxShadow: 'var(--shadow)',
   }
 }));
 
@@ -30,7 +30,7 @@ const TerminalHeader = styled(Box)(() => ({
 }));
 
 const TerminalTitle = styled(Typography)(() => ({
-  color: '#94a3b8', 
+  color: 'var(--text)', 
   fontWeight: 700, 
   fontSize: '0.875rem',
   display: 'flex',
@@ -42,11 +42,11 @@ const TerminalTitle = styled(Typography)(() => ({
 const TerminalContent = styled(Box)(() => ({
   flexGrow: 1, 
   overflowY: 'auto', 
-  backgroundColor: '#020617', 
+  backgroundColor: 'var(--code-bg)', 
   borderRadius: '8px', 
   padding: '16px', 
-  border: '1px solid rgba(255, 255, 255, 0.05)',
-  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.45)',
+  border: '1px solid var(--border)',
+  boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.05)',
   display: 'flex',
   flexDirection: 'column'
 }));
@@ -57,13 +57,14 @@ export function ConsoleOutput({ output }: ConsoleOutputProps) {
                   output.toLowerCase().includes('traceback') ||
                   output.toLowerCase().includes('failed')
 
-  const textColor = isError ? '#f87171' : '#34d399' // Red-pink for errors, emerald green for output
+  const isWaiting = !output || output.includes('Waiting for execution...')
+  const textColor = isWaiting ? 'var(--text)' : (isError ? '#ef4444' : 'var(--text-h)')
 
   return (
     <TerminalContainer>
       <TerminalHeader>
         <TerminalTitle variant="subtitle2">
-          <Terminal size={16} color="#94a3b8" /> Console Output
+          <Terminal size={16} color="#475569" /> Console Output
         </TerminalTitle>
       </TerminalHeader>
       
