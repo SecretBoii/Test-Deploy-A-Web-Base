@@ -20,6 +20,7 @@ interface ActivityStatus {
   score: number
   runCount: number
   hintUsed: boolean
+  output: string | null
   exceptionMessage: string | null
   aiFeedback: string | null
   exerciseId: number
@@ -120,7 +121,7 @@ export function ResultPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <Box sx={{ maxWidth: '1280px', margin: '0 auto', p: 3, bgcolor: '#f8fafc', minHeight: '90vh', width: '100%' }}>
+      <Box sx={{ maxWidth: '1280px', margin: '0 auto', p: 3, minHeight: '90vh', width: '100%' }}>
         
         {/* Header Section */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
@@ -131,7 +132,7 @@ export function ResultPage() {
             startIcon={<ArrowLeft size={16} />} 
             onClick={() => navigate('/sessions')}
             variant="outlined"
-            sx={{ borderRadius: '8px', textTransform: 'none', borderColor: '#cbd5e1', color: '#64748b' }}
+            sx={{ borderRadius: '12px', textTransform: 'none', borderColor: '#cbd5e1', color: '#475569', fontWeight: 600 }}
           >
             กลับหน้ารวมบทเรียน
           </Button>
@@ -158,7 +159,7 @@ export function ResultPage() {
           <Grid size={{ xs: 12, md: 8 }} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             {/* 1. ผลลัพธ์การรัน (Run Results) */}
             <RunResultsCard 
-              actualOutput={data.exceptionMessage} 
+              actualOutput={data.output || data.exceptionMessage} 
             />
 
             {/* 2. โค้ดที่ส่ง (Monaco Editor) */}

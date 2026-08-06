@@ -114,6 +114,7 @@ model Activity {
   answer           String
   score            Int
   status           String      @default("PENDING") @db.VarChar(50)
+  output           String?     @map("output")
   exceptionMessage String?     @map("exception_message")
   aiFeedback       String?     @map("ai_feedback")
   eventType        String      @map("event_type") @db.VarChar(50)

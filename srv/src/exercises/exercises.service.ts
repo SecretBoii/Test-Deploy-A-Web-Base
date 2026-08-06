@@ -154,13 +154,17 @@ export class ExercisesService implements OnModuleInit {
           eventType: 'run',
         },
       });
-      
-      let run_count = typeof runCountParam === 'number' ? runCountParam : (event_type === 'run' ? previousRuns + 1 : previousRuns);
-      
+
+      let run_count =
+        typeof runCountParam === 'number'
+          ? runCountParam
+          : event_type === 'run'
+            ? previousRuns + 1
+            : previousRuns;
 
       let sessionId = sessionIdParam ? sessionIdParam : 1;
 
-      if(!sessionIdParam){
+      if (!sessionIdParam) {
         const sessionExercise = await this.prisma.sessionExercise.findFirst({
           where: { exerciseId },
         });
@@ -180,7 +184,9 @@ export class ExercisesService implements OnModuleInit {
         });
 
         if (!latestRun) {
-          throw new BadRequestException('กรุณากด Run Code เพื่อทดสอบโค้ดและตรวจผลลัพธ์ก่อนส่งคำตอบ');
+          throw new BadRequestException(
+            'กรุณากด Run Code เพื่อทดสอบโค้ดและตรวจผลลัพธ์ก่อนส่งคำตอบ',
+          );
         }
 
         // Find the most recent submit activity for this user and exercise to measure current attempt time
@@ -201,11 +207,13 @@ export class ExercisesService implements OnModuleInit {
             userId: Number(userId),
             exerciseId: Number(exerciseId),
             eventType: 'run',
-            ...(latestSubmit ? {
-              submittedAt: {
-                gt: latestSubmit.submittedAt,
-              },
-            } : {}),
+            ...(latestSubmit
+              ? {
+                  submittedAt: {
+                    gt: latestSubmit.submittedAt,
+                  },
+                }
+              : {}),
           },
           orderBy: {
             submittedAt: 'asc',
@@ -227,6 +235,7 @@ export class ExercisesService implements OnModuleInit {
             status: 'SUCCESS',
             eventType: 'submit',
             runCount: run_count,
+            output: latestRun.output,
             exceptionMessage: latestRun.exceptionMessage,
             aiFeedback: latestRun.aiFeedback,
           },
@@ -256,12 +265,10 @@ export class ExercisesService implements OnModuleInit {
         },
       });
 
-      
-
       const inputMap: Record<number, string> = {
         101: '5\n10\n',
         102: '1\n2\n0\n',
-      }
+      };
 
       const testInputs = inputMap[exerciseId] ?? '5\n10\n15\n20\nstudent\n';
 
@@ -287,7 +294,8 @@ export class ExercisesService implements OnModuleInit {
       };
     } catch (error) {
       throw new InternalServerErrorException(
-        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,      );
+        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,
+      );
     }
   }
 
@@ -297,7 +305,7 @@ export class ExercisesService implements OnModuleInit {
       include: {
         exercise: true,
         session: true,
-      }
+      },
     });
     if (!activity) {
       throw new NotFoundException('Activity log not found');
@@ -307,11 +315,17 @@ export class ExercisesService implements OnModuleInit {
       success: true,
       activityId: activity.activityId,
       eventType: activity.eventType,
-      status: activity.status === 'SUCCESS' ? 'success' : activity.status === 'PENDING' ? 'pending' : 'error',
+      status:
+        activity.status === 'SUCCESS'
+          ? 'success'
+          : activity.status === 'PENDING'
+            ? 'pending'
+            : 'error',
       rawStatus: activity.status,
       score: activity.score,
       runCount: activity.runCount,
       hintUsed: activity.hintUsed,
+      output: activity.output,
       exceptionMessage: activity.exceptionMessage,
       aiFeedback: activity.aiFeedback,
       exerciseId: activity.exerciseId,
@@ -344,8 +358,11 @@ export class ExercisesService implements OnModuleInit {
       }
 
       const apiKey = this.configService.get<string>('GEMMA_PSU');
-      const model = this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
-      const gemmaUrl = this.configService.get<string>('GEMMA_API_URL') || 'https://ai.psu.blue/v1/chat/completions';
+      const model =
+        this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
+      const gemmaUrl =
+        this.configService.get<string>('GEMMA_API_URL') ||
+        'https://ai.psu.blue/v1/chat/completions';
       const prompt = this.buildGemmaPrompt(
         sourceCode,
         runResult,
@@ -355,18 +372,25 @@ export class ExercisesService implements OnModuleInit {
       );
 
       // 1. บันทึกผลลัพธ์จาก Docker (stdout/stderr) ทันที (ยังคง status = PENDING เพื่อให้ Frontend ยังคง Poll ต่อจนกว่า Gemma จะเสร็จ)
-      const outputMsg = runResult.stderr ? runResult.stderr : runResult.stdout ? runResult.stdout : 'โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)';
+      const outputMsg = runResult.stderr
+        ? runResult.stderr
+        : runResult.stdout
+          ? runResult.stdout
+          : 'โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)';
       await this.prisma.activity.update({
         where: { activityId },
         data: {
-          exceptionMessage: outputMsg,
+          output: runResult.stdout || null,
+          exceptionMessage: runResult.stderr || null,
         },
       });
 
       // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API เท่านั้น
       let gemmaResponse;
       try {
-        this.logger.log(`[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`);
+        this.logger.log(
+          `[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`,
+        );
         gemmaResponse = await firstValueFrom(
           this.httpService.post(
             gemmaUrl,
@@ -377,7 +401,7 @@ export class ExercisesService implements OnModuleInit {
             },
             {
               headers: {
-                'Authorization': `Bearer ${apiKey}`,
+                Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
               },
             },
@@ -386,24 +410,29 @@ export class ExercisesService implements OnModuleInit {
       } catch (apiError) {
         this.logger.error(
           'Gemma model call failed:',
-          apiError.response?.data?.error?.message || apiError.response?.data || apiError.message,
+          apiError.response?.data?.error?.message ||
+            apiError.response?.data ||
+            apiError.message,
         );
       }
 
       // 3. เมื่อ Gemma ตอบกลับมา บันทึกคะแนนและคำแนะนำ แล้วปรับ status เป็น SUCCESS
       const aiText = gemmaResponse?.data?.choices?.[0]?.message?.content;
-      
+
       // ป้องกันการให้คะแนน 100 แบบสุ่มสี่สุ่มห้า หาก API ยิงไม่ผ่าน
       if (!aiText) {
-        throw new Error('AI Grading response is empty or Gemma API call failed.');
+        throw new Error(
+          'AI Grading response is empty or Gemma API call failed.',
+        );
       }
 
       let aiReview = {
         score: runResult.status === 'Accepted' ? 100 : 0,
-        exception_message: outputMsg,
-        ai_feedback: runResult.status === 'Accepted'
-          ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้ว'
-          : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง',
+        exception_message: outputMsg as string | null,
+        ai_feedback:
+          runResult.status === 'Accepted'
+            ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้ว'
+            : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง',
       };
 
       const defaultScore = runResult.status === 'Accepted' ? 100 : 0;
@@ -415,10 +444,11 @@ export class ExercisesService implements OnModuleInit {
       );
       aiReview = {
         score: parsed.score,
-        exception_message: parsed.exception_message ?? outputMsg,
+        exception_message:
+          parsed.exception_message ??
+          (runResult.stderr ? runResult.stderr : null),
         ai_feedback: parsed.ai_feedback ?? aiReview.ai_feedback,
       };
-
 
       const finalScore = runResult.status === 'Accepted' ? aiReview.score : 0;
 
@@ -426,6 +456,7 @@ export class ExercisesService implements OnModuleInit {
         where: { activityId },
         data: {
           score: finalScore,
+          output: runResult.stdout || null,
           exceptionMessage: aiReview.exception_message,
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
@@ -530,7 +561,12 @@ export class ExercisesService implements OnModuleInit {
     runResult: { status: string; stdout: string; stderr: string },
     event_type: string,
     run_count: number,
-    exercise: { title: string; description: string; topic: string; objective: string },
+    exercise: {
+      title: string;
+      description: string;
+      topic: string;
+      objective: string;
+    },
   ): string {
     const securityRules = this.getSkillGuideline('security');
     const complexityRules = this.getSkillGuideline('complexity');
@@ -612,7 +648,10 @@ export class ExercisesService implements OnModuleInit {
           });
 
           const totalSessions = sessions.length;
-          const totalMinutes = sessions.reduce((sum: number, s: any) => sum + s.duration, 0);
+          const totalMinutes = sessions.reduce(
+            (sum: number, s: any) => sum + s.duration,
+            0,
+          );
           const totalHours = Math.round(totalMinutes / 60) || 6;
 
           const exerciseIds = sessions.flatMap((s: any) =>
@@ -626,10 +665,7 @@ export class ExercisesService implements OnModuleInit {
               where: {
                 userId: userId,
                 exerciseId: { in: exerciseIds },
-                OR: [
-                  { eventType: 'submit' },
-                  { score: { gt: 0 } },
-                ],
+                OR: [{ eventType: 'submit' }, { score: { gt: 0 } }],
               },
               select: { exerciseId: true },
               distinct: ['exerciseId'],
@@ -643,8 +679,10 @@ export class ExercisesService implements OnModuleInit {
             totalHours,
             totalExercises,
             completedExercises,
-            sessionName: sessions.length > 0 ? sessions[0].sessionName : undefined,
-            sessionObjective: sessions.length > 0 ? sessions[0].sessionObjective : undefined,
+            sessionName:
+              sessions.length > 0 ? sessions[0].sessionName : undefined,
+            sessionObjective:
+              sessions.length > 0 ? sessions[0].sessionObjective : undefined,
           };
         }),
       );
@@ -671,30 +709,32 @@ export class ExercisesService implements OnModuleInit {
     const userActivities = await this.prisma.activity.findMany({
       where: {
         userId: userId,
-        OR: [
-          { eventType: 'submit' },
-          { score: { gt: 0 } },
-        ],
+        OR: [{ eventType: 'submit' }, { score: { gt: 0 } }],
       },
       select: { exerciseId: true },
     });
     const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
 
     const result = sessions.map((session: any) => {
-      const exercises = (session.sessionExercises || []).map((se: any, idx: number) => {
-        const isPassed = passedExerciseIds.has(se.exerciseId);
-        return {
-          exerciseId: se.exerciseId,
-          orderNumber: idx + 1,
-          title: se.exercise?.title || '',
-          description: se.exercise?.description || '',
-          expectedTime: se.exercise?.expectedTime || 5,
-          isPassed,
-        };
-      });
+      const exercises = (session.sessionExercises || []).map(
+        (se: any, idx: number) => {
+          const isPassed = passedExerciseIds.has(se.exerciseId);
+          return {
+            exerciseId: se.exerciseId,
+            orderNumber: idx + 1,
+            title: se.exercise?.title || '',
+            description: se.exercise?.description || '',
+            expectedTime: se.exercise?.expectedTime || 5,
+            isPassed,
+          };
+        },
+      );
 
       const completedCount = exercises.filter((e: any) => e.isPassed).length;
-      const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
+      const totalExpectedTime = exercises.reduce(
+        (sum: number, e: any) => sum + e.expectedTime,
+        0,
+      );
 
       return {
         sessionId: session.sessionId,
@@ -703,7 +743,8 @@ export class ExercisesService implements OnModuleInit {
         duration: totalExpectedTime || session.duration,
         totalExercises: exercises.length,
         completedExercises: completedCount,
-        isCompleted: completedCount === exercises.length && exercises.length > 0,
+        isCompleted:
+          completedCount === exercises.length && exercises.length > 0,
         exercises,
       };
     });
@@ -711,27 +752,36 @@ export class ExercisesService implements OnModuleInit {
     return result;
   }
 
-  private async isSessionCompleted(userId: number, sessionId: number): Promise<boolean> {
+  private async isSessionCompleted(
+    userId: number,
+    sessionId: number,
+  ): Promise<boolean> {
     const session = await this.prisma.session.findUnique({
       where: { sessionId },
       include: {
         sessionExercises: true,
       },
     });
-    if (!session || !session.sessionExercises || session.sessionExercises.length === 0) {
+    if (
+      !session ||
+      !session.sessionExercises ||
+      session.sessionExercises.length === 0
+    ) {
       return true;
     }
 
     const exerciseIds = session.sessionExercises.map((se) => se.exerciseId);
-    const passedActivitiesCount = await this.prisma.activity.findMany({
-      where: {
-        userId,
-        exerciseId: { in: exerciseIds },
-        score: { gt: 0 },
-      },
-      select: { exerciseId: true },
-      distinct: ['exerciseId'],
-    }).then(res => res.length);
+    const passedActivitiesCount = await this.prisma.activity
+      .findMany({
+        where: {
+          userId,
+          exerciseId: { in: exerciseIds },
+          score: { gt: 0 },
+        },
+        select: { exerciseId: true },
+        distinct: ['exerciseId'],
+      })
+      .then((res) => res.length);
 
     return passedActivitiesCount === exerciseIds.length;
   }
@@ -744,11 +794,14 @@ export class ExercisesService implements OnModuleInit {
         orderBy: { submittedAt: 'desc' },
         select: { sessionId: true },
       });
-      
+
       const targetSessionIds: number[] = [];
       for (const act of recentActivities) {
         if (act.sessionId && !targetSessionIds.includes(act.sessionId)) {
-          const isCompleted = await this.isSessionCompleted(userId, act.sessionId);
+          const isCompleted = await this.isSessionCompleted(
+            userId,
+            act.sessionId,
+          );
           if (!isCompleted) {
             targetSessionIds.push(act.sessionId);
             if (targetSessionIds.length >= 3) break;
@@ -765,7 +818,10 @@ export class ExercisesService implements OnModuleInit {
         });
         for (const prog of recentProgress) {
           if (prog.sessionId && !targetSessionIds.includes(prog.sessionId)) {
-            const isCompleted = await this.isSessionCompleted(userId, prog.sessionId);
+            const isCompleted = await this.isSessionCompleted(
+              userId,
+              prog.sessionId,
+            );
             if (!isCompleted) {
               targetSessionIds.push(prog.sessionId);
               if (targetSessionIds.length >= 3) break;
@@ -778,15 +834,15 @@ export class ExercisesService implements OnModuleInit {
       if (targetSessionIds.length < 3) {
         const activeSessions = await this.prisma.session.findMany({
           where: { status: 'active' },
-          orderBy: [
-            { targetLevel: 'asc' },
-            { sessionId: 'asc' },
-          ],
+          orderBy: [{ targetLevel: 'asc' }, { sessionId: 'asc' }],
           select: { sessionId: true },
         });
         for (const sess of activeSessions) {
           if (sess.sessionId && !targetSessionIds.includes(sess.sessionId)) {
-            const isCompleted = await this.isSessionCompleted(userId, sess.sessionId);
+            const isCompleted = await this.isSessionCompleted(
+              userId,
+              sess.sessionId,
+            );
             if (!isCompleted) {
               targetSessionIds.push(sess.sessionId);
               if (targetSessionIds.length >= 3) break;
@@ -812,29 +868,36 @@ export class ExercisesService implements OnModuleInit {
 
         // หาโจทย์ที่ผ่านแล้วของ User ใน session นี้
         const userActivities = await this.prisma.activity.findMany({
-          where: { 
-            userId, 
+          where: {
+            userId,
             sessionId: targetSessionId,
-            score: { gt: 0 } 
+            score: { gt: 0 },
           },
           select: { exerciseId: true },
         });
-        const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
+        const passedExerciseIds = new Set(
+          userActivities.map((a) => a.exerciseId),
+        );
 
-        const exercises = (session.sessionExercises || []).map((se: any, idx: number) => {
-          const isPassed = passedExerciseIds.has(se.exerciseId);
-          return {
-            exerciseId: se.exerciseId,
-            orderNumber: idx + 1,
-            title: se.exercise?.title || '',
-            description: se.exercise?.description || '',
-            expectedTime: se.exercise?.expectedTime || 5,
-            isPassed,
-          };
-        });
+        const exercises = (session.sessionExercises || []).map(
+          (se: any, idx: number) => {
+            const isPassed = passedExerciseIds.has(se.exerciseId);
+            return {
+              exerciseId: se.exerciseId,
+              orderNumber: idx + 1,
+              title: se.exercise?.title || '',
+              description: se.exercise?.description || '',
+              expectedTime: se.exercise?.expectedTime || 5,
+              isPassed,
+            };
+          },
+        );
 
         const completedCount = exercises.filter((e: any) => e.isPassed).length;
-        const totalExpectedTime = exercises.reduce((sum: number, e: any) => sum + e.expectedTime, 0);
+        const totalExpectedTime = exercises.reduce(
+          (sum: number, e: any) => sum + e.expectedTime,
+          0,
+        );
 
         result.push({
           sessionId: session.sessionId,
@@ -906,4 +969,3 @@ export class ExercisesService implements OnModuleInit {
     }
   }
 }
-

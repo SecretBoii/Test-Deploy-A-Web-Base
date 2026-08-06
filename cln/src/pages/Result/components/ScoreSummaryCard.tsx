@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Paper, Divider, Checkbox } from '@mui/material'
+import { Box, Typography, Button, Paper, Divider, Checkbox, LinearProgress } from '@mui/material'
 import { 
   CheckCircle2, 
   XCircle, 
@@ -74,12 +74,10 @@ export function ScoreSummaryCard({
   const items = [
     { 
       label: 'ผลตรวจ', 
-      value: isPassed ? 'ถูกต้อง' : 'มีข้อผิดพลาด', 
+      value: isPassed ? 'Passed	' : 'Failed', 
       valueColor: isPassed ? '#10b981' : '#ef4444', 
       icon: isPassed ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" /> 
     },
-    { label: 'ครั้งที่ Run', value: `${runCount} ครั้ง`, icon: <PlayCircle size={16} color="#64748b" /> },
-    { label: 'เวลาที่ใช้', value: getTimeSpent(), icon: <Clock size={16} color="#64748b" /> },
     { 
       label: 'ใช้ Hint', 
       value: (
@@ -101,10 +99,12 @@ export function ScoreSummaryCard({
       ),
       icon: <Lightbulb size={16} color={hintUsed ? '#eab308' : '#64748b'} />
     },
+    { label: 'ครั้งที่ Run', value: `${runCount} ครั้ง`, icon: <PlayCircle size={16} color="#64748b" /> },
     { label: 'เริ่มทำเมื่อ', value: formatThaiDate(startedAt), icon: <Calendar size={16} color="#64748b" /> },
     { label: 'เวลาเริ่ม', value: formatThaiTime(startedAt), icon: <Clock size={16} color="#64748b" /> },
     { label: 'วันที่ส่ง', value: formatThaiDate(submittedAt), icon: <Calendar size={16} color="#64748b" /> },
     { label: 'เวลาส่ง', value: formatThaiTime(submittedAt), icon: <Clock size={16} color="#64748b" /> },
+    { label: 'เวลาที่ใช้', value: getTimeSpent(), icon: <Clock size={16} color="#64748b" /> },  
   ]
 
   return (
@@ -112,60 +112,49 @@ export function ScoreSummaryCard({
       elevation={0}
       sx={{
         p: 3,
-        borderRadius: '24px',
+        borderRadius: '16px',
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         height: '100%',
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+        boxShadow: 'none',
       }}
     >
-      {/* 1. แสดงคะแนนแบบไม่มีกรอบ */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          mb: 4,
-          mt: 2,
-        }}
-      >
-        <Typography 
-          sx={{ 
-            fontSize: '76px',
-            fontWeight: 900, 
-            color: isPassed ? '#10b981' : '#ef4444', 
-            lineHeight: 1.1,
-            fontFamily: 'inherit',
-            letterSpacing: '-0.02em',
-            textShadow: isPassed 
-              ? '0 4px 12px rgba(16, 185, 129, 0.1)' 
-              : '0 4px 12px rgba(239, 68, 68, 0.1)'
-          }}
-        >
-          {score}
+      {/* แสดงคะแนนแบบ Dashboard Stats */}
+      <Box sx={{ width: '100%', textAlign: 'center', mb: 3, mt: 1 }}>
+        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', mb: 0.5, display: 'block' }}>
+          คะแนนที่ได้
         </Typography>
-        <Typography 
-          variant="subtitle2" 
-          sx={{ 
-            color: '#64748b', 
-            fontWeight: 700, 
-            mt: 0.5,
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase'
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'baseline', gap: 0.5 }}>
+          <Typography sx={{ fontSize: '48px', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+            {score}
+          </Typography>
+          <Typography sx={{ fontSize: '16px', fontWeight: 600, color: '#64748b' }}>
+            / 100
+          </Typography>
+        </Box>
+
+        {/* แถบ LinearProgress ใต้ตัวเลข */}
+        <LinearProgress
+          variant="determinate"
+          value={score}
+          sx={{
+            mt: 2,
+            mb: 1,
+            height: 6,
+            borderRadius: 3,
+            bgcolor: '#f1f5f9',
+            '& .MuiLinearProgress-bar': { bgcolor: isPassed ? '#10b981' : '#f43f5e' },
           }}
-        >
-          คะแนน
-        </Typography>
+        />
       </Box>
 
       <Divider sx={{ width: '100%', mb: 3, borderColor: '#f1f5f9' }} />
 
       {/* 2. ตารางรายละเอียดผลการตรวจ */}
-      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2, mb: 4 }}>
+      <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 3, mb: 4 }}>
         {items.map((item, index) => (
           <Box 
             key={index} 
@@ -199,20 +188,17 @@ export function ScoreSummaryCard({
           <Button
             fullWidth
             variant="contained"
+            disableElevation
             endIcon={<ChevronRight size={16} />}
             onClick={() => navigate(`/editor/${nextExerciseId}?sessionId=${sessionId}`)}
             sx={{
-              py: 1.6,
-              borderRadius: '14px',
-              fontWeight: 800,
+              py: 1.5,
+              borderRadius: '12px',
+              fontWeight: 700,
               textTransform: 'none',
-              bgcolor: '#10b981',
-              boxShadow: 'none',
-              transition: 'all 0.2s',
+              bgcolor: '#2563eb',
               '&:hover': {
-                bgcolor: '#059669',
-                boxShadow: '0 4px 12px rgba(16,185,129,0.2)',
-                transform: 'translateY(-1px)',
+                bgcolor: '#1d4ed8',
               },
             }}
           >
@@ -222,19 +208,16 @@ export function ScoreSummaryCard({
           <Button
             fullWidth
             variant="contained"
+            disableElevation
             onClick={() => navigate('/sessions')}
             sx={{
-              py: 1.6,
-              borderRadius: '14px',
-              fontWeight: 800,
+              py: 1.5,
+              borderRadius: '12px',
+              fontWeight: 700,
               textTransform: 'none',
               bgcolor: '#10b981',
-              boxShadow: 'none',
-              transition: 'all 0.2s',
               '&:hover': {
                 bgcolor: '#059669',
-                boxShadow: '0 4px 12px rgba(16,185,129,0.2)',
-                transform: 'translateY(-1px)',
               },
             }}
           >
@@ -245,19 +228,18 @@ export function ScoreSummaryCard({
         <Button
           fullWidth
           variant="outlined"
+          disableElevation
           onClick={() => navigate(`/editor/${exerciseId}?sessionId=${sessionId}`)}
           sx={{
-            py: 1.5,
-            borderRadius: '14px',
-            fontWeight: 800,
+            py: 1.4,
+            borderRadius: '12px',
+            fontWeight: 700,
             textTransform: 'none',
-            borderColor: '#3b82f6',
-            color: '#3b82f6',
-            transition: 'all 0.2s',
+            borderColor: '#cbd5e1',
+            color: '#475569',
             '&:hover': {
-              borderColor: '#2563eb',
-              bgcolor: '#eff6ff',
-              transform: 'translateY(-1px)',
+              borderColor: '#94a3b8',
+              bgcolor: '#f8fafc',
             },
           }}
         >

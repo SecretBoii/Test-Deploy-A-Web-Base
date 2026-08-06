@@ -29,10 +29,10 @@ export function AiFeedbackCard({ feedback }: AiFeedbackCardProps) {
       elevation={0}
       sx={{ 
         p: 3, 
-        borderRadius: '24px', 
-        border: '1px solid #e2e8f0', 
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
-        bgcolor: '#ffffff'
+        borderRadius: '16px', 
+        border: '1px solid var(--border)', 
+        boxShadow: 'none',
+        bgcolor: 'var(--bg)'
       }}
     >
       {/* Title Header */}
@@ -40,23 +40,31 @@ export function AiFeedbackCard({ feedback }: AiFeedbackCardProps) {
         <Box 
           sx={{ 
             p: 1, 
-            borderRadius: '12px', 
-            bgcolor: '#fae8ff', 
-            color: '#d946ef',
+            borderRadius: '8px', 
+            bgcolor: '#f1f5f9', 
+            color: '#475569',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}
         >
-          <Sparkles size={20} />
+          <Sparkles size={18} />
         </Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>
           คำแนะนำจาก AI
         </Typography>
       </Box>
 
-      {/* แสดงหัวข้อหลัก (หากมีหลายหัวข้อ จะแสดงเป็นข้อๆ ให้แยกแยะง่าย) */}
-      <Box sx={{ mb: recommendationText ? 2.5 : 0 }}>
+      {/* แสดงหัวข้อหลัก (กล่องล้อมข้อความสีเทาอ่อน) */}
+      <Box 
+        sx={{ 
+          p: 2,
+          bgcolor: '#f8fafc',
+          borderRadius: '12px',
+          border: '1px solid #e2e8f0',
+          mb: recommendationText ? 2.5 : 0 
+        }}
+      >
         {points.length > 1 ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
             {points.map((point, idx) => (
@@ -66,57 +74,56 @@ export function AiFeedbackCard({ feedback }: AiFeedbackCardProps) {
                     width: 6, 
                     height: 6, 
                     borderRadius: '50%', 
-                    bgcolor: '#d946ef', 
+                    bgcolor: '#64748b', 
                     mt: 1, 
                     flexShrink: 0 
                   }} 
                 />
-                <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.6, fontSize: '14px' }}>
+                <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.6, fontSize: '13.5px' }}>
                   {point}
                 </Typography>
               </Box>
             ))}
           </Box>
         ) : (
-          <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.8, fontSize: '14.5px' }}>
+          <Typography variant="body2" sx={{ color: '#475569', lineHeight: 1.8, fontSize: '13.5px' }}>
             {mainText}
           </Typography>
         )}
       </Box>
 
-      {/* ส่วนกรอบแนะนำเพิ่มเติมแบบไฮไลต์สีม่วง */}
+      {/* ส่วนกรอบแนะนำเพิ่มเติมแบบไฮไลต์สีเทาอ่อน */}
       {recommendationText && (
         <Box
           sx={{
-            p: 2.5,
-            bgcolor: '#faf5ff',
-            borderRadius: '16px',
-            border: '1.5px dashed #d8b4fe',
+            p: 2,
+            bgcolor: '#f8fafc',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'flex-start',
             gap: 1.5,
-            boxShadow: '0 2px 4px rgba(243,232,255,0.2)'
           }}
         >
           <Box 
             sx={{ 
               p: 0.5, 
-              borderRadius: '8px', 
-              bgcolor: '#f3e8ff', 
-              color: '#a855f7',
+              borderRadius: '6px', 
+              bgcolor: '#f1f5f9', 
+              color: '#475569',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               mt: 0.25
             }}
           >
-            <Lightbulb size={16} />
+            <Lightbulb size={14} />
           </Box>
           <Box>
-            <Typography variant="caption" sx={{ fontWeight: 800, color: '#7c3aed', display: 'block', mb: 0.5, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.5, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               คำแนะนำเพิ่มเติม
             </Typography>
-            <Typography variant="body2" sx={{ color: '#5827b5', fontSize: '13.5px', lineHeight: 1.6, fontWeight: 500 }}>
+            <Typography variant="body2" sx={{ color: '#475569', fontSize: '13px', lineHeight: 1.6, fontWeight: 500 }}>
               {recommendationText}
             </Typography>
           </Box>
@@ -125,3 +132,6 @@ export function AiFeedbackCard({ feedback }: AiFeedbackCardProps) {
     </Paper>
   )
 }
+
+
+

@@ -17,9 +17,9 @@ export function ConsoleOutputCard({ exceptionMessage }: ConsoleOutputCardProps) 
       elevation={0}
       sx={{ 
         p: 3, 
-        borderRadius: '24px', 
+        borderRadius: '16px', 
         border: '1px solid #e2e8f0', 
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+        boxShadow: 'none',
         bgcolor: '#ffffff'
       }}
     >
@@ -28,22 +28,22 @@ export function ConsoleOutputCard({ exceptionMessage }: ConsoleOutputCardProps) 
           <Box 
             sx={{ 
               p: 1, 
-              borderRadius: '12px', 
-              bgcolor: '#ffe4e6', 
-              color: '#e11d48',
+              borderRadius: '8px', 
+              bgcolor: '#f1f5f9', 
+              color: '#475569',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
             }}
           >
-            <AlertCircle size={20} />
+            <AlertCircle size={18} />
           </Box>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>
             Exception Message
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 700, fontSize: '13.5px' }}>
+          <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>
             แสดงรายละเอียด
           </Typography>
           <Switch 
@@ -60,16 +60,15 @@ export function ConsoleOutputCard({ exceptionMessage }: ConsoleOutputCardProps) 
           {/* Terminal Stderr Box */}
           <Box
             sx={{
-              p: 2.5,
-              bgcolor: '#090d16',
-              color: '#f87171',
+              p: 2,
+              bgcolor: '#f8fafc',
+              color: '#dc2626',
               fontFamily: 'Consolas, Monaco, monospace',
               fontSize: '13px',
               lineHeight: 1.6,
               whiteSpace: 'pre-wrap',
-              borderRadius: '16px',
-              border: '1.5px solid #e11d48',
-              boxShadow: '0 10px 15px -3px rgba(225,29,72,0.05)'
+              borderRadius: '12px',
+              border: '1px solid #e2e8f0',
             }}
           >
             {displayMessage}
@@ -79,3 +78,4 @@ export function ConsoleOutputCard({ exceptionMessage }: ConsoleOutputCardProps) 
     </Paper>
   )
 }
+
