@@ -134,26 +134,6 @@ export function StatsRow({ username, stats }: StatsRowProps) {
           </Box>
         </Card>
       </Box>
-
-      {/* Main Action Button */}
-      {/* <Button
-        variant="contained"
-        size="large"
-        disableElevation
-        sx={{
-          py: 1.5,
-          borderRadius: '50px',
-          bgcolor: '#2563eb',
-          textTransform: 'none',
-          fontSize: '1rem',
-          fontWeight: 700,
-          '&:hover': {
-            bgcolor: '#1d4ed8',
-          },
-        }}
-      >
-        เริ่มทำข้อสอบ
-      </Button> */}
     </Box>
   );
 }
