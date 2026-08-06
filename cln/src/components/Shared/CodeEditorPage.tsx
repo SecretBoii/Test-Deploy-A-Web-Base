@@ -117,8 +117,9 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
           const data = statusRes.data
 
           // แสดงผล Console Output ทันทีที่มีผลลัพธ์จาก Docker (แม้ Gemma จะยังวิเคราะห์ไม่เสร็จ)
-          if (data.exceptionMessage) {
-            setOutput(data.exceptionMessage)
+          const liveOutput = data.exceptionMessage || data.output
+          if (liveOutput) {
+            setOutput(liveOutput)
           }
 
           const isDone = String(data.status || data.rawStatus).toLowerCase() !== 'pending'
@@ -136,7 +137,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
               return
             }
 
-            if (!data.exceptionMessage) {
+            if (!data.output && !data.exceptionMessage) {
               setOutput('โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)')
             }
 

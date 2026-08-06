@@ -12,9 +12,9 @@ export function CodeReviewEditor({ sourceCode }: CodeReviewEditorProps) {
       elevation={0}
       sx={{ 
         p: 3, 
-        borderRadius: '24px', 
+        borderRadius: '16px',
         border: '1px solid #e2e8f0', 
-        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.01)',
+        boxShadow: 'none',
         bgcolor: '#ffffff'
       }}
     >
@@ -23,33 +23,27 @@ export function CodeReviewEditor({ sourceCode }: CodeReviewEditorProps) {
         <Box 
           sx={{ 
             p: 1, 
-            borderRadius: '12px', 
-            bgcolor: '#dbeafe', 
-            color: '#2563eb',
+            borderRadius: '8px', 
+            bgcolor: '#f1f5f9', 
+            color: '#475569',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center'
           }}
         >
-          <Code size={20} />
+          <Code size={18} />
         </Box>
-        <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '1rem' }}>
           โค้ดที่ส่งตรวจ
         </Typography>
       </Box>
 
-      {/* Editor Title */}
-      <Typography variant="caption" sx={{ fontWeight: 700, color: '#64748b', display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        Source Code
-      </Typography>
-
       {/* Code Editor Container without macOS Titlebar */}
       <Box 
         sx={{ 
-          borderRadius: '16px', 
+          borderRadius: '12px', 
           overflow: 'hidden', 
-          border: '1px solid #1e293b',
-          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)',
+          border: '1px solid #e2e8f0',
           height: '350px'
         }}
       >
@@ -71,3 +65,4 @@ export function CodeReviewEditor({ sourceCode }: CodeReviewEditorProps) {
     </Paper>
   )
 }
+
