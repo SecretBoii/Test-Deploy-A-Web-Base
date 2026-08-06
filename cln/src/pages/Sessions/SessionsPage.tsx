@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { MainLayout } from '../../components/Layout/MainLayout'
 import SessionStudent from './SessionStudent'
@@ -13,16 +14,20 @@ export function SessionsPage() {
     return <Navigate to="/dashboard" replace />
   }
 
-  const levelParam = searchParams.get('level')
-  const initialLevel = levelParam ? parseInt(levelParam, 10) : null
+  // รองรับการย้อนกลับสำหรับลิงก์เก่าที่ใช้ ?level=X โดย Redirect ไปยัง /sessions/levelX
+  useEffect(() => {
+    const levelParam = searchParams.get('level')
+    if (levelParam) {
+      navigate(`/sessions/level${levelParam}`, { replace: true })
+    }
+  }, [searchParams, navigate])
 
   return (
     <MainLayout activeItem="Sessions">
       <SessionStudent
         userId={user.userId}
-        initialLevel={initialLevel}
-        onSelectExercise={(exerciseId, sessionId) => {
-          navigate(`/editor/${exerciseId}?sessionId=${sessionId}`)
+        onSelectLevel={(levelId) => {
+          navigate(`/sessions/level${levelId}`)
         }}
       />
     </MainLayout>

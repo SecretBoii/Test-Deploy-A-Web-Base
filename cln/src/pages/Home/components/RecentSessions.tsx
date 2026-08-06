@@ -102,7 +102,7 @@ export function RecentSessions({ loadingRecent, recentSessions }: RecentSessions
                   <Button
                     variant="outlined"
                     size="small"
-                    onClick={() => navigate(`/sessions?level=${session.targetLevel}`)}
+                    onClick={() => navigate(`/sessions/level${session.targetLevel}`)}
                     endIcon={<ArrowForwardIcon />}
                     sx={{
                       borderRadius: '8px',
