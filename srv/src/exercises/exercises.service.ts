@@ -172,11 +172,31 @@ export class ExercisesService implements OnModuleInit {
       }
 
       if (event_type === 'submit') {
+        // ค้นหาการส่งคำตอบล่าสุด (latest submit) เพื่อนำมาจำกัดช่วงเวลาการค้นหา Run ล่าสุด
+        const latestSubmit = await this.prisma.activity.findFirst({
+          where: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            eventType: 'submit',
+          },
+          orderBy: {
+            submittedAt: 'desc',
+          },
+        });
+
+        // ค้นหาการรันโค้ดล่าสุดที่เกิดขึ้น *หลังจาก* การส่งคำตอบล่าสุด (ป้องกันการดึงผลการรันเก่าข้ามรอบ)
         const latestRun = await this.prisma.activity.findFirst({
           where: {
             userId: Number(userId),
             exerciseId: Number(exerciseId),
             eventType: 'run',
+            ...(latestSubmit
+              ? {
+                  submittedAt: {
+                    gt: latestSubmit.submittedAt,
+                  },
+                }
+              : {}),
           },
           orderBy: {
             submittedAt: 'desc',
@@ -188,18 +208,6 @@ export class ExercisesService implements OnModuleInit {
             'กรุณากด Run Code เพื่อทดสอบโค้ดและตรวจผลลัพธ์ก่อนส่งคำตอบ',
           );
         }
-
-        // Find the most recent submit activity for this user and exercise to measure current attempt time
-        const latestSubmit = await this.prisma.activity.findFirst({
-          where: {
-            userId: Number(userId),
-            exerciseId: Number(exerciseId),
-            eventType: 'submit',
-          },
-          orderBy: {
-            submittedAt: 'desc',
-          },
-        });
 
         // Find the oldest run since the last submission (or overall if no previous submission exists)
         const oldestRun = await this.prisma.activity.findFirst({
