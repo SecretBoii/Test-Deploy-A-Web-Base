@@ -12,6 +12,9 @@ export function Register() {
 
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [email, setEmail] = useState('')
   const [gender, setGender] = useState('')
   const [dateOfBirth, setDateOfBirth] = useState('')
   const [university, setUniversity] = useState('')
@@ -22,15 +25,20 @@ export function Register() {
 
   const handleNextStep = () => {
     if (step === 1) {
-      if (!username.trim() || !password) {
-        setError('กรุณากรอก Username และ Password ให้ครบถ้วน')
+      if (!username.trim() || !password || !email.trim()) {
+        setError('กรุณากรอก Username, Password และ Email ให้ครบถ้วน')
+        return
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setError('รูปแบบอีเมลไม่ถูกต้อง (ตัวอย่าง: user@gmail.com หรือ user@email.com)')
         return
       }
       setError('')
       setStep(2)
     } else if (step === 2) {
-      if (!gender || !dateOfBirth) {
-        setError('กรุณาระบุเพศและวันเกิดให้ครบถ้วน')
+      if (!firstName.trim() || !lastName.trim() || !gender || !dateOfBirth) {
+        setError('กรุณากรอกชื่อจริง นามสกุล และเลือกเพศกับวันเกิดให้ครบถ้วน')
         return
       }
       setError('')
@@ -59,6 +67,9 @@ export function Register() {
       await register({
         username: username.trim(),
         password,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        email: email.trim(),
         gender,
         dateOfBirth,
         university: university.trim(),
@@ -99,6 +110,9 @@ export function Register() {
         step={step}
         username={username}
         password={password}
+        firstName={firstName}
+        lastName={lastName}
+        email={email}
         gender={gender}
         dateOfBirth={dateOfBirth}
         university={university}
@@ -108,6 +122,9 @@ export function Register() {
         success={success}
         onChangeUsername={setUsername}
         onChangePassword={setPassword}
+        onChangeFirstName={setFirstName}
+        onChangeLastName={setLastName}
+        onChangeEmail={setEmail}
         onChangeGender={setGender}
         onChangeDateOfBirth={setDateOfBirth}
         onChangeUniversity={setUniversity}

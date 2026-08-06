@@ -10,6 +10,9 @@ import {
 
 interface ProfileFormProps {
   username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   gender: string;
   dateOfBirth: string;
   university: string;
@@ -22,6 +25,9 @@ interface ProfileFormProps {
 
 export function ProfileForm({
   username,
+  firstName,
+  lastName,
+  email,
   gender,
   dateOfBirth,
   university,
@@ -60,10 +66,10 @@ export function ProfileForm({
         </Avatar>
         <Box>
           <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a' }}>
-            {username}
+            {firstName} {lastName}
           </Typography>
           <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>
-            {roleName || '-'}
+            {username} • {roleName || '-'}
           </Typography>
           <Typography variant="body2" sx={{ color: '#94a3b8', mt: 0.5 }}>
             สมัครเมื่อ: {formatDate(registerTimestamp)}
@@ -74,6 +80,60 @@ export function ProfileForm({
       {/* Form (Inert read-only view: ห้ามเอาเมาส์ชี้เพื่อเอาเคอร์เซอร์เจาะพิมพ์ และห้ามแก้ไข) */}
       <Box component="div">
         <Grid container spacing={2.5}>
+          {/* FIRST NAME */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="FIRST NAME"
+              value={firstName}
+              variant="outlined"
+              slotProps={{ input: { readOnly: true, tabIndex: -1 } }}
+              sx={{ 
+                pointerEvents: 'none',
+                '& .MuiOutlinedInput-root': { 
+                  borderRadius: '10px',
+                  backgroundColor: '#f8fafc' 
+                } 
+              }}
+            />
+          </Grid>
+
+          {/* LAST NAME */}
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              fullWidth
+              label="LAST NAME"
+              value={lastName}
+              variant="outlined"
+              slotProps={{ input: { readOnly: true, tabIndex: -1 } }}
+              sx={{ 
+                pointerEvents: 'none',
+                '& .MuiOutlinedInput-root': { 
+                  borderRadius: '10px',
+                  backgroundColor: '#f8fafc' 
+                } 
+              }}
+            />
+          </Grid>
+
+          {/* EMAIL */}
+          <Grid size={{ xs: 12 }}>
+            <TextField
+              fullWidth
+              label="EMAIL"
+              value={email}
+              variant="outlined"
+              slotProps={{ input: { readOnly: true, tabIndex: -1 } }}
+              sx={{ 
+                pointerEvents: 'none',
+                '& .MuiOutlinedInput-root': { 
+                  borderRadius: '10px',
+                  backgroundColor: '#f8fafc' 
+                } 
+              }}
+            />
+          </Grid>
+
           {/* USERNAME */}
           <Grid size={{ xs: 12, sm: 6 }}>
             <TextField

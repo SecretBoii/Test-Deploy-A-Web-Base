@@ -29,6 +29,9 @@ interface LevelProgress {
 interface ProfileDetails {
   userId: number;
   username: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   gender: string;
   dateOfBirth: string;
   registerTimestamp: string;
@@ -44,6 +47,9 @@ export function ProfilePage() {
   
   // สถานะข้อมูลผู้ใช้งาน
   const [username, setUsername] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [gender, setGender] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [university, setUniversity] = useState('');
@@ -71,6 +77,9 @@ export function ProfilePage() {
       
       // ตั้งค่าแสดงผล
       setUsername(data.username);
+      setFirstName(data.firstName || '');
+      setLastName(data.lastName || '');
+      setEmail(data.email || '');
       setGender(data.gender);
       if (data.dateOfBirth) {
         setDateOfBirth(data.dateOfBirth.substring(0, 10)); // แปลงเป็นรูปแบบ YYYY-MM-DD
@@ -115,6 +124,9 @@ export function ProfilePage() {
           <Grid size={{ xs: 12, md: 7 }}>
             <ProfileForm
               username={username}
+              firstName={firstName}
+              lastName={lastName}
+              email={email}
               gender={gender}
               dateOfBirth={dateOfBirth}
               university={university}

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString, IsEmail } from 'class-validator';
 
 export class RegisterDto {
   @IsNotEmpty({ message: 'กรุณากรอก Username' })
@@ -8,6 +8,18 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'กรุณากรอก Password' })
   @IsString({ message: 'Password ต้องเป็นข้อความ' })
   password: string;
+
+  @IsNotEmpty({ message: 'กรุณากรอกชื่อจริง' })
+  @IsString({ message: 'ชื่อจริงต้องเป็นข้อความ' })
+  firstName: string;
+
+  @IsNotEmpty({ message: 'กรุณากรอกนามสกุล' })
+  @IsString({ message: 'นามสกุลต้องเป็นข้อความ' })
+  lastName: string;
+
+  @IsNotEmpty({ message: 'กรุณากรอกอีเมล' })
+  @IsEmail({}, { message: 'รูปแบบอีเมลไม่ถูกต้อง' })
+  email: string;
 
   @IsNotEmpty({ message: 'กรุณาระบุเพศ' })
   @IsString({ message: 'เพศต้องเป็นข้อความ' })
