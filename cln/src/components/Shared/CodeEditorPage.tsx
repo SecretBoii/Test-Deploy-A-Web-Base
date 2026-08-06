@@ -25,7 +25,6 @@ export interface ExerciseDetail {
   hint: string
 }
 
-
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
   const navigate = useNavigate();
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')

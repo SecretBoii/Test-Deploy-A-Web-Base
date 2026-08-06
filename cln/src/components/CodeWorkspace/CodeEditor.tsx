@@ -8,7 +8,7 @@ interface CodeEditorProps {
 }
 
 const EditorContainer = styled(Box)(() => ({
-  flex: 1.2, 
+  flex: 1.4, 
   border: '1px solid #cbd5e1', 
   borderRadius: '12px', 
   overflow: 'hidden', 
