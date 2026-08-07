@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(response.data);            
         }
         catch (err) {
-            setUser(null)
+            sessionStorage.clear();
+            setUser(null);
         } 
         finally {
             setLoading(false);
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 const logout = async () => {
     try{
         await apiClient.post('/logout');
+        sessionStorage.clear();
         setUser(null);
     }catch(err){
         console.error('logout error',err);

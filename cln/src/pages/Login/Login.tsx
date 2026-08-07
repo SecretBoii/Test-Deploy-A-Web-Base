@@ -20,6 +20,7 @@ export function Login() {
     try {
       const userData = await login(username.trim(), password)
       console.log('Logging in with:', userData)
+      sessionStorage.clear()
       setUser(userData)
 
       if (userData.roleId === 2 || userData.roleId === 3) {
