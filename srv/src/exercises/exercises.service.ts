@@ -116,7 +116,7 @@ export class ExercisesService implements OnModuleInit {
     return obj;
   }
 
-  async getExerciseById(exerciseId: number | string) {
+  async getExerciseById(exerciseId: number | string, userId?: number) {
     const id = Number(exerciseId);
     if (isNaN(id)) {
       throw new BadRequestException('Invalid exercise ID');
@@ -127,7 +127,38 @@ export class ExercisesService implements OnModuleInit {
     if (!exercise) {
       throw new NotFoundException('Exercise not found');
     }
-    return exercise;
+
+    // ป้องกันกรณี userId เป็น undefined หรือ NaN เพื่อไม่ให้ระบบค้าง/Error ตอน Query Database
+    if (!userId || isNaN(userId)) {
+      return { ...exercise, runCount: 0 };
+    }
+
+    const latestSubmit = await this.prisma.activity.findFirst({
+      where: {
+        userId: Number(userId),
+        exerciseId: id,
+        eventType: 'submit',
+      },
+      orderBy: {
+        submittedAt: 'desc',
+      },
+    });
+
+    const runCount = await this.prisma.activity.count({
+      where: {
+        userId: Number(userId),
+        exerciseId: id,
+        eventType: 'run',
+        ...(latestSubmit
+        ? {
+          submittedAt: {
+             gt: latestSubmit.submittedAt, 
+          },
+        } : {})
+      },
+    });
+
+    return {...exercise, runCount,};
   }
 
   async submitExercise(
