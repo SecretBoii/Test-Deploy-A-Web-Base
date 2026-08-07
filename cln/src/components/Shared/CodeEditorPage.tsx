@@ -23,6 +23,7 @@ export interface ExerciseDetail {
   expectedTime: number
   status?: string
   hint: string
+  runCount?: number
 }
 
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
@@ -39,10 +40,12 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
-    const sessionKey = `run_count_exercise_${exerciseId}`
-    const storedVal = sessionStorage.getItem(sessionKey)
-    setRunCount(storedVal ? parseInt(storedVal, 10) : 0)
-  }, [exerciseId])
+    if (exerciseData && typeof exerciseData.runCount === 'number') {
+      setRunCount(exerciseData.runCount)
+    } else {
+      setRunCount(0)
+    }
+  }, [exerciseData])
   
   useEffect(() => {
     if (exerciseId) {
@@ -87,8 +90,6 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
       setRunCount(nextRunCount)
     }
 
-    sessionStorage.setItem(`run_count_exercise_${exerciseId}`, String(nextRunCount));
-
     try {
       // 1. ส่งโค้ดไปยัง Backend
       const res = await apiClient.post(endpoint, {
@@ -132,7 +133,6 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
             setIsRunning(false)
 
             if (endpoint === '/exercises/submit') {
-              sessionStorage.removeItem(`run_count_exercise_${exerciseId}`);
               navigate(`/result/${activityId}`)
               return
             }

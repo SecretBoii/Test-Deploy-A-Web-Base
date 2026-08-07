@@ -91,7 +91,9 @@ export class ExercisesController {
 
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
   @Get(':id')
-  async getExerciseById(@Param('id') id: string) {
-    return await this.exercisesService.getExerciseById(Number(id));
+  async getExerciseById(
+    @Param('id') id: string,
+    @CurrentUser() user: any,) {
+    return await this.exercisesService.getExerciseById(Number(id),user.userId);
   }
 }
