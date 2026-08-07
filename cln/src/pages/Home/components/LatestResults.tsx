@@ -1,13 +1,16 @@
-import { Box, Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button } from '@mui/material';
+import { Box, Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Pagination } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 
 interface LatestResultsProps {
   history: any[];
   onSelectExercise: (exerciseId: number, sessionId?: number) => void;
+  page: number;
+  totalPages: number;
+  onPageChange: (event: React.ChangeEvent<unknown>, value:number) => void;
 }
 
-export function LatestResults({ history, onSelectExercise }: LatestResultsProps) {
+export function LatestResults({ history, onSelectExercise, page, totalPages, onPageChange }: LatestResultsProps) {
   const navigate = useNavigate();
 
   return (
@@ -30,15 +33,15 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
           <Table>
             <TableHead sx={{ bgcolor: '#eff6ff' }}>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>EXERCISE</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>SESSION</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>LEVEL</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '280px' }}>EXERCISE</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '210px'  }}>SESSION</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '235px' }}>LEVEL</TableCell>
                 <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>RUN COUNT</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>SCORE</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>EVENT</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>STATUS</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>DATE & TIME</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}></TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '100px' }}>SCORE</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '115px' }}>EVENT</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>STATUS</TableCell>
+                <TableCell align="center"sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>DATE & TIME</TableCell>
+                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', minWidth: '100px'  }}></TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -58,7 +61,7 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                   
                   return (
                     <TableRow key={row.activityId} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell sx={{ fontWeight: 700, color: '#334155', fontSize: '0.85rem' }}>
+                      <TableCell sx={{ fontWeight: 700, color: '#334155', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                         {row.exercise?.title}
                       </TableCell>
                       <TableCell sx={{ color: '#64748b', fontSize: '0.85rem' }}>
@@ -86,10 +89,10 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                           {row.runCount}
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ color: isAccepted ? '#10b981' : '#d97706', fontWeight: 700, fontSize: '0.85rem' }}>
+                      <TableCell align="center" sx={{ color: isAccepted ? '#10b981' : '#d97706', fontWeight: 700, fontSize: '0.85rem' }}>
                         {row.score}
                       </TableCell>
-                      <TableCell>
+                      <TableCell align="center">
                         <Box
                           sx={{
                             display: 'inline-flex',
@@ -107,7 +110,7 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                           {row.eventType === 'submit' ? 'Submit' : 'Run Code'}
                         </Box>
                       </TableCell>
-                      <TableCell>
+                      <TableCell align="center">
                         <Box
                           sx={{
                             display: 'inline-flex',
@@ -125,7 +128,7 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
                           {isAccepted ? 'Passed' : 'Failed'}
                         </Box>
                       </TableCell>
-                      <TableCell sx={{ color: '#64748b', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                      <TableCell align="center" sx={{ color: '#64748b', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
                         {formattedDate}
                       </TableCell>
                       <TableCell>
@@ -150,6 +153,17 @@ export function LatestResults({ history, onSelectExercise }: LatestResultsProps)
             </TableBody>
           </Table>
         </TableContainer>
+
+        {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid #e2e8f0' }}>
+          <Pagination 
+          count={totalPages} 
+          page={page} 
+          onChange={onPageChange} 
+          color="primary" 
+          size="medium"/>
+        </Box>
+        )}
       </Card>
     </Box>
   );

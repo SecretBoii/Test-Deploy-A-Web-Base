@@ -138,28 +138,18 @@ export function HistoryPage() {
   const getLevelBadge = (level: number) => {
     const meta = DIFFICULTY_LEVELS[level] || DIFFICULTY_LEVELS[1]
     
-    let shortLabel = `Lv.${level} `
-    if (level === 1) shortLabel += 'Remember'
-    else if (level === 2) shortLabel += 'Understand'
-    else if (level === 3) shortLabel += 'Apply'
-    else if (level === 4) shortLabel += 'Analyze'
-    else if (level === 5) shortLabel += 'Create'
+    let shortLabel = `${meta.label} `
 
     return (
       <Tooltip title={meta.description} arrow placement="top">
         <Box
+          component="span"
           sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 1.5,
-            py: 0.5,
-            borderRadius: '50px',
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            bgcolor: meta.bg,
             color: meta.color,
-            border: `1px solid ${meta.border}`,
-            cursor: 'help'
+            fontWeight: 700,
+            fontSize: '0.85rem',
+            cursor: 'help',
+            whiteSpace: 'nowrap'
           }}
         >
           {shortLabel}
