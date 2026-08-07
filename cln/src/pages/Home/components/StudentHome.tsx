@@ -17,6 +17,8 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
   const [stats, setStats] = useState<any>(null)
   const [history, setHistory] = useState<any[]>([])
   const [levelsSummary, setLevelsSummary] = useState<any[]>([])
+  const [page, setPage] = useState<number>(1)
+  const [totalPages, setTotalPages] = useState<number>(1)
 
   useEffect(() => {
     const fetchRecentSession = async () => {
@@ -40,15 +42,6 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
       }
     }
 
-    const fetchHistory = async () => {
-      try {
-        const res = await apiClient.get('/exercises/history?limit=5')
-        setHistory(res.data || [])
-      } catch (err) {
-        console.error('Failed to fetch history:', err)
-      }
-    }
-
     const fetchLevelsSummary = async () => {
       try {
         const res = await apiClient.get('/exercises/levels-summary')
@@ -60,9 +53,21 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
 
     fetchRecentSession()
     fetchDashboardStats()
-    fetchHistory()
     fetchLevelsSummary()
   }, [])
+
+  useEffect(() => {
+    const fetchHistory = async () => {
+      try {
+        const res = await apiClient.get(`/exercises/history?limit=5&page=${page}`)
+        setHistory(res.data.item || [])
+        setTotalPages(res.data.totalPage || 1)
+      } catch (err) {
+        console.error('Failed to fetch history:', err)
+      }
+    }
+    fetchHistory()
+  }, [page])
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
@@ -79,7 +84,13 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
       </Box>
 
       {/* 3. Bottom Section: Latest Results Table */}
-      <LatestResults history={history} onSelectExercise={onSelectExercise} />
+      <LatestResults 
+        history={history} 
+        onSelectExercise={onSelectExercise} 
+        page={page}
+        totalPages={totalPages}
+        onPageChange={(_, value) => setPage(value)}
+      />
     </Box>
   )
 }

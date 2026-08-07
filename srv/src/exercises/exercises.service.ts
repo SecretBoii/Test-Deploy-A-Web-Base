@@ -960,17 +960,42 @@ export class ExercisesService implements OnModuleInit {
     }
   }
 
-  async getHistory(userId: number, limit?: number) {
+  async getHistory(userId: number, limit?: number, page: number = 1) {
     try {
-      return await this.prisma.activity.findMany({
-        where: { userId },
-        orderBy: { submittedAt: 'desc' },
-        ...(limit ? { take: limit } : {}),
-        include: {
-          exercise: true,
-          session: true,
-        },
-      });
+      if (limit === undefined) {
+        return await this.prisma.activity.findMany({
+          where: { userId },
+          orderBy: { submittedAt: 'desc' },
+          include: {
+            exercise: true,
+            session: true,
+          },
+        });
+      }
+
+      const skip = (page - 1) * limit;
+      const [item, total] = await Promise.all([
+        this.prisma.activity.findMany({
+          where: { userId },
+          orderBy: { submittedAt: 'desc' },
+          take: limit,
+          skip,
+          include: {
+            exercise: true,
+            session: true,
+          },
+        }),
+        this.prisma.activity.count({
+          where: { userId },
+        }),
+      ])
+      return { 
+        item, 
+        total, 
+        page, 
+        limit, 
+        totalPage: Math.ceil(total / limit) 
+      };
     } catch (err) {
       this.logger.error('Error in getHistory:', err);
       throw err;

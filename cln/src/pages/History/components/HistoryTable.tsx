@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Box, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Typography, Tabs, Tab } from '@mui/material'
+import { Box, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Typography, Tabs, Tab, Pagination } from '@mui/material'
 import { ClipboardList, ChevronRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -44,6 +44,8 @@ export function HistoryTable({
 }: HistoryTableProps) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<'all' | 'submit' | 'run'>('all')
+  const [page, setPage] = useState<number>(1)
+  const rowsPerPage = 10
 
   const filteredHistory = useMemo(() => {
     if (activeTab === 'submit') {
@@ -54,6 +56,13 @@ export function HistoryTable({
     }
     return history
   }, [history, activeTab])
+
+  const paginatedHistory = useMemo(() => {
+    const start = (page - 1) * rowsPerPage
+    return filteredHistory.slice(start, start + rowsPerPage)
+  }, [filteredHistory, page])
+
+  const totalPages = Math.ceil(filteredHistory.length / rowsPerPage)
 
   return (
     <Card sx={{ p: 3, borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden' }}>
@@ -67,7 +76,10 @@ export function HistoryTable({
         </Box>
         <Tabs
           value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
+          onChange={(_, newValue) => {
+            setActiveTab(newValue)
+            setPage(1)
+          }}
           sx={{
             minHeight: '38px',
             bgcolor: '#f1f5f9',
@@ -134,20 +146,20 @@ export function HistoryTable({
         <Table sx={{ minWidth: 800 }}>
           <TableHead sx={{ bgcolor: '#f8fafc' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>EXERCISE</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>SESSION</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap', minWidth: '280px' }}>EXERCISE</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap', minWidth: '210px' }}>SESSION</TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>LEVEL</TableCell>
               <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>RUN COUNT</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>SCORE</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>EVENT</TableCell>
+              <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>SCORE</TableCell>
+              <TableCell align='center' sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap', minWidth: '115px' }}>EVENT</TableCell>
               <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>STATUS</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap' }}>DATE & TIME</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.825rem', py: 2, whiteSpace: 'nowrap',minWidth: '130px' }}>DATE & TIME</TableCell>
               <TableCell sx={{ py: 2 }}></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredHistory.length > 0 ? (
-              filteredHistory.map((row) => {
+            {paginatedHistory.length > 0 ? (
+              paginatedHistory.map((row) => {
                 const targetLevel = row.exercise?.difficultyLevel || row.session?.targetLevel || 1
                 const isAccepted = row.score >= 80
 
@@ -164,7 +176,7 @@ export function HistoryTable({
                     }}
                   >
                     {/* ชื่อโจทย์ */}
-                    <TableCell sx={{ fontWeight: 800, color: '#1e293b', fontSize: '0.85rem' }}>
+                    <TableCell sx={{ fontWeight: 800, color: '#1e293b', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
                       {row.exercise?.title || 'แบบฝึกหัดทั่วไป'}
                     </TableCell>
 
@@ -178,7 +190,7 @@ export function HistoryTable({
                       {getLevelBadge(targetLevel)}
                     </TableCell>
 
-                    {/* ครั้งที่ส่ง */}
+                    {/* RUN COUNT */}
                     <TableCell align="center">
                       <Box
                         sx={{
@@ -199,13 +211,13 @@ export function HistoryTable({
                       </Box>
                     </TableCell>
 
-                    {/* คะแนน */}
-                    <TableCell sx={{ fontWeight: 800, color: isAccepted ? '#10b981' : '#d97706', fontSize: '0.9rem' }}>
+                    {/* SCORE */}
+                    <TableCell align="center" sx={{ fontWeight: 800, color: isAccepted ? '#10b981' : '#d97706', fontSize: '0.9rem' }}>
                       {row.score}
                     </TableCell>
 
-                    {/* กิจกรรม */}
-                    <TableCell>
+                    {/* EVEVT */}
+                    <TableCell align="center">
                       <Box
                         sx={{
                           display: 'inline-flex',
@@ -224,8 +236,8 @@ export function HistoryTable({
                       </Box>
                     </TableCell>
 
-                    {/* ผลตรวจ */}
-                    <TableCell>
+                    {/* STATUS */}
+                    <TableCell align="center">
                       <Box
                         sx={{
                           display: 'inline-flex',
@@ -244,12 +256,12 @@ export function HistoryTable({
                       </Box>
                     </TableCell>
 
-                    {/* วันที่และเวลา */}
-                    <TableCell sx={{ color: '#64748b', fontSize: '0.825rem' }}>
+                    {/* DATE & TIMME */}
+                    <TableCell align="center" sx={{ color: '#64748b', fontSize: '0.825rem' }}>
                       {formatThaiDateTime(row.submittedAt)}
                     </TableCell>
 
-                    {/* ปุ่มดูผลละเอียด */}
+                    {/* DETAIL */}
                     <TableCell align="right">
                       <Button
                         variant="outlined"
@@ -292,6 +304,18 @@ export function HistoryTable({
           </TableBody>
         </Table>
       </TableContainer>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid #e2e8f0', mt: 2 }}>
+          <Pagination 
+            count={totalPages} 
+            page={page} 
+            onChange={(_, value) => setPage(value)} 
+            color="primary" 
+            size="medium"
+          />
+        </Box>
+      )}
     </Card>
   )
 }
