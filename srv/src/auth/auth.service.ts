@@ -109,7 +109,7 @@ export class AuthService {
         where: {
           userId,
           eventType: 'submit',
-          score: { gt: 0 },
+          score: { gte: 80 },
         },
       })
       .then((res) => res.length);

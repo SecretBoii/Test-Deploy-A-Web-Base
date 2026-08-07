@@ -673,7 +673,7 @@ export class ExercisesService implements OnModuleInit {
               where: {
                 userId: userId,
                 exerciseId: { in: exerciseIds },
-                OR: [{ eventType: 'submit' }, { score: { gt: 0 } }],
+                score: { gte: 80 },
               },
               select: { exerciseId: true },
               distinct: ['exerciseId'],
@@ -717,7 +717,7 @@ export class ExercisesService implements OnModuleInit {
     const userActivities = await this.prisma.activity.findMany({
       where: {
         userId: userId,
-        OR: [{ eventType: 'submit' }, { score: { gt: 0 } }],
+        score: { gte: 80 },
       },
       select: { exerciseId: true },
     });
@@ -784,7 +784,7 @@ export class ExercisesService implements OnModuleInit {
         where: {
           userId,
           exerciseId: { in: exerciseIds },
-          score: { gt: 0 },
+          score: { gte: 80 },
         },
         select: { exerciseId: true },
         distinct: ['exerciseId'],
@@ -879,7 +879,7 @@ export class ExercisesService implements OnModuleInit {
           where: {
             userId,
             sessionId: targetSessionId,
-            score: { gt: 0 },
+            score: { gte: 80 },
           },
           select: { exerciseId: true },
         });
@@ -935,7 +935,7 @@ export class ExercisesService implements OnModuleInit {
       const completedActivities = await this.prisma.activity.findMany({
         where: {
           userId,
-          score: { gt: 0 },
+          score: { gte: 80 },
         },
         select: { exerciseId: true },
         distinct: ['exerciseId'],
