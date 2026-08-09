@@ -1032,4 +1032,50 @@ export class ExercisesService implements OnModuleInit {
       throw err;
     }
   }
+
+  async getAllExercisesForManage() {
+    return await this.prisma.exercise.findMany({
+      orderBy: { exerciseId: 'desc' },
+    });
+  }
+  async createExercise(dto: any) {
+    return await this.prisma.exercise.create({
+      data: {
+        title: dto.title,
+        description: dto.description,
+        topic: dto.topic,
+        objective: dto.objective || '',
+        difficultyLevel: dto.difficultyLevel,
+        expectedTime: dto.expectedTime,
+        status: dto.status,
+        hint: dto.hint || '',
+      },
+    });
+  }
+
+  async updateExercise(exerciseId: number, dto: any) {
+    const existing = await this.prisma.exercise.findUnique({
+      where: { exerciseId },
+    });
+    if (!existing) {
+      throw new NotFoundException(`Exercise ID ${exerciseId} not found`);
+    }
+    return await this.prisma.exercise.update({
+      where: { exerciseId },
+      data: dto,
+    });
+  }
+  
+  async deleteExercise(exerciseId: number) {
+    const existing = await this.prisma.exercise.findUnique({
+      where: { exerciseId },
+    });
+    if (!existing) {
+      throw new NotFoundException(`Exercise ID ${exerciseId} not found`);
+    }
+    return await this.prisma.exercise.delete({
+      where: { exerciseId },
+    });
+  }
+
 }

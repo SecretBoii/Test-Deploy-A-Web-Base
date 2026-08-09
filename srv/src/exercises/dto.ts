@@ -25,3 +25,41 @@ export class SubmitExerciseDto {
   @Type(() => Number)
   runCount?: number;
 }
+
+export class CreateExerciseDto {
+  @IsNotEmpty({ message: 'Title is required' })
+  @IsString()
+  title: string;
+
+  @IsNotEmpty({ message: 'Description is required' })
+  @IsString()
+  description: string;
+
+  @IsNotEmpty({ message: 'Topic is required' })
+  @IsString()
+  topic: string;
+
+  @IsOptional()
+  @IsString()
+  objective?: string;
+
+  @IsNotEmpty({ message: 'Difficulty level is required' })
+  @IsInt()
+  @Type(() => Number)
+  difficultyLevel: number;
+
+  @IsNotEmpty({ message: 'Expected time is required' })
+  @IsInt()
+  @Type(() => Number)
+  expectedTime: number;
+
+  @IsNotEmpty({ message: 'Status is required' })
+  @IsString()
+  status: string;
+
+  @IsOptional()
+  @IsString()
+  hint?: string;
+}
+
+export class UpdateExerciseDto extends CreateExerciseDto {}

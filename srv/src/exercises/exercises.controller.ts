@@ -1,6 +1,6 @@
-import { Controller, Post, Body, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, UseGuards, Put, Delete, ForbiddenException } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
-import { SubmitExerciseDto } from './dto';
+import { SubmitExerciseDto, CreateExerciseDto, UpdateExerciseDto } from './dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { CurrentUser } from 'src/auth/current-user-decorator';
 @UseGuards(JwtAuthGuard)
@@ -87,6 +87,39 @@ export class ExercisesController {
     @CurrentUser() user: any,
   ) {
     return await this.exercisesService.getLevelSessions(Number(level), user.userId);
+  }
+
+  @Get('manage/all')
+  async getAllExercises(@CurrentUser() user: any) {
+    if (user.roleId !== 2 && user.roleId !== 3) {
+      throw new ForbiddenException('Only teachers or admins can view all exercises.');
+    }
+    return await this.exercisesService.getAllExercisesForManage();
+  }
+  @Post()
+  async create(@Body() dto: CreateExerciseDto, @CurrentUser() user: any) {
+    if (user.roleId !== 2 && user.roleId !== 3) {
+      throw new ForbiddenException('Only teachers or admins can create exercises.');
+    }
+    return await this.exercisesService.createExercise(dto);
+  }
+  @Put(':id')
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateExerciseDto,
+    @CurrentUser() user: any,
+  ) {
+    if (user.roleId !== 2 && user.roleId !== 3) {
+      throw new ForbiddenException('Only teachers or admins can update exercises.');
+    }
+    return await this.exercisesService.updateExercise(Number(id), dto);
+  }
+  @Delete(':id')
+  async delete(@Param('id') id: string, @CurrentUser() user: any) {
+    if (user.roleId !== 2 && user.roleId !== 3) {
+      throw new ForbiddenException('Only teachers or admins can delete exercises.');
+    }
+    return await this.exercisesService.deleteExercise(Number(id));
   }
 
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
