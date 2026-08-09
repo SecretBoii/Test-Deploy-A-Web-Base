@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
 import { MainLayout } from '../../components/Layout/MainLayout'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
@@ -9,10 +8,6 @@ import AdminDashboard from './components/AdminDashboard'
 export function Dashboard() {
   const { user } = useAuth()
   const [activeItem, setActiveItem] = useState('Dashboard')
-
-  if (user?.roleId === 1) {
-    return <Navigate to="/home" replace />
-  }
 
   return (
     <MainLayout activeItem={activeItem} onItemClick={setActiveItem}>

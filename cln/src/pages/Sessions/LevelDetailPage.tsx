@@ -21,11 +21,6 @@ export const LevelDetailPage: React.FC = () => {
   const levelMatch = levelId?.match(/^level(\d+)$/);
   const level = levelMatch ? parseInt(levelMatch[1], 10) : null;
 
-  // ป้องกันผู้ที่ไม่ใช่ Student (roleId !== 1) แอบเข้าหน้านี้ตรงๆ ผ่าน URL
-  if (user?.roleId !== 1) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   // ดึงข้อมูล Sessions ใน Level ที่ถูกเลือก
   useEffect(() => {
     if (level === null || isNaN(level)) {
