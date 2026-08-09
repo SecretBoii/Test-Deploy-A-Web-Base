@@ -6,6 +6,7 @@ import Login from './pages/Login/Login.tsx'
 import Register from './pages/Register/Register.tsx'
 import Home from './pages/Home/Home.tsx'
 import Dashboard from './pages/Dashboard/Dashboard.tsx'
+import ExercisesPage from './pages/Exercises/ExercisesPage.tsx'
 import SessionsPage from './pages/Sessions/SessionsPage.tsx'
 import LevelDetailPage from './pages/Sessions/LevelDetailPage.tsx'
 import EditorPage from './pages/Editor/EditorPage.tsx'
@@ -52,6 +53,7 @@ createRoot(document.getElementById('root')!).render(
               {/* Teacher/Admin routes (roleId === 2 or 3) */}
               <Route element={<RoleProtectedRoute allowedRoles={[2, 3]} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/exercises" element={<ExercisesPage />} />
               </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
