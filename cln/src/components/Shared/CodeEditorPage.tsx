@@ -7,6 +7,7 @@ import { ConsoleOutput } from '../CodeWorkspace/ConsoleOutput'
 import { GemmaFeedback } from '../CodeWorkspace/GemmaFeedback'
 import { ExerciseHint } from '../CodeWorkspace/ExerciseHint'
 import { apiClient } from '../../api/client'
+import { ConfirmSubmitDialog } from '../CodeWorkspace/ConfirmSubmitDialog'
 
 interface CodeEditorPageProps {
   exerciseId?: number
@@ -37,6 +38,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
   const [loadingExercise, setLoadingExercise] = useState(false)
   const [hintUsed, setHintUsed] = useState(false)
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -186,7 +188,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         isRunning={isRunning}
         runCount={runCount}
         onRun={() => executeAndPoll('/exercises/run')}
-        onSubmit={() => executeAndPoll('/exercises/submit')}
+        onSubmit={() => setSubmitDialogOpen(true)}
       />
 
       {/* 2. Main Workspace Split (Left: Editor, Right: Outputs Stack) */}
@@ -206,6 +208,18 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
           <GemmaFeedback response={gemmaResponse} score={score} />
         </Box>
       </Box>
+
+      {/* Dialog ยืนยันการส่งคำตอบ */}
+      <ConfirmSubmitDialog
+        open={submitDialogOpen}
+        onClose={() => setSubmitDialogOpen(false)}
+        onConfirm={() => {
+          setSubmitDialogOpen(false)
+          executeAndPoll('/exercises/submit')
+        }}
+        exerciseTitle={exerciseData?.title}
+        runCount={runCount}
+      />
     </Box>
   )
 }
