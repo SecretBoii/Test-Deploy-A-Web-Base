@@ -1,4 +1,16 @@
-import { Box, Typography, Button, Collapse, CircularProgress } from '@mui/material'
+import { useState } from 'react'
+import { 
+  Box, 
+  Typography, 
+  Button, 
+  Collapse, 
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions
+} from '@mui/material'
 import { styled } from '@mui/material/styles'
 import { Lightbulb, ChevronDown } from 'lucide-react'
 
@@ -104,6 +116,7 @@ const HintContentText = styled(Typography)(() => ({
 }));
 
 export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHintProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
   const displayHint = hint || 'ยังไม่มีคำใบ้สำหรับโจทย์ข้อนี้'
 
   return (
@@ -134,7 +147,7 @@ export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHin
         ) : (
           <HintToggleButton
             size="small"
-            onClick={onUseHint}
+            onClick={() => setConfirmOpen(true)}
             disabled={loading}
           >
             {loading ? (
@@ -164,6 +177,77 @@ export function ExerciseHint({ hint, loading, hintUsed, onUseHint }: ExerciseHin
           )}
         </HintExpandedCard>
       </Collapse>
+
+      {/* Dialog ยืนยันการเปิดดูคำใบ้ */}
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '20px',
+              p: 2,
+              border: '1px solid #e2e8f0',
+              maxWidth: '380px',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)'
+            }
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 800, color: '#d97706', display: 'flex', alignItems: 'center', gap: 1, p: 0, mb: 1.5, fontFamily: 'inherit', fontSize: '1.15rem' }}>
+          <Lightbulb size={20} /> ยืนยันการเปิดคำใบ้?
+        </DialogTitle>
+        <DialogContent sx={{ p: 0 }}>
+          <DialogContentText sx={{ color: '#64748b', fontSize: '14px', lineHeight: 1.6, fontFamily: 'inherit' }}>
+            การเปิดดูคำใบ้จะช่วยแนะนำแนวทางเขียนโค้ด แต่จะถือว่าคุณมีการใช้งานคำใบ้ในกิจกรรมข้อนี้ ยืนยันที่จะเปิดดูหรือไม่?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 0, pt: 3, gap: 1.5 }}>
+          <Button
+            onClick={() => setConfirmOpen(false)}
+            variant="outlined"
+            sx={{
+              flex: 1,
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 700,
+              color: '#64748b',
+              borderColor: '#e2e8f0',
+              py: 1.2,
+              '&:hover': {
+                borderColor: '#cbd5e1',
+                bgcolor: '#f8fafc'
+              }
+            }}
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmOpen(false)
+              onUseHint()
+            }}
+            variant="contained"
+            sx={{
+              flex: 1,
+              borderRadius: '12px',
+              textTransform: 'none',
+              fontWeight: 700,
+              bgcolor: '#d97706',
+              color: '#ffffff',
+              py: 1.2,
+              boxShadow: 'none',
+              '&:hover': {
+                bgcolor: '#b45309',
+                boxShadow: 'none'
+              }
+            }}
+          >
+            ยืนยันเปิดดู
+          </Button>
+        </DialogActions>
+      </Dialog>
     </HintContainer>
   )
 }
