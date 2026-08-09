@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { MainLayout } from '../../components/Layout/MainLayout'
 import { Box } from '@mui/material'
 import { useAuth } from '../../context/AuthContext'
@@ -9,10 +9,6 @@ export function Home() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [activeItem, setActiveItem] = useState('Home')
-
-  if (user?.roleId === 2 || user?.roleId === 3) {
-    return <Navigate to="/dashboard" replace />
-  }
 
   return (
     <MainLayout activeItem={activeItem} onItemClick={setActiveItem}>

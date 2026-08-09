@@ -11,6 +11,7 @@ import LevelDetailPage from './pages/Sessions/LevelDetailPage.tsx'
 import EditorPage from './pages/Editor/EditorPage.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import ProtectedRoute from './components/Auth/ProtectedRoute.tsx'
+import RoleProtectedRoute from './components/Auth/RoleProtectedRoute.tsx'
 import ResultPage from './pages/Result/ResultPage.tsx'
 import HistoryPage from './pages/History/HistoryPage.tsx'
 import ProfilePage from './pages/Profile/ProfilePage.tsx'
@@ -33,14 +34,25 @@ createRoot(document.getElementById('root')!).render(
             <Route path="/" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route element={<ProtectedRoute />}>
-              <Route path="/home" element={<Home />} />
-              <Route path="/sessions" element={<SessionsPage />} />
-              <Route path="/sessions/:levelId" element={<LevelDetailPage />} />
-              <Route path="/editor/:exerciseId" element={<EditorPage />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/result/:activityId" element={<ResultPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
+              {/* Student-only routes (roleId === 1) */}
+              <Route element={<RoleProtectedRoute allowedRoles={[1]} />}>
+                <Route path="/home" element={<Home />} />
+                <Route path="/sessions" element={<SessionsPage />} />
+                <Route path="/sessions/:levelId" element={<LevelDetailPage />} />
+                <Route path="/editor/:exerciseId" element={<EditorPage />} />
+                <Route path="/result/:activityId" element={<ResultPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+              </Route>
+
+              {/* Shared profile route (roles 1, 2, 3) */}
+              <Route element={<RoleProtectedRoute allowedRoles={[1, 2]} />}>
+                <Route path="/profile" element={<ProfilePage />} />
+              </Route>
+
+              {/* Teacher/Admin routes (roleId === 2 or 3) */}
+              <Route element={<RoleProtectedRoute allowedRoles={[2, 3]} />}>
+                <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
