@@ -88,7 +88,10 @@ export function HistoryPage() {
           const start = new Date(s.startedAt).getTime()
           const end = new Date(s.submittedAt).getTime()
           const diffMs = end - start
-          return isNaN(diffMs) || diffMs <= 1000 ? 0 : diffMs / 60000
+          if (isNaN(diffMs) || diffMs <= 1000) return 0
+          const durationMin = diffMs / 60000
+          // จำกัดเวลาเฉลี่ยสูงสุดต่อข้อไว้ไม่เกิน 120 นาที (Capping เพื่อไม่ให้เวลาข้ามวันเบ้ค่าเฉลี่ย)
+          return Math.min(durationMin, 120)
         })
         .filter((d) => d > 0)
 
