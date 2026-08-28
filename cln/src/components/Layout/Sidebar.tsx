@@ -32,7 +32,7 @@ const MENU_DEFINITIONS: Record<string, { name: string; icon: React.ReactNode }> 
   students: { name: 'Students', icon: <GraduationCap size={20} /> },
   results: { name: 'Student Results', icon: <TrendingUp size={20} /> },
   history: { name: 'History', icon: <Award size={20} /> },
-  users: { name: 'User Management', icon: <Users size={20} /> },
+  users: { name: 'UserManagement', icon: <Users size={20} /> },
   reports: { name: 'Reports', icon: <FileText size={20} /> },
   audit: { name: 'Audit Logs', icon: <Activity size={20} /> },
   profile: { name: 'Profile', icon: <User size={20} /> },

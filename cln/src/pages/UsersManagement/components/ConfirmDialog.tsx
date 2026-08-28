@@ -1,0 +1,104 @@
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+} from '@mui/material';
+
+interface ConfirmDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: string;
+  confirmColor?: 'error' | 'success' | 'primary';
+}
+
+export function ConfirmDialog({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmColor = 'primary',
+}: ConfirmDialogProps) {
+  
+  // กำหนดสีปุ่มยืนยันตามประเภทรายการ (เช่น ลบ = สีแดง, เพิ่ม/แก้ไข = สีเขียว/ม่วง)
+  const getButtonProps = () => {
+    if (confirmColor === 'error') {
+      return {
+        bgcolor: '#ef4444',
+        hoverBg: '#dc2626',
+        color: '#ffffff',
+      };
+    }
+    // ค่าเริ่มต้นสีเขียว
+    return {
+      bgcolor: '#4f46e5',
+      hoverBg: '#4338ca',
+      color: '#ffffff',
+    };
+  };
+
+  const btnMeta = getButtonProps();
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: { borderRadius: '16px', p: 1, border: '1px solid #e2e8f0' }
+        }
+      }}
+    >
+      <DialogTitle sx={{ fontWeight: 800, color: '#0f172a' }}>{title}</DialogTitle>
+      <DialogContent>
+        <DialogContentText sx={{ color: '#64748b', fontSize: '14px' }}>
+          {message}
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          variant="outlined"
+          sx={{
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 700,
+            color: '#64748b',
+            borderColor: '#cbd5e1',
+            '&:hover': {
+              borderColor: '#94a3b8',
+              bgcolor: '#f8fafc',
+            }
+          }}
+        >
+          ยกเลิก
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          sx={{
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 700,
+            bgcolor: btnMeta.bgcolor,
+            color: btnMeta.color,
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: btnMeta.hoverBg,
+              boxShadow: 'none',
+            }
+          }}
+        >
+          ยืนยัน
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
+export default ConfirmDialog;
