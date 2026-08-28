@@ -17,6 +17,10 @@ export function SessionsPage() {
     }
   }, [searchParams, navigate])
 
+  if (!user) {
+    return null
+  }
+
   return (
     <MainLayout activeItem="Sessions">
       <SessionStudent
