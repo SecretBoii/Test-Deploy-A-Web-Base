@@ -1,8 +1,0 @@
-### run client ต้อง runในpath cln
-npm run dev
-
-### run server ต้อง runในpath srv
-npm run start:dev
-
-### เปืดprisma 
-npm prisma studio
