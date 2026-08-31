@@ -20,7 +20,7 @@ export function SessionsPage() {
   return (
     <MainLayout activeItem="Sessions">
       <SessionStudent
-        userId={user.userId}
+        userId={user?.userId}
         onSelectLevel={(levelId) => {
           navigate(`/sessions/level${levelId}`)
         }}

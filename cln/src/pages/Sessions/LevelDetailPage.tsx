@@ -23,7 +23,7 @@ export const LevelDetailPage: React.FC = () => {
 
   // ดึงข้อมูล Sessions ใน Level ที่ถูกเลือก
   useEffect(() => {
-    if (level === null || isNaN(level)) {
+    if (level === null || isNaN(level) || !user) {
       return;
     }
     const fetchLevelSessions = async () => {
@@ -40,7 +40,7 @@ export const LevelDetailPage: React.FC = () => {
       }
     };
     fetchLevelSessions();
-  }, [level, user.userId]);
+  }, [level, user?.userId]);
 
   if (level === null || isNaN(level)) {
     return <Navigate to="/sessions" replace />;
