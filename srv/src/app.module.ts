@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { UserActivityInterceptor } from './auth/user-activity.interceptor';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { UserActivityInterceptor } from './auth/user-activity.interceptor';
     ExercisesModule,
     AuthModule,
     UsersModule,
+    ReportsModule,
   ],
   controllers: [AppController],
   providers: [
