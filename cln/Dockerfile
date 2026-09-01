@@ -19,6 +19,8 @@ CMD ["npm", "run", "dev", "--", "--host"]
 FROM base AS build
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
 # 4. Stage สำหรับ Production (ใช้เสิร์ฟไฟล์ผ่าน Nginx)
