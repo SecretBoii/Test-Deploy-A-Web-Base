@@ -20,6 +20,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import UsersPage from './pages/UsersManagement/UsersPage.tsx'
 import ReportsPage from './pages/report/reportsPage.tsx'
+import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
 const theme = createTheme({
   typography: {
@@ -61,6 +62,7 @@ createRoot(document.getElementById('root')!).render(
               <Route element={<RoleProtectedRoute allowedRoles={[3]} />}>
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/audit-logs" element={<AdminAuditLogPage />} />
              </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
