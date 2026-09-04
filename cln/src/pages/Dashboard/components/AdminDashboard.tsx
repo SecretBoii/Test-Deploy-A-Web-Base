@@ -1,171 +1,162 @@
-import { Box, Typography, Card } from '@mui/material'
+import { useState, useEffect } from 'react'
+import { Box, Alert, Button, Typography } from '@mui/material'
+import { apiClient } from '../../../api/client'
+import { AdminStatCards } from './admin/AdminStatCards'
+import { AdminQuickActions } from './admin/AdminQuickActions'
+import { AdminErrorDistribution } from './admin/AdminErrorDistribution'
+import { AdminRecentAuditLogs } from './admin/AdminRecentAuditLogs'
+import { DashboardTimeFilter, type TimeRangeType } from './admin/DashboardTimeFilter'
 
-interface AdminDashboardProps {
-  username?: string
+export interface DashboardStats {
+  totalUsers: number
+  totalExercises: number
+  totalSubmissionsToday: number
+  passRatePercentage: number
 }
 
-export function AdminDashboard({}: AdminDashboardProps) {
+export interface PythonErrorStat {
+  errorType: string
+  count: number
+  percentage: number
+}
+
+export interface SimpleAuditLog {
+  id: number
+  username: string
+  action: string
+  entity: string
+  createdAt: string
+}
+
+export function AdminDashboard() {
+  const [timeRange, setTimeRange] = useState<TimeRangeType>('daily')
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [errorStats, setErrorStats] = useState<PythonErrorStat[]>([])
+  const [auditLogs, setAuditLogs] = useState<SimpleAuditLog[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
+  const loadDashboardData = async () => {
+    setIsLoading(true)
+    setErrorMessage(null)
+
+    try {
+      // ดึงข้อมูลจริงจาก Backend API
+      const [reportsRes, errorsRes, logsRes, exercisesRes] = await Promise.all([
+        apiClient.get('/reports/students', { params: { timeRange } }).catch(() => null),
+        apiClient.get('/reports/errors', { params: { timeRange } }).catch(() => null),
+        apiClient.get('/audit-log?limit=5').catch(() => null),
+        apiClient.get('/exercises/manage/all').catch(() => null),
+      ])
+
+      // 1. ผู้ใช้งานทั้งหมด (Student Users)
+      const totalStudentsCount = reportsRes?.data?.length ?? 0
+      
+      // 2. แบบฝึกหัดทั้งหมดในระบบ (Total Exercises)
+      const totalExercisesCount = exercisesRes?.data?.length ?? 0
+
+      // 3. จำนวนครั้งที่มีการรัน/ส่งตรวจจริง และ อัตราการผ่านสำเร็จ (%)
+      let realSubmissionsCount = 0
+      let realPassedCount = 0
+
+      if (reportsRes?.data && Array.isArray(reportsRes.data)) {
+        reportsRes.data.forEach((s: any) => {
+          const studentSubmissions = typeof s.totalSubmissions === 'number' ? s.totalSubmissions : (s.completedSessions || 0)
+          realSubmissionsCount += studentSubmissions
+          
+          if (typeof s.passedSubmissions === 'number') {
+            realPassedCount += s.passedSubmissions
+          } else if (s.averageScore >= 80) {
+            realPassedCount += studentSubmissions
+          }
+        })
+      }
+
+      // หาก totalSubmissions ยังไม่ส่งมาจาก Backend หรือเป็น 0 แต่มีประวัติการเจอ Error ในระบบ ให้ใช้ผลรวม Error เป็นค่าสำรองขั้นต่ำ
+      if (realSubmissionsCount === 0 && errorsRes?.data && Array.isArray(errorsRes.data)) {
+        const errorTotal = errorsRes.data.reduce((sum: number, err: any) => sum + (err.occurrenceCount || err.count || 0), 0);
+        if (errorTotal > 0) {
+          realSubmissionsCount = errorTotal;
+        }
+      }
+
+      // 4. คำนวณอัตราการผ่านสำเร็จจริง (%) = (จำนวนครั้งที่ผ่าน / จำนวนครั้งที่ส่งตรวจทั้งหมด) * 100
+      const realPassRate = realSubmissionsCount > 0 
+        ? Math.min(100, Math.max(0, (realPassedCount / realSubmissionsCount) * 100))
+        : 0
+
+      setStats({
+        totalUsers: totalStudentsCount,
+        totalExercises: totalExercisesCount,
+        totalSubmissionsToday: realSubmissionsCount,
+        passRatePercentage: Number(realPassRate.toFixed(1)),
+      })
+
+      // 5. สถิติข้อผิดพลาดจริงจากฐานข้อมูล (Top Errors)
+      if (errorsRes?.data && Array.isArray(errorsRes.data)) {
+        setErrorStats(errorsRes.data.map((item: any) => ({
+          errorType: item.errorType || 'UnknownError',
+          count: item.occurrenceCount || item.count || 0,
+          percentage: Number(item.percentage?.toFixed(1) || 0),
+        })))
+      } else {
+        setErrorStats([])
+      }
+
+      // 6. ประวัติกิจกรรมล่าสุดจากฐานข้อมูล (Audit Logs)
+      setAuditLogs(logsRes?.data?.data || [])
+
+    } catch (error) {
+      setErrorMessage('เกิดข้อผิดพลาดในการโหลดข้อมูล Dashboard กรุณาลองใหม่อีกครั้ง')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadDashboardData()
+  }, [timeRange])
+
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
-
-      {/* 1. Stats Row (4 Empty Card Containers) */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
-          gap: 2.5,
-        }}
-      >
-        {[...Array(4)].map((_, idx) => (
-          <Card
-            key={idx}
-            sx={{
-              height: 110,
-              borderRadius: '16px',
-              border: '1px solid #e2e8f0',
-              bgcolor: '#ffffff',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            }}
-          />
-        ))}
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, pb: 4 }}>
+      {/* Header Bar พร้อมปุ่มกรองช่วงเวลา */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
+            ภาพรวมระบบสำหรับผู้ดูแลระบบ (Admin Dashboard)
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#64748b' }}>
+            ติดตามการใช้งาน สถิติข้อผิดพลาด และกิจกรรมล่าสุดแบบเรียลไทม์
+          </Typography>
+        </Box>
+        <DashboardTimeFilter value={timeRange} onChange={setTimeRange} />
       </Box>
 
-      {/* 2. Middle Row: Donut Chart (Left), Activity Columns (Middle), Top Tasks (Right) */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 1.2fr 1fr' },
-          gap: 3,
-        }}
-      >
-        {/* User Proportion Card (Donut chart placeholder + legend lines) */}
-        <Card
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
+      {/* แสดง Error Alert หากดึงข้อมูลล้มเหลว */}
+      {errorMessage && (
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={loadDashboardData}>
+              ลองอีกครั้ง
+            </Button>
+          }
         >
-          {/* Section Title Placeholder */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', mb: 3, height: 20 }} />
+          {errorMessage}
+        </Alert>
+      )}
 
-          {/* Donut Layout */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexGrow: 1, minHeight: 180 }}>
-            {/* Circle Placeholder */}
-            <Box
-              sx={{
-                width: 100,
-                height: 100,
-                borderRadius: '50%',
-                border: '16px solid #f1f5f9',
-                borderColor: '#f1f5f9 #e2e8f0 #cbd5e1 #94a3b8', // mock segmented border
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            />
-            {/* Legend Placeholder Lines */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
-              {[...Array(3)].map((_, i) => (
-                <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#cbd5e1' }} />
-                  <Box sx={{ height: 12, bgcolor: '#f1f5f9', borderRadius: '4px', width: '70%' }} />
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        </Card>
+      {/* 1. การ์ดสถิติ KPI ภาพรวม */}
+      <AdminStatCards stats={stats} isLoading={isLoading} timeRange={timeRange} />
 
-        {/* Daily Activity Column Chart Card (7 Days columns) */}
-        <Card
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          {/* Section Title Placeholder */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', mb: 3, height: 20 }} />
+      {/* 2. แถบปุ่มทางลัดจัดการระบบ */}
+      <AdminQuickActions onNavigate={(path) => window.location.href = path} />
 
-          {/* 7 Columns representation */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-around',
-              minHeight: 180,
-            }}
-          >
-            {[1.5, 2, 1.8, 2.5, 3.5, 1.6, 1.4].map((heightScale, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  width: '10%',
-                  height: `${heightScale * 20}%`, // varied heights
-                  borderRadius: '6px 6px 0 0',
-                  border: '1px solid #e2e8f0',
-                  bgcolor: '#f8fafc',
-                }}
-              />
-            ))}
-          </Box>
-        </Card>
-
-        {/* Most Active Tasks Card (5 level rows) */}
-        <Card
-          sx={{
-            p: 3,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-          }}
-        >
-          {/* Section Title Placeholder */}
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', mb: 3, height: 20 }} />
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {[...Array(5)].map((_, idx) => (
-              <Box key={idx} sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Box sx={{ height: 12, bgcolor: '#f1f5f9', borderRadius: '4px', width: '80%' }} />
-                <Box
-                  sx={{
-                    height: 8,
-                    borderRadius: '4px',
-                    border: '1px solid #e2e8f0',
-                    bgcolor: '#f8fafc',
-                  }}
-                />
-              </Box>
-            ))}
-          </Box>
-        </Card>
+      {/* 3. กราฟวิเคราะห์และตาราง Log ล่าสุด */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1.2fr' }, gap: 3 }}>
+        <AdminErrorDistribution errors={errorStats} isLoading={isLoading} />
+        <AdminRecentAuditLogs logs={auditLogs} isLoading={isLoading} />
       </Box>
-
-      {/* 3. Latest Users Section (Empty Container Box) */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1e293b', height: 24 }} />
-        <Card
-          sx={{
-            minHeight: 260,
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
-          }}
-        />
-      </Box>
-
     </Box>
   )
 }

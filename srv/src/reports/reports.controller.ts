@@ -21,10 +21,11 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
     @Query('education') education?: string,
     @Query('search') search?: string,
+    @Query('timeRange') timeRange?: string,
     ) {
         this.checkAdminOrTeacher(user);
         return this.reportsService.getStudentReport({
-            startDate, endDate, education, search
+            startDate, endDate, education, search, timeRange
         });
     }
 
@@ -34,10 +35,11 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('education') education?: string,
+    @Query('timeRange') timeRange?: string,
     ) {
         this.checkAdminOrTeacher(user);
         return this.reportsService.getExerciseReport({
-            startDate, endDate, education
+            startDate, endDate, education, timeRange
         });
     }
 
@@ -47,10 +49,11 @@ export class ReportsController {
         @Query('startDate') startDate?: string,
         @Query('endDate') endDate?: string,
         @Query('education') education?: string,
+        @Query('timeRange') timeRange?: string,
     ) {
         this.checkAdminOrTeacher(user);
         return this.reportsService.getErrorReport({
-            startDate, endDate, education
+            startDate, endDate, education, timeRange
         });
     }
 }

@@ -5,7 +5,38 @@ import { PrismaService } from '../prisma/prisma.service';
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async getStudentReport(filters: { startDate?: string; endDate?: string; education?: string; search?: string }) {
+  private getTimeRangeDates(timeRange?: string, startDate?: string, endDate?: string) {
+    if (startDate || endDate) {
+      return {
+        start: startDate ? new Date(startDate) : undefined,
+        end: endDate ? (() => { const d = new Date(endDate); d.setHours(23, 59, 59, 999); return d; })() : undefined,
+      };
+    }
+    if (!timeRange) return { start: undefined, end: undefined };
+
+    const now = new Date();
+    const end = new Date(now);
+    end.setHours(23, 59, 59, 999);
+
+    const start = new Date(now);
+    if (timeRange === 'daily') {
+      start.setHours(0, 0, 0, 0);
+    } else if (timeRange === 'weekly') {
+      start.setDate(now.getDate() - 7);
+      start.setHours(0, 0, 0, 0);
+    } else if (timeRange === 'monthly') {
+      start.setMonth(now.getMonth() - 1);
+      start.setHours(0, 0, 0, 0);
+    } else if (timeRange === 'yearly') {
+      start.setFullYear(now.getFullYear() - 1);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      return { start: undefined, end: undefined };
+    }
+    return { start, end };
+  }
+
+  async getStudentReport(filters: { startDate?: string; endDate?: string; education?: string; search?: string; timeRange?: string }) {
     const where: any = {
       roleId: 1, // ค้นหาเฉพาะผู้เรียนที่เป็น Student
     };
@@ -27,18 +58,9 @@ export class ReportsService {
       };
     }
 
-    if (filters.startDate || filters.endDate) {
-      where.registerTimestamp = {};
-      if (filters.startDate) {
-        where.registerTimestamp.gte = new Date(filters.startDate);
-      }
-      if (filters.endDate) {
-        const end = new Date(filters.endDate);
-        end.setHours(23, 59, 59, 999);
-        where.registerTimestamp.lte = end;
-      }
-    }
+    const dateRange = this.getTimeRangeDates(filters.timeRange, filters.startDate, filters.endDate);
 
+    // ดึงข้อมูลผู้เรียนทั้งหมด พร้อมกิจกรรม (activities) ที่กรองตามช่วงเวลา (dateRange)
     const students = await this.prisma.userProfile.findMany({
       where,
       include: {
@@ -47,10 +69,18 @@ export class ReportsService {
         activities: {
           where: {
             status: { not: 'PENDING' },
+            ...( (dateRange.start || dateRange.end) ? {
+              createdAt: {
+                gte: dateRange.start,
+                lte: dateRange.end,
+              },
+            } : {} ),
           },
           select: {
             score: true,
             runCount: true,
+            eventType: true,
+            createdAt: true,
           },
         },
       },
@@ -59,6 +89,12 @@ export class ReportsService {
     const totalSessions = await this.prisma.session.count();
 
     return students.map((student) => {
+      // 1. จำนวนครั้งที่มีการกดทดลองรันโค้ดจริง (eventType === 'run')
+      const totalSubmissions = student.activities.filter((a) => a.eventType === 'run' || !a.eventType).length;
+
+      // 2. จำนวนครั้งที่ทดลองรัน/ส่งตรวจแล้วผ่านเกณฑ์สำเร็จ (คะแนน >= 80)
+      const passedSubmissions = student.activities.filter((a) => a.score >= 80).length;
+
       const completedSessions = student.userSessions.filter(
         (us) => us.status === 'COMPLETED',
       ).length;
@@ -72,10 +108,12 @@ export class ReportsService {
       return {
         userId: student.userId,
         username: student.username,
-        fullName: `${student.firstName} ${ student.lastName}`,
+        fullName: `${student.firstName} ${student.lastName}`,
         university: student.education?.university || '-',
         faculty: student.education?.faculty || '-',
         completedSessions,
+        totalSubmissions, // จำนวนครั้งส่งตรวจ/รันโค้ดจริง
+        passedSubmissions, // จำนวนครั้งที่ตรวจผ่านสำเร็จ
         totalSessions,
         averageScore,
         averageAttempts,
@@ -84,7 +122,8 @@ export class ReportsService {
     });
   }
 
-  async getExerciseReport(filters: { startDate?: string; endDate?: string; education?: string }) {
+  async getExerciseReport(filters: { startDate?: string; endDate?: string; education?: string; timeRange?: string }) {
+    const dateRange = this.getTimeRangeDates(filters.timeRange, filters.startDate, filters.endDate);
     const exercises = await this.prisma.exercise.findMany({
       include: {
         activities: {
@@ -97,9 +136,9 @@ export class ReportsService {
                         ],
                     }
                 } : undefined,
-                createdAt: (filters.startDate || filters.endDate) ? {
-                    gte: filters.startDate ? new Date(filters.startDate) : undefined,
-                    lte: filters.endDate ? new Date(filters.endDate) : undefined,
+                createdAt: (dateRange.start || dateRange.end) ? {
+                    gte: dateRange.start,
+                    lte: dateRange.end,
                 } : undefined,
             },
             select: {
@@ -145,7 +184,7 @@ export class ReportsService {
       });
   }
 
-  async getErrorReport(filter: { startDate?: string; endDate?: string; education?: string }) {
+  async getErrorReport(filter: { startDate?: string; endDate?: string; education?: string; timeRange?: string }) {
     const where: any = {
       exceptionMessage: { not: null },
     };
@@ -160,16 +199,12 @@ export class ReportsService {
         },
       };
     }
-    if (filter.startDate || filter.endDate) { 
+
+    const dateRange = this.getTimeRangeDates(filter.timeRange, filter.startDate, filter.endDate);
+    if (dateRange.start || dateRange.end) {
       where.createdAt = {};
-      if (filter.startDate) {
-        where.createdAt.gte = new Date(filter.startDate);
-      }
-      if (filter.endDate) {
-        const end = new Date(filter.endDate);
-        end.setHours(23, 59, 59, 999);
-        where.createdAt.lte = end;
-      }
+      if (dateRange.start) where.createdAt.gte = dateRange.start;
+      if (dateRange.end) where.createdAt.lte = dateRange.end;
     }
 
     const activitiesWithError = await this.prisma.activity.findMany({

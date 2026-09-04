@@ -30,7 +30,7 @@ export function ReportFilters({ onFilterChange }: ReportFiltersProps) {
   return (
     <Box sx={{ p: 2.5, bgcolor: '#ffffff', borderRadius: '12px', border: '1px solid #e2e8f0', mb: 3 }}>
       <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <TextField
             fullWidth
             size="small"
@@ -49,7 +49,7 @@ export function ReportFilters({ onFilterChange }: ReportFiltersProps) {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 3 }}>
+        <Grid size={{ xs: 12, md: 5 }}>
           <TextField
             fullWidth
             size="small"
@@ -65,34 +65,6 @@ export function ReportFilters({ onFilterChange }: ReportFiltersProps) {
                 ),
               }
             }}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 2 }}>
-          <TextField
-            fullWidth
-            type="date"
-            size="small"
-            label="วันที่เริ่มต้น"
-            slotProps={{
-              inputLabel: { shrink: true }
-            }}
-            value={filters.startDate}
-            onChange={(e) => handleInputChange('startDate', e.target.value)}
-          />
-        </Grid>
-
-        <Grid size={{ xs: 6, md: 2 }}>
-          <TextField
-            fullWidth
-            type="date"
-            size="small"
-            label="วันที่สิ้นสุด"
-            slotProps={{
-              inputLabel: { shrink: true }
-            }}
-            value={filters.endDate}
-            onChange={(e) => handleInputChange('endDate', e.target.value)}
           />
         </Grid>
 

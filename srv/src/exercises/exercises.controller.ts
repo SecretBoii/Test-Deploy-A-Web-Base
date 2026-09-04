@@ -92,32 +92,35 @@ export class ExercisesController {
   @Get('manage/all')
   async getAllExercises(@CurrentUser() user: any) {
     if (user.roleId !== 2 && user.roleId !== 3) {
-      throw new ForbiddenException('Only teachers or admins can view all exercises.');
+      throw new ForbiddenException('Only teachers and admins can view all exercises.');
     }
     return await this.exercisesService.getAllExercisesForManage();
   }
+
   @Post()
   async create(@Body() dto: CreateExerciseDto, @CurrentUser() user: any) {
-    if (user.roleId !== 2 && user.roleId !== 3) {
-      throw new ForbiddenException('Only teachers or admins can create exercises.');
+    if (user.roleId !== 2) {
+      throw new ForbiddenException('Only teachers can create exercises.');
     }
     return await this.exercisesService.createExercise(dto);
   }
+
   @Put(':id')
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateExerciseDto,
     @CurrentUser() user: any,
   ) {
-    if (user.roleId !== 2 && user.roleId !== 3) {
-      throw new ForbiddenException('Only teachers or admins can update exercises.');
+    if (user.roleId !== 2) {
+      throw new ForbiddenException('Only teachers can update exercises.');
     }
     return await this.exercisesService.updateExercise(Number(id), dto);
   }
+
   @Delete(':id')
   async delete(@Param('id') id: string, @CurrentUser() user: any) {
-    if (user.roleId !== 2 && user.roleId !== 3) {
-      throw new ForbiddenException('Only teachers or admins can delete exercises.');
+    if (user.roleId !== 2) {
+      throw new ForbiddenException('Only teachers can delete exercises.');
     }
     return await this.exercisesService.deleteExercise(Number(id));
   }
