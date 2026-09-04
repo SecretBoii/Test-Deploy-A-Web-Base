@@ -42,8 +42,29 @@ model UserProfile {
   education         Education             @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
   role              Role                  @relation(fields: [roleId], references: [roleId], onDelete: NoAction, onUpdate: NoAction)
   userSessions      UserSessionProgress[]
+  auditLogs         AuditLog[]
 
   @@map("user_profile")
+}
+
+model AuditLog {
+  id         Int          @id @default(autoincrement())
+  userId     Int?         @map("user_id")
+  username   String?      @db.VarChar(100)
+  action     String       @db.VarChar(100) // เช่น CREATE_EXERCISE, UPDATE_USER, LOGIN
+  entity     String       @db.VarChar(100) // เช่น Exercise, UserProfile, Session
+  entityId   Int?         @map("entity_id")
+  details    Json?        // เก็บ payload หรือ { oldData, newData }
+  ipAddress  String?      @map("ip_address") @db.VarChar(45)
+  userAgent  String?      @map("user_agent") @db.VarChar(255)
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
+
+  user       UserProfile? @relation(fields: [userId], references: [userId], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_log")
 }
 
 model Exercise {
