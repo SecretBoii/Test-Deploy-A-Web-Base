@@ -7,10 +7,10 @@ interface AuditLogFilterProps {
   setSearch: (val: string) => void;
   actionFilter: string;
   setActionFilter: (val: string) => void;
-  startDate: string;
-  setStartDate: (val: string) => void;
-  endDate: string;
-  setEndDate: (val: string) => void;
+  startDate?: string;
+  setStartDate?: (val: string) => void;
+  endDate?: string;
+  setEndDate?: (val: string) => void;
   onSearch: (e: React.FormEvent) => void;
   onRefresh: () => void;
 }
@@ -23,10 +23,6 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
   setSearch,
   actionFilter,
   setActionFilter,
-  startDate,
-  setStartDate,
-  endDate,
-  setEndDate,
   onSearch,
   onRefresh,
 }) => {
@@ -57,24 +53,6 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
               <MenuItem value="UPDATE_EXERCISE">UPDATE_EXERCISE</MenuItem>
               <MenuItem value="DELETE_EXERCISE">DELETE_EXERCISE</MenuItem>
             </TextField>
-
-            <TextField
-              type="date"
-              size="small"
-              label="ตั้งแต่วันที่"
-              slotProps={{ inputLabel: { shrink: true } }}
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-
-            <TextField
-              type="date"
-              size="small"
-              label="ถึงวันที่"
-              slotProps={{ inputLabel: { shrink: true } }}
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-            />
 
             <IconButton onClick={onRefresh} title="รีเฟรชข้อมูล">
               <RefreshCw size={18} />

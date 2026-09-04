@@ -5,6 +5,7 @@ export interface ReportFilterParams {
     endDate?: string;
     education?: string;
     search?: string;
+    timeRange?: string;
 }
 
 export interface StudentReportData {
