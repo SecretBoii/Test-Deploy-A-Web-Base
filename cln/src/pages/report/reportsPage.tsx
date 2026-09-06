@@ -1,5 +1,6 @@
-import { Box, Typography, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab, Card } from '@mui/material';
 import { useState, useEffect } from 'react';
+import { Users, BookOpen, AlertTriangle } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { ReportFilters } from './components/ReportFilters';
 import { StudentPerformanceReport } from './components/StudentPerformanceReport';
@@ -15,6 +16,10 @@ import {
   type ErrorAnalyticsData
 } from '../../api/reports';
 
+/**
+ * หน้าหลักระบบรายงานเชิงลึก (Admin Reports Page)
+ * ออกแบบตามมาตรฐาน Student Home (Card 16px, Tabs 12px, ขอบมนสวยงามไม่กลมเกินไป)
+ */
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [filters, setFilters] = useState<ReportFilterParams>({});
@@ -24,19 +29,20 @@ export default function ReportsPage() {
   const [exerciseData, setExerciseData] = useState<ExerciseAnalyticsData[]>([]);
   const [errorData, setErrorData] = useState<ErrorAnalyticsData[]>([]);
 
+  // ดึงข้อมูลรายงานจาก Backend API ตาม Tab ที่เปิดอยู่และ Filter ที่ระบุ
   useEffect(() => {
     const fetchReport = async () => {
       setLoading(true);
       try {
         if (activeTab === 0) {
           const res = await getStudentPerformanceReport(filters);
-          setStudentData(res);
+          setStudentData(res || []);
         } else if (activeTab === 1) {
           const res = await getExerciseAnalyticsReport(filters);
-          setExerciseData(res);
+          setExerciseData(res || []);
         } else if (activeTab === 2) {
           const res = await getErrorAnalyticsReport(filters);
-          setErrorData(res);
+          setErrorData(res || []);
         }
       } catch (err) {
         console.error('ไม่สามารถเรียกรายงานความคืบหน้าได้:', err);
@@ -54,49 +60,66 @@ export default function ReportsPage() {
 
   return (
     <MainLayout activeItem="Reports">
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', maxWidth: '1440px', margin: '0 auto' }}>
-        <Box sx={{ mb: 1 }}>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', mb: 1 }}>
-            ระบบรายงานเชิงลึก (Admin Reports)
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            วิเคราะห์ และติดตามคะแนนสอบ ตลอดจนข้อผิดพลาดของเด็กนักเรียนในการเขียนโค้ดภาษาไพทอน
-          </Typography>
-        </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, width: '100%', maxWidth: '1440px', margin: '0 auto', pb: 4 }}>
+        
+        {/* Main Content Area wrapped in Card - ขอบมน 16px ตามมาตรฐาน Student Home */}
+        <Card sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
+          
+          {/* Component ตัวกรองข้อมูล */}
+          <ReportFilters activeTab={activeTab} onFilterChange={handleFilterChange} />
 
-        <ReportFilters 
-          onFilterChange={handleFilterChange} 
-        />
+          {/* Clean Segmented Tabs - ขอบมน 12px */}
+          <Box sx={{ mb: 3 }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={(_, val) => setActiveTab(val)} 
+              sx={{ 
+                bgcolor: '#f8fafc',
+                p: '4px',
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                minHeight: 'auto',
+                '& .MuiTabs-indicator': { display: 'none' },
+                '& .MuiTab-root': { 
+                  fontWeight: 700, 
+                  textTransform: 'none', 
+                  fontSize: '14px',
+                  borderRadius: '8px',
+                  minHeight: '40px',
+                  color: '#64748b',
+                  px: 2.5,
+                  transition: 'all 0.15s ease',
+                  '&.Mui-selected': { 
+                    bgcolor: '#ffffff', 
+                    color: '#2563eb',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                  } 
+                }
+              }}
+            >
+              <Tab icon={<Users size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="รายงานผู้เรียนรายบุคคล" />
+              <Tab icon={<BookOpen size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="วิเคราะห์ประสิทธิภาพโจทย์" />
+              <Tab icon={<AlertTriangle size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="สรุปข้อผิดพลาด & Exceptions" />
+            </Tabs>
+          </Box>
 
-        <Tabs 
-          value={activeTab} 
-          onChange={(_, val) => setActiveTab(val)} 
-          sx={{ 
-            borderBottom: 1, 
-            borderColor: '#e2e8f0', 
-            mb: 3,
-            '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', fontSize: '14px' },
-            '& .Mui-selected': { color: '#4f46e5' },
-            '& .MuiTabs-indicator': { bgcolor: '#4f46e5' }
-          }}
-        >
-          <Tab label="รายงานความคืบหน้าผู้เรียนรายบุคคล" />
-          <Tab label="วิเคราะห์ประสิทธิภาพหลักสูตรและโจทย์" />
-          <Tab label="สรุปข้อผิดพลาดและ Exceptions" />
-        </Tabs>
-
-        <Box sx={{ bgcolor: '#ffffff', p: 3, borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-          {activeTab === 0 && (
-            <StudentPerformanceReport data={studentData} isLoading={loading} />
-          )}
-          {activeTab === 1 && (
-            <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} />
-          )}
-          {activeTab === 2 && (
-            <ErrorAnalyticsReport data={errorData} isLoading={loading} />
-          )}
-        </Box>
+          {/* Tab Panel Display */}
+          <Box>
+            {activeTab === 0 && (
+              <StudentPerformanceReport data={studentData} isLoading={loading} />
+            )}
+            {activeTab === 1 && (
+              <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} />
+            )}
+            {activeTab === 2 && (
+              <ErrorAnalyticsReport data={errorData} isLoading={loading} />
+            )}
+          </Box>
+        </Card>
       </Box>
     </MainLayout>
   );
 }
+
+
+
