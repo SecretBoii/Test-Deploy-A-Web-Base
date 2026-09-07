@@ -36,10 +36,20 @@ export class UsersController {
     @Query('search') search?: string,
     @Query('roleId') roleId?: string,
     @Query('status') status?: 'online' | 'offline',
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     this.checkAdmin(adminUser);
     const parsedRoleId = roleId ? Number(roleId) : undefined;
-    return await this.usersService.findAll(search, parsedRoleId, status);
+    const parsedPage = page ? Number(page) : undefined;
+    const parsedLimit = limit ? Number(limit) : undefined;
+    return await this.usersService.findAll(
+      search,
+      parsedRoleId,
+      status,
+      parsedPage,
+      parsedLimit,
+    );
   }
 
   @Get(':id')

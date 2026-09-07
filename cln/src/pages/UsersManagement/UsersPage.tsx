@@ -12,13 +12,15 @@ import {
   MenuItem,
   CircularProgress,
   InputAdornment,
+  Tooltip,
 } from '@mui/material';
-import { Users, Search, RefreshCw } from 'lucide-react';
+import { Users, Search, RefreshCw, RotateCcw } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
-import { type User, getUsers, createUser, updateUser, deleteUser } from '../../api/users';
+import { type User, type UserStats, getUsers, createUser, updateUser, deleteUser } from '../../api/users';
 import { UserDialog } from './components/UserDialog';
 import { UserTable } from './components/UserTable';
 import { ConfirmDialog } from './components/ConfirmDialog';
+import { UserStatsHeader } from './components/UserStatsHeader';
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -27,6 +29,25 @@ export function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<number | ''>('');
   const [statusFilter, setStatusFilter] = useState<string>('');
   
+  // State สำหรับ สรุปสถิติภาพรวม และ Pagination
+  const [stats, setStats] = useState<UserStats | undefined>(undefined);
+  const [total, setTotal] = useState<number>(0);
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+
+  // เช็คว่ามีการตั้งค่าตัวกรองอยู่หรือไม่
+  const isFiltered = Boolean(search.trim() || roleFilter !== '' || statusFilter !== '');
+
+  /**
+   * ล้างค่าตัวกรองการค้นหา สิทธิ์ และสถานะ พร้อมรีเซ็ตหน้ากลับเป็นหน้า 1
+   */
+  const handleResetFilters = () => {
+    setSearch('');
+    setRoleFilter('');
+    setStatusFilter('');
+    setPage(0);
+  };
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
@@ -37,29 +58,48 @@ export function UsersPage() {
   const [confirmColor, setConfirmColor] = useState<'error' | 'success' | 'primary'>('primary');
   const [confirmAction, setConfirmAction] = useState<(() => Promise<void>) | null>(null);
 
+  /**
+   * โหลดข้อมูลอัตโนมัติเมื่อมีการเปลี่ยนแปลงตัวกรอง หน้า หรือการค้นหา (พร้อม Debounce 300ms)
+   * เหตุผลที่ใช้ Debounce: ป้องกันการส่ง API request ซ้ำซ้อนจากการพิมพ์ในช่องค้นหาอย่างรวดเร็ว
+   */
   useEffect(() => {
-    fetchUsers();
-  }, [roleFilter, statusFilter]);
+    const timer = setTimeout(() => {
+      fetchUsers();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [page, rowsPerPage, search, roleFilter, statusFilter]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const params: any = {};
-      if (search) params.search = search;
+      const params: any = {
+        page: page + 1, // แปลง 0-indexed จาก MUI เป็น 1-indexed สำหรับ Backend API
+        limit: rowsPerPage,
+      };
+      if (search.trim()) params.search = search.trim();
       if (roleFilter !== '') params.roleId = roleFilter;
       if (statusFilter !== '') params.status = statusFilter;
-      const data = await getUsers(params);
-      setUsers(data);
+      const res = await getUsers(params);
+      setUsers(res.data || []);
+      setTotal(res.total || 0);
+      if (res.stats) {
+        setStats((prev) => {
+          if (res.stats!.total > 0 || !prev) {
+            return res.stats;
+          }
+          return prev;
+        });
+      }
+
+      // หาก page ปัจจุบันเกินขอบเขตของ total ให้ปรับกลับมาหน้าแรก
+      if (res.total > 0 && page * rowsPerPage >= res.total) {
+        setPage(0);
+      }
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      fetchUsers();
     }
   };
 
@@ -147,6 +187,9 @@ export function UsersPage() {
     <MainLayout activeItem="UserManagement">
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', maxWidth: '1440px', margin: '0 auto' }}>
         
+        {/* การ์ดสรุปสถิติผู้ใช้งานภาพรวม (4-Grid Cards Header) */}
+        <UserStatsHeader stats={stats} loading={loading} />
+
         {/* ครอบหัวข้อ ตัวกรอง และตารางให้อยู่ในการ์ดใบเดียวกันเพื่อความสวยงามตามแบบหน้า Exercises */}
         <Card sx={{ p: 3, borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden' }}>
           
@@ -155,7 +198,7 @@ export function UsersPage() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Users size={24} color="#4f46e5" />
               <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                จัดการผู้ใช้งานทั้งหมด ({users.length} คน)
+                จัดการผู้ใช้งานทั้งหมด ({total} คน)
               </Typography>
             </Box>
             <Button
@@ -186,8 +229,10 @@ export function UsersPage() {
             <TextField
               placeholder="ค้นหาชื่อจริง, นามสกุล, Username, อีเมล..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleSearchKeyPress}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
               sx={{ flexGrow: 1, minWidth: { xs: '100%', sm: 250 } }}
               slotProps={{
                 input: {
@@ -211,7 +256,10 @@ export function UsersPage() {
               <InputLabel sx={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>สิทธิ์ผู้ใช้งาน</InputLabel>
               <Select
                 value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value as number | '')}
+                onChange={(e) => {
+                  setRoleFilter(e.target.value as number | '');
+                  setPage(0);
+                }}
                 label="สิทธิ์ผู้ใช้งาน"
                 sx={{
                   borderRadius: '12px',
@@ -232,7 +280,10 @@ export function UsersPage() {
               <InputLabel sx={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>สถานะ</InputLabel>
               <Select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as string)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value as string);
+                  setPage(0);
+                }}
                 label="สถานะ"
                 sx={{
                   borderRadius: '12px',
@@ -248,20 +299,59 @@ export function UsersPage() {
               </Select>
             </FormControl>
 
-            <IconButton
-              onClick={fetchUsers}
+            <Tooltip title="รีเฟรชข้อมูล">
+              <IconButton
+                onClick={() => {
+                  if (page === 0) {
+                    fetchUsers();
+                  } else {
+                    setPage(0);
+                  }
+                }}
+                sx={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  width: '46px',
+                  height: '46px',
+                  bgcolor: '#f8fafc',
+                  '&:hover': { bgcolor: '#f1f5f9' },
+                  transition: 'all 0.2s',
+                }}
+              >
+                <RefreshCw size={18} />
+              </IconButton>
+            </Tooltip>
+
+            <Button
+              variant="outlined"
+              onClick={handleResetFilters}
+              disabled={!isFiltered}
+              startIcon={<RotateCcw size={15} />}
               sx={{
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                width: '46px',
                 height: '46px',
-                bgcolor: '#f8fafc',
-                '&:hover': { bgcolor: '#f1f5f9' },
-                transition: 'all 0.2s',
+                borderRadius: '12px',
+                px: 2,
+                borderColor: isFiltered ? '#cbd5e1' : '#e2e8f0',
+                color: isFiltered ? '#475569' : '#94a3b8',
+                bgcolor: isFiltered ? '#f8fafc' : 'transparent',
+                textTransform: 'none',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                '&:hover': {
+                  bgcolor: '#f1f5f9',
+                  borderColor: '#94a3b8',
+                  color: '#0f172a',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'transparent',
+                  borderColor: '#e2e8f0',
+                  color: '#cbd5e1',
+                },
+                transition: 'all 0.15s ease',
               }}
             >
-              <RefreshCw size={18} />
-            </IconButton>
+              ล้างตัวกรอง
+            </Button>
           </Box>
 
           {/* User Table Component */}
@@ -276,6 +366,14 @@ export function UsersPage() {
               onDelete={handleDeleteClick}
               formatDate={formatDate}
               getRelativeTime={getRelativeTime}
+              total={total}
+              page={page}
+              rowsPerPage={rowsPerPage}
+              onPageChange={(newPage) => setPage(newPage)}
+              onRowsPerPageChange={(newRowsPerPage) => {
+                setRowsPerPage(newRowsPerPage);
+                setPage(0);
+              }}
             />
           )}
         </Card>
