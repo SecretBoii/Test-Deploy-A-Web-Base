@@ -1,7 +1,8 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Typography, Box, Chip, LinearProgress, TablePagination, TableSortLabel } from '@mui/material';
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Chip, LinearProgress, TablePagination, TableSortLabel } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { BookOpen, HelpCircle, ArrowUp, ArrowDown } from 'lucide-react';
+import { BookOpen, HelpCircle } from 'lucide-react';
 import type { ExerciseAnalyticsData } from '../../../api/reports';
+import { SortIconIndicator } from './SortIconIndicator';
 
 interface ExerciseAnalyticsReportProps {
   data: ExerciseAnalyticsData[];
@@ -9,21 +10,6 @@ interface ExerciseAnalyticsReportProps {
 }
 
 type SortField = 'difficulty' | 'successRate' | 'averageAttempts';
-
-/**
- * คอมโพเนนต์แสดงไอคอนแสดงสถานะการเรียงลำดับ (Sort Icon Indicator)
- * แยกออกมาเพื่อปฏิบัติตาม React Best Practice (หลีกเลี่ยง Inline Function Re-creation ใน JSX)
- */
-function SortIconIndicator({ active, direction }: { active: boolean; direction: 'asc' | 'desc' }) {
-  if (!active) {
-    return <ArrowUp size={14} style={{ color: '#cbd5e1', marginLeft: 4 }} />;
-  }
-  return direction === 'asc' ? (
-    <ArrowUp size={14} style={{ color: '#2563eb', marginLeft: 4 }} />
-  ) : (
-    <ArrowDown size={14} style={{ color: '#2563eb', marginLeft: 4 }} />
-  );
-}
 
 /**
  * คอมโพเนนต์แสดงตารางสถิติและวิเคราะห์ประสิทธิภาพของโจทย์โปรแกรมมิ่ง (Exercise Analytics)
@@ -116,71 +102,70 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
         </Typography>
       </Box>
 
-      {/* Container ตารางสถิติโจทย์ - ทรงมน 16px หัวตารางสีฟ้า #eff6ff ตามแบบ Student Home */}
-      <Paper sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow sx={{ '& th': { bgcolor: '#eff6ff', borderBottom: '1px solid #e2e8f0' } }}>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>โจทย์ / บทเรียน</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>
-                  <TableSortLabel
-                    active={sortField === 'difficulty'}
-                    direction={sortField === 'difficulty' ? sortOrder : 'asc'}
-                    onClick={() => handleSort('difficulty')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'difficulty'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    ระดับความยาก
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} width="220px">
-                  <TableSortLabel
-                    active={sortField === 'successRate'}
-                    direction={sortField === 'successRate' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('successRate')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'successRate'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    อัตราการผ่าน (Success %)
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} align="center">
-                  <TableSortLabel
-                    active={sortField === 'averageAttempts'}
-                    direction={sortField === 'averageAttempts' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('averageAttempts')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'averageAttempts'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    รันเฉลี่ยสะสม
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} align="center">อัตราขอคำใบ้</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>เวลาใช้จริง / ตั้งไว้</TableCell>
-              </TableRow>
-            </TableHead>
+      {/* TableContainer ตารางสถิติโจทย์ - วางบน Card โดยตรงพร้อมหัวตาราง #f8fafc ถอดแบบจาก UserTable */}
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 900 }}>
+          <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow sx={{ '& th': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', py: 1.8, fontSize: '13px', fontWeight: 700, color: '#475569' } }}>
+              <TableCell>โจทย์ / บทเรียน</TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === 'difficulty'}
+                  direction={sortField === 'difficulty' ? sortOrder : 'asc'}
+                  onClick={() => handleSort('difficulty')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'difficulty'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  ระดับความยาก
+                </TableSortLabel>
+              </TableCell>
+              <TableCell width="220px">
+                <TableSortLabel
+                  active={sortField === 'successRate'}
+                  direction={sortField === 'successRate' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('successRate')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'successRate'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  อัตราการผ่าน (Success %)
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={sortField === 'averageAttempts'}
+                  direction={sortField === 'averageAttempts' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('averageAttempts')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'averageAttempts'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  รันเฉลี่ยสะสม
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">อัตราขอคำใบ้</TableCell>
+              <TableCell>เวลาใช้จริง / ตั้งไว้</TableCell>
+            </TableRow>
+          </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
@@ -252,7 +237,6 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
               )}
             </TableBody>
           </Table>
-        </TableContainer>
 
         {/* ระบบเปลี่ยนหน้า Pagination */}
         <TablePagination
@@ -265,9 +249,16 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="แสดงแถวต่อหน้า:"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
-          sx={{ borderTop: '1px solid #e2e8f0', color: '#64748b' }}
+          sx={{
+            borderTop: '1px solid #e2e8f0',
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: '13px',
+              color: '#64748b',
+              fontWeight: 500,
+            },
+          }}
         />
-      </Paper>
+      </TableContainer>
     </Box>
   );
 }
