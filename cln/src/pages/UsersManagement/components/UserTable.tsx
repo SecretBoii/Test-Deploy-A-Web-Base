@@ -11,6 +11,7 @@ import {
   Typography,
   Box,
   Chip,
+  TablePagination,
 } from '@mui/material';
 import { Edit2, Trash2 } from 'lucide-react';
 
@@ -20,9 +21,25 @@ interface UserTableProps {
   onDelete: (id: number, username: string) => void;
   formatDate: (dateString?: string) => string;
   getRelativeTime: (dateString?: string) => string;
+  total?: number;
+  page?: number;
+  rowsPerPage?: number;
+  onPageChange?: (newPage: number) => void;
+  onRowsPerPageChange?: (newRowsPerPage: number) => void;
 }
 
-export function UserTable({ users, onEdit, onDelete, formatDate, getRelativeTime }: UserTableProps) {
+export function UserTable({
+  users,
+  onEdit,
+  onDelete,
+  formatDate,
+  getRelativeTime,
+  total,
+  page,
+  rowsPerPage,
+  onPageChange,
+  onRowsPerPageChange,
+}: UserTableProps) {
   // ฟังก์ชันวาด Chip บทบาทดีไซน์หรูหรา (Light Background + Solid Border + Custom Font)
   const getRoleChip = (roleId: number) => {
     switch (roleId) {
@@ -209,6 +226,29 @@ export function UserTable({ users, onEdit, onDelete, formatDate, getRelativeTime
           )}
         </TableBody>
       </Table>
+
+      {/* 4. ส่วนแสดง Pagination ของตารางผู้ใช้งาน (Standard MUI TablePagination) */}
+      {total !== undefined && page !== undefined && rowsPerPage !== undefined && onPageChange && onRowsPerPageChange && (
+        <TablePagination
+          rowsPerPageOptions={[10, 20, 50]}
+          component="div"
+          count={total}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={(_, newPage) => onPageChange(newPage)}
+          onRowsPerPageChange={(e) => onRowsPerPageChange(parseInt(e.target.value, 10))}
+          labelRowsPerPage="จำนวนรายการต่อหน้า:"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`}
+          sx={{
+            borderTop: '1px solid #e2e8f0',
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: '13px',
+              color: '#64748b',
+              fontWeight: 500,
+            },
+          }}
+        />
+      )}
     </TableContainer>
   );
 }

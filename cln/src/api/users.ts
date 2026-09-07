@@ -31,10 +31,52 @@ export interface UserFilterParams {
     search?: string;
     roleId?: number;
     status?: string;
+    page?: number;
+    limit?: number;
 }
 
-export const getUsers = async (params:UserFilterParams) => {
-    const response = await apiClient.get<User[]>("/users", { params });
+export interface UserStats {
+    total: number;
+    onlineCount: number;
+    studentCount: number;
+    teacherCount: number;
+}
+
+export interface GetUsersResponse {
+    data: User[];
+    total: number;
+    stats?: UserStats;
+    page?: number;
+    limit?: number;
+    totalPages?: number;
+}
+
+export const getUsers = async (params: UserFilterParams): Promise<GetUsersResponse> => {
+    const response = await apiClient.get<GetUsersResponse | User[]>("/users", { params });
+    // ป้องกันกรณีที่ Backend คืนค่าเป็น Array แบบเดิม โดยเพิ่ม client-side pagination fallback
+    if (Array.isArray(response.data)) {
+        const total = response.data.length;
+        const onlineCount = response.data.filter((u) => u.isOnline).length;
+        const studentCount = response.data.filter((u) => u.roleId === 1).length;
+        const teacherCount = response.data.filter((u) => u.roleId === 2 || u.roleId === 3).length;
+        const page = params.page || 1;
+        const limit = params.limit || 10;
+        const start = (page - 1) * limit;
+        const slicedData = response.data.slice(start, start + limit);
+        return {
+            data: slicedData,
+            total,
+            stats: {
+                total,
+                onlineCount,
+                studentCount,
+                teacherCount,
+            },
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
+        };
+    }
     return response.data;
 }
 
