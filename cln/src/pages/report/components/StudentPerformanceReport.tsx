@@ -1,10 +1,11 @@
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Typography, Box, LinearProgress, Button, Tooltip, TablePagination, Avatar, TableSortLabel
+  Typography, Box, LinearProgress, Button, Tooltip, TablePagination, Avatar, TableSortLabel
 } from '@mui/material';
 import { useState, useEffect } from 'react';
-import { Download, Award, Users, GraduationCap, ArrowUp, ArrowDown } from 'lucide-react';
+import { Download, Award, Users, GraduationCap } from 'lucide-react';
 import type { StudentReportData } from '../../../api/reports';
+import { SortIconIndicator } from './SortIconIndicator';
 
 interface StudentPerformanceReportProps {
   data: StudentReportData[];
@@ -14,22 +15,8 @@ interface StudentPerformanceReportProps {
 type SortField = 'name' | 'progress' | 'averageScore' | 'averageAttempts' | 'lastActiveAt';
 
 /**
- * คอมโพเนนต์แสดงไอคอนสถานะการเรียงลำดับในตาราง
- */
-function SortIconIndicator({ active, direction }: { active: boolean; direction: 'asc' | 'desc' }) {
-  if (!active) {
-    return <ArrowUp size={14} style={{ color: '#cbd5e1', marginLeft: 4 }} />;
-  }
-  return direction === 'asc' ? (
-    <ArrowUp size={14} style={{ color: '#2563eb', marginLeft: 4 }} />
-  ) : (
-    <ArrowDown size={14} style={{ color: '#2563eb', marginLeft: 4 }} />
-  );
-}
-
-/**
  * คอมโพเนนต์แสดงตารางเปรียบเทียบคะแนนความคืบหน้าของผู้เรียนรายบุคคล
- * ตกแต่งตามมาตรฐาน Student Home (Paper 16px, TableHead #eff6ff, Badges 8px)
+ * ตกแต่งตามมาตรฐาน Student Home พร้อมสไตล์หัวตารางเรียบหรู #f8fafc ถอดแบบจาก UserTable
  * พร้อมระบบ Sort ครบทุกคอลัมน์สำคัญ (คะแนนเฉลี่ย, ความคืบหน้า, ชื่อผู้เรียน, รันโค้ดเฉลี่ย, ใช้งานล่าสุด)
  */
 export function StudentPerformanceReport({ data, isLoading }: StudentPerformanceReportProps) {
@@ -151,105 +138,104 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
         </Tooltip>
       </Box>
 
-      {/* Container ตารางสถิติผู้เรียน - ทรงมน 16px หัวตารางสีฟ้า #eff6ff ตามแบบ Student Home */}
-      <Paper sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden' }}>
-        <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow sx={{ '& th': { bgcolor: '#eff6ff', borderBottom: '1px solid #e2e8f0' } }}>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>
-                  <TableSortLabel
-                    active={sortField === 'name'}
-                    direction={sortField === 'name' ? sortOrder : 'asc'}
-                    onClick={() => handleSort('name')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'name'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    นักศึกษา
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>มหาวิทยาลัย / คณะ</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} width="200px">
-                  <TableSortLabel
-                    active={sortField === 'progress'}
-                    direction={sortField === 'progress' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('progress')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'progress'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    ความคืบหน้าการเรียน
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} align="center">
-                  <TableSortLabel
-                    active={sortField === 'averageScore'}
-                    direction={sortField === 'averageScore' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('averageScore')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'averageScore'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    คะแนนรวมเฉลี่ย
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }} align="center">
-                  <TableSortLabel
-                    active={sortField === 'averageAttempts'}
-                    direction={sortField === 'averageAttempts' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('averageAttempts')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'averageAttempts'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    ความพยายามเฉลี่ย
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem' }}>
-                  <TableSortLabel
-                    active={sortField === 'lastActiveAt'}
-                    direction={sortField === 'lastActiveAt' ? sortOrder : 'desc'}
-                    onClick={() => handleSort('lastActiveAt')}
-                    IconComponent={() => (
-                      <SortIconIndicator active={sortField === 'lastActiveAt'} direction={sortOrder} />
-                    )}
-                    sx={{
-                      fontWeight: 700,
-                      color: '#475569',
-                      '&.MuiTableSortLabel-root': { color: '#475569' },
-                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                    }}
-                  >
-                    ใช้งานล่าสุด
-                  </TableSortLabel>
-                </TableCell>
-              </TableRow>
-            </TableHead>
+      {/* TableContainer ตารางสถิติผู้เรียน - วางบน Card โดยตรงพร้อมหัวตาราง #f8fafc ถอดแบบจาก UserTable */}
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 900 }}>
+          <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow sx={{ '& th': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', py: 1.8, fontSize: '13px', fontWeight: 700, color: '#475569' } }}>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === 'name'}
+                  direction={sortField === 'name' ? sortOrder : 'asc'}
+                  onClick={() => handleSort('name')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'name'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  นักศึกษา
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>มหาวิทยาลัย / คณะ</TableCell>
+              <TableCell width="200px">
+                <TableSortLabel
+                  active={sortField === 'progress'}
+                  direction={sortField === 'progress' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('progress')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'progress'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  ความคืบหน้าการเรียน
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={sortField === 'averageScore'}
+                  direction={sortField === 'averageScore' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('averageScore')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'averageScore'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  คะแนนรวมเฉลี่ย
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="center">
+                <TableSortLabel
+                  active={sortField === 'averageAttempts'}
+                  direction={sortField === 'averageAttempts' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('averageAttempts')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'averageAttempts'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  ความพยายามเฉลี่ย
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === 'lastActiveAt'}
+                  direction={sortField === 'lastActiveAt' ? sortOrder : 'desc'}
+                  onClick={() => handleSort('lastActiveAt')}
+                  IconComponent={() => (
+                    <SortIconIndicator active={sortField === 'lastActiveAt'} direction={sortOrder} />
+                  )}
+                  sx={{
+                    fontWeight: 700,
+                    color: '#475569',
+                    '&.MuiTableSortLabel-root': { color: '#475569' },
+                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                  }}
+                >
+                  ใช้งานล่าสุด
+                </TableSortLabel>
+              </TableCell>
+            </TableRow>
+          </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
@@ -324,7 +310,6 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
               )}
             </TableBody>
           </Table>
-        </TableContainer>
 
         {/* ระบบเปลี่ยนหน้า Pagination */}
         <TablePagination
@@ -337,9 +322,16 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="แสดงแถวต่อหน้า:"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
-          sx={{ borderTop: '1px solid #e2e8f0', color: '#64748b' }}
+          sx={{
+            borderTop: '1px solid #e2e8f0',
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+              fontSize: '13px',
+              color: '#64748b',
+              fontWeight: 500,
+            },
+          }}
         />
-      </Paper>
+      </TableContainer>
     </Box>
   );
 }
