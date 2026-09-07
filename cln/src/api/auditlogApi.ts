@@ -15,12 +15,20 @@ export interface AuditLogItem {
 
 export type AuditLogitem = AuditLogItem;
 
+export interface AuditLogStats {
+  total: number;
+  createOrAuthCount: number;
+  updateCount: number;
+  deleteOrSecurityCount: number;
+}
+
 export interface AuditLogResponse {
   data: AuditLogItem[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+  stats?: AuditLogStats;
 }
 
 export interface GetAuditLogParams {

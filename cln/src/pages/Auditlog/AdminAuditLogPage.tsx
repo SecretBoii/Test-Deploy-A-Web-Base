@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
-import { fetchAuditLogs, type AuditLogItem } from '../../api/auditlogApi';
+import { fetchAuditLogs, type AuditLogItem, type AuditLogStats } from '../../api/auditlogApi';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { AuditLogStatsHeader } from './components/AuditLogStatsHeader';
 import { AuditLogFilter } from './components/AuditLogFilter';
@@ -12,6 +12,7 @@ export const AdminAuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [total, setTotal] = useState<number>(0);
+  const [stats, setStats] = useState<AuditLogStats | undefined>(undefined);
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
@@ -22,6 +23,11 @@ export const AdminAuditLogPage: React.FC = () => {
 
   const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
+
+  /**
+   * useRef สำหรับเก็บอ้างอิงของ Debounce Timer ป้องกันการยิง API ซ้ำซ้อนเมื่อผู้ใช้กด Enter หรือกดปุ่มค้นหาในฟอร์ม
+   */
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -36,6 +42,9 @@ export const AdminAuditLogPage: React.FC = () => {
       });
       setLogs(res.data);
       setTotal(res.total);
+      if (res.stats) {
+        setStats(res.stats);
+      }
     } catch (err) {
       console.error('ไม่สามารถดึงข้อมูล Audit Logs ได้:', err);
     } finally {
@@ -72,25 +81,44 @@ export const AdminAuditLogPage: React.FC = () => {
     setPage(0);
   };
 
-  // โหลดข้อมูลอัตโนมัติเมื่อมีการเปลี่ยนแปลงเงื่อนไข (พร้อม Debounce 400ms ป้องกันการยิง API ซ้ำ)
+  /**
+   * โหลดข้อมูลอัตโนมัติเมื่อมีการเปลี่ยนแปลงเงื่อนไข (พร้อม Debounce 400ms)
+   * โดยจะล้าง timerRef ก่อนทุกครั้งเพื่อป้องกันการยิง API ซ้ำซ้อน
+   */
   useEffect(() => {
-    const timer = setTimeout(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+
+    timerRef.current = setTimeout(() => {
       loadData();
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
   }, [page, rowsPerPage, search, actionFilter, startDate, endDate]);
 
+  /**
+   * จัดการการค้นหาเมื่อผู้ใช้กด Enter หรือ submit ฟอร์ม
+   * จะทำการยกเลิก Debounce Timer ที่ค้างอยู่ทันที และดึงข้อมูลใหม่เพียงครั้งเดียว
+   */
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (timerRef.current) {
+      clearTimeout(timerRef.current); // ยกเลิก Timer ที่ค้างอยู่ออกทันที
+    }
     loadData();
   };
 
   return (
     <MainLayout activeItem="Audit Logs">
-      <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1400, margin: '0 auto' }}>
+      {/* จัดระเบียบ Layout มาตรฐานเดียวกับหน้า Users, Exercises และ Reports พร้อมปรับระยะห่าง gap ให้กระชับพอดี (20px) */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%', maxWidth: '1440px', margin: '0 auto' }}>
         {/* 1. สรุปภาพรวมสถิติ KPI Metrics Header */}
-        <AuditLogStatsHeader logs={logs} total={total} />
+        <AuditLogStatsHeader stats={stats} total={total} />
 
         {/* 2. ตัวกรองข้อมูล Search/Filter & View Mode Switcher */}
         <AuditLogFilter

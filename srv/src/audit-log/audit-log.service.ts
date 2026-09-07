@@ -64,7 +64,11 @@ export class AuditLogService {
       }
     }
 
-    const [logs, total] = await Promise.all([
+    /**
+     * ดึงข้อมูล Audit Logs พร้อมคำนวณสรุปสถิติจริงจากฐานข้อมูล (Stats Aggregate)
+     * เพื่อให้หน้า Frontend แสดงสถิติแม่นยำตรงตามความเป็นจริง ไม่ว่าจะอยู่หน้า Pagination ใด
+     */
+    const [logs, total, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -72,6 +76,31 @@ export class AuditLogService {
         take: Number(limit),
       }),
       this.prisma.auditLog.count({ where }),
+      this.prisma.auditLog.count({
+        where: {
+          ...where,
+          OR: [
+            { action: { contains: 'CREATE', mode: 'insensitive' } },
+            { action: { contains: 'LOGIN', mode: 'insensitive' } },
+          ],
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          ...where,
+          action: { contains: 'UPDATE', mode: 'insensitive' },
+        },
+      }),
+      this.prisma.auditLog.count({
+        where: {
+          ...where,
+          OR: [
+            { action: { contains: 'DELETE', mode: 'insensitive' } },
+            { action: { contains: 'SECURITY', mode: 'insensitive' } },
+            { action: { contains: 'REMOVE', mode: 'insensitive' } },
+          ],
+        },
+      }),
     ]);
 
     return {
@@ -80,6 +109,12 @@ export class AuditLogService {
       page: Number(page),
       limit: Number(limit),
       totalPages: Math.ceil(total / limit),
+      stats: {
+        total,
+        createOrAuthCount,
+        updateCount,
+        deleteOrSecurityCount,
+      },
     };
   }
 }
