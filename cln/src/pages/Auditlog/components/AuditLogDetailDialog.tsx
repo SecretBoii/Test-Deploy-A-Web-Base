@@ -16,9 +16,6 @@ interface AuditLogDetailDialogProps {
   onClose: () => void;
 }
 
-/**
- * Subcomponent Modal สำหรับแสดง JSON Payload Details
- */
 export const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({ selectedLog, onClose }) => {
   return (
     <Dialog open={Boolean(selectedLog)} onClose={onClose} maxWidth="md" fullWidth>
