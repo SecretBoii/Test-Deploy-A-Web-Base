@@ -4,24 +4,18 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import SecurityIcon from '@mui/icons-material/Security';
-import { type AuditLogItem } from '../../../api/auditlogApi';
+import { type AuditLogStats } from '../../../api/auditlogApi';
 
 interface AuditLogStatsHeaderProps {
-  logs: AuditLogItem[];
+  stats?: AuditLogStats;
   total: number;
 }
 
-export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ logs, total }) => {
-  const createOrAuthCount = logs.filter(
-    (l) => l.action.includes('CREATE') || l.action.includes('LOGIN')
-  ).length;
-
-  const updateCount = logs.filter((l) => l.action.includes('UPDATE')).length;
-
-  const deleteOrSecurityCount = logs.filter(
-    (l) => l.action.includes('DELETE') || l.action.includes('SECURITY') || l.action.includes('REMOVE')
-  ).length;
-
+/**
+ * คอมโพเนนต์แสดงผลการ์ดสรุปสถิติ KPI ภาพรวมของระบบ Audit Logs
+ * ดึงค่าโดยตรงจากสถิติฝั่ง Backend (stats) เพื่อให้ตัวเลขแม่นยำตรงตามฐานข้อมูลจริง
+ */
+export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats, total }) => {
   const cardItems = [
     {
       title: 'รายการทั้งหมดในระบบ',
@@ -32,34 +26,34 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ logs, 
     },
     {
       title: 'เข้าสู่ระบบ / เพิ่มข้อมูล',
-      value: createOrAuthCount.toLocaleString(),
+      value: (stats?.createOrAuthCount ?? 0).toLocaleString(),
       unit: 'ครั้ง',
       icon: <PersonAddIcon sx={{ color: '#059669' }} />,
       bgColor: '#ecfdf5',
     },
     {
       title: 'แก้ไข / อัปเดตข้อมูล',
-      value: updateCount.toLocaleString(),
+      value: (stats?.updateCount ?? 0).toLocaleString(),
       unit: 'ครั้ง',
       icon: <EditNoteIcon sx={{ color: '#d97706' }} />,
       bgColor: '#fffbeb',
     },
     {
       title: 'การลบ / ความเสี่ยงระบบ',
-      value: deleteOrSecurityCount.toLocaleString(),
+      value: (stats?.deleteOrSecurityCount ?? 0).toLocaleString(),
       unit: 'ครั้ง',
       icon: <SecurityIcon sx={{ color: '#dc2626' }} />,
       bgColor: '#fef2f2',
     },
   ];
 
+  // ปรับการจัด Layout โดยถอด mb ออกเพื่อให้ระยะห่างถูกควบคุมผ่าน gap ของ Parent Box (AdminAuditLogPage) อย่างเป็นระเบียบ
   return (
     <Box
       sx={{
         display: 'grid',
         gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
         gap: 2.5,
-        mb: 3.5,
       }}
     >
       {cardItems.map((item, index) => (
