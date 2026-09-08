@@ -4,6 +4,17 @@ import { PrismaService } from '../prisma/prisma.service';
 @Injectable()
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
+  private getThaiDateTime(date: Date | string) {
+    const d = new Date(date);
+    const thaiTime = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+    return {
+      hours: thaiTime.getUTCHours(),
+      dayOfWeek: thaiTime.getUTCDay(),   // 0 = อาทิตย์, 1 = จันทร์, ...
+      dayOfMonth: thaiTime.getUTCDate(), // วันที่ 1 - 31
+      month: thaiTime.getUTCMonth(),     // เดือน 0 (ม.ค.) - 11 (ธ.ค.)
+      year: thaiTime.getUTCFullYear(),
+    };
+  }
 
   private getTimeRangeDates(timeRange?: string, startDate?: string, endDate?: string) {
     if (startDate || endDate) {
@@ -14,26 +25,41 @@ export class ReportsService {
     }
     if (!timeRange) return { start: undefined, end: undefined };
 
-    const now = new Date();
-    const end = new Date(now);
-    end.setHours(23, 59, 59, 999);
+    // คำนวณวันปัจจุบันตามเวลาประเทศไทย (UTC+7)
+    const nowUtc = new Date();
+    const nowThai = new Date(nowUtc.getTime() + 7 * 60 * 60 * 1000);
+    const year = nowThai.getUTCFullYear();
+    const month = nowThai.getUTCMonth();
+    const date = nowThai.getUTCDate();
+    const day = nowThai.getUTCDay();
 
-    const start = new Date(now);
+    const MS_7_HOURS = 7 * 60 * 60 * 1000;
+
     if (timeRange === 'daily') {
-      start.setHours(0, 0, 0, 0);
+      // เวลาไทย 00:00:00.000 ถึง 23:59:59.999 ของวันนี้
+      const start = new Date(Date.UTC(year, month, date, 0, 0, 0, 0) - MS_7_HOURS);
+      const end = new Date(Date.UTC(year, month, date, 23, 59, 59, 999) - MS_7_HOURS);
+      return { start, end };
     } else if (timeRange === 'weekly') {
-      start.setDate(now.getDate() - 7);
-      start.setHours(0, 0, 0, 0);
+      // วันจันทร์ (00:00:00) ถึงวันอาทิตย์ (23:59:59) ของสัปดาห์ปัจจุบันในไทย
+      const diffToMon = day === 0 ? -6 : 1 - day;
+      const mondayDate = date + diffToMon;
+      const start = new Date(Date.UTC(year, month, mondayDate, 0, 0, 0, 0) - MS_7_HOURS);
+      const end = new Date(Date.UTC(year, month, mondayDate + 6, 23, 59, 59, 999) - MS_7_HOURS);
+      return { start, end };
     } else if (timeRange === 'monthly') {
-      start.setMonth(now.getMonth() - 1);
-      start.setHours(0, 0, 0, 0);
+      // วันที่ 1 ถึงวันสิ้นเดือนของเดือนปัจจุบันในไทย
+      const start = new Date(Date.UTC(year, month, 1, 0, 0, 0, 0) - MS_7_HOURS);
+      const end = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59, 999) - MS_7_HOURS);
+      return { start, end };
     } else if (timeRange === 'yearly') {
-      start.setFullYear(now.getFullYear() - 1);
-      start.setHours(0, 0, 0, 0);
-    } else {
-      return { start: undefined, end: undefined };
+      // วันที่ 1 ม.ค. ถึง 31 ธ.ค. ของปีปัจจุบันในไทย
+      const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0) - MS_7_HOURS);
+      const end = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999) - MS_7_HOURS);
+      return { start, end };
     }
-    return { start, end };
+
+    return { start: undefined, end: undefined };
   }
 
   async getStudentReport(filters: { startDate?: string; endDate?: string; education?: string; search?: string; timeRange?: string }) {
@@ -186,6 +212,7 @@ export class ReportsService {
 
   async getErrorReport(filter: { startDate?: string; endDate?: string; education?: string; timeRange?: string }) {
     const where: any = {
+      eventType: 'run',
       exceptionMessage: { not: null },
     };
 
@@ -250,4 +277,108 @@ export class ReportsService {
         percentage: (data.count / totalErrors) * 100,
         commonExceptionMessage: data.examples[0] || '', })).sort((a, b) => b.occurrenceCount - a.occurrenceCount);
   }
+
+  async getUsageAnalytics(filters: { timeRange?: string }) {
+    const dateRange = this.getTimeRangeDates(filters.timeRange);
+
+    const dateWhere = dateRange.start || dateRange.end ? {
+      createdAt: {
+        gte: dateRange.start,
+        lte: dateRange.end,
+      },
+    } : undefined;
+
+    // ดึงประวัติกิจกรรมจริงจากทั้งตาราง Activity และ AuditLog
+    const [activities, auditLogs] = await Promise.all([
+      this.prisma.activity.findMany({
+        where: dateWhere,
+        select: { createdAt: true },
+      }),
+      this.prisma.auditLog.findMany({
+        where: dateWhere,
+        select: { createdAt: true },
+      }),
+    ]);
+
+    const timestamps = [
+      ...activities.map((a) => a.createdAt),
+      ...auditLogs.map((l) => l.createdAt),
+    ];
+
+    const timeRange = filters.timeRange || 'daily';
+
+    // weekly: จัดกลุ่มตามวันในสัปดาห์ (อิงตามเวลาไทย)
+    if (timeRange === 'weekly') {
+      const counts = [0, 0, 0, 0, 0, 0, 0];
+      timestamps.forEach((t) => {
+        const thai = this.getThaiDateTime(t);
+        counts[thai.dayOfWeek]++;
+      });
+
+      return [
+        { periodLabel: 'จันทร์', userCount: counts[1] },
+        { periodLabel: 'อังคาร', userCount: counts[2] },
+        { periodLabel: 'พุธ', userCount: counts[3] },
+        { periodLabel: 'พฤหัสบดี', userCount: counts[4] },
+        { periodLabel: 'ศุกร์', userCount: counts[5] },
+        { periodLabel: 'เสาร์', userCount: counts[6] },
+        { periodLabel: 'อาทิตย์', userCount: counts[0] },
+      ];
+    }
+
+    // monthly: จัดกลุ่มตามสัปดาห์ของเดือน (อิงตามเวลาไทย)
+    if (timeRange === 'monthly') {
+      const weeks = [0, 0, 0, 0];
+      timestamps.forEach((t) => {
+        const thai = this.getThaiDateTime(t);
+        const d = thai.dayOfMonth;
+        if (d <= 7) weeks[0]++;
+        else if (d <= 14) weeks[1]++;
+        else if (d <= 21) weeks[2]++;
+        else weeks[3]++;
+      });
+
+      return [
+        { periodLabel: 'สัปดาห์ที่ 1', userCount: weeks[0] },
+        { periodLabel: 'สัปดาห์ที่ 2', userCount: weeks[1] },
+        { periodLabel: 'สัปดาห์ที่ 3', userCount: weeks[2] },
+        { periodLabel: 'สัปดาห์ที่ 4', userCount: weeks[3] },
+      ];
+    }
+
+    // yearly: จัดกลุ่มตามไตรมาส (อิงตามเวลาไทย)
+    if (timeRange === 'yearly') {
+      const quarters = [0, 0, 0, 0];
+      timestamps.forEach((t) => {
+        const thai = this.getThaiDateTime(t);
+        const q = Math.floor(thai.month / 3);
+        quarters[q]++;
+      });
+
+      return [
+        { periodLabel: 'Q1 (ม.ค.-มี.ค.)', userCount: quarters[0] },
+        { periodLabel: 'Q2 (เม.ย.-มิ.ย.)', userCount: quarters[1] },
+        { periodLabel: 'Q3 (ก.ค.-ก.ย.)', userCount: quarters[2] },
+        { periodLabel: 'Q4 (ต.ค.-ธ.ค.)', userCount: quarters[3] },
+      ];
+    }
+
+    // daily: จัดกลุ่มตามช่วงเวลา 4 ชั่วโมงต่อ Slot (อิงตามชั่วโมงเวลาไทย Asia/Bangkok)
+    const slots = [0, 0, 0, 0, 0, 0];
+    timestamps.forEach((t) => {
+      const thai = this.getThaiDateTime(t);
+      const slotIndex = Math.min(Math.floor(thai.hours / 4), 5);
+      slots[slotIndex]++;
+    });
+
+    return [
+      { periodLabel: '00:00 - 03:59', userCount: slots[0] },
+      { periodLabel: '04:00 - 07:59', userCount: slots[1] },
+      { periodLabel: '08:00 - 11:59', userCount: slots[2] },
+      { periodLabel: '12:00 - 15:59', userCount: slots[3] },
+      { periodLabel: '16:00 - 19:59', userCount: slots[4] },
+      { periodLabel: '20:00 - 23:59', userCount: slots[5] },
+    ];
+  }
 }
+

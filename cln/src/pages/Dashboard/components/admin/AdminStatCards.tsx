@@ -40,7 +40,7 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({ stats, isLoading
     },
     {
       title: submissionTitle,
-      value: stats?.totalSubmissionsToday ?? 0,
+      value: stats?.totalSubmissions ?? 0,
       unit: 'ครั้ง',
       icon: <CodeIcon sx={{ color: '#d97706' }} />,
       bgColor: '#fffbeb',

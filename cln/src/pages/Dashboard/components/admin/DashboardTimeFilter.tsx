@@ -8,9 +8,6 @@ interface DashboardTimeFilterProps {
   onChange: (value: TimeRangeType) => void
 }
 
-/**
- * คอมโพเนนต์ตัวกรองช่วงเวลา (รายวัน, สัปดาห์, เดือน, ปี) ประจำหน้า AdminDashboard
- */
 export const DashboardTimeFilter: React.FC<DashboardTimeFilterProps> = ({ value, onChange }) => {
   return (
     <ToggleButtonGroup
@@ -48,10 +45,10 @@ export const DashboardTimeFilter: React.FC<DashboardTimeFilterProps> = ({ value,
         },
       }}
     >
-      <ToggleButton value="daily">📅 รายวัน</ToggleButton>
-      <ToggleButton value="weekly">📆 สัปดาห์</ToggleButton>
-      <ToggleButton value="monthly">📊 เดือน</ToggleButton>
-      <ToggleButton value="yearly">🗓️ ปี</ToggleButton>
+      <ToggleButton value="daily">รายวัน</ToggleButton>
+      <ToggleButton value="weekly">สัปดาห์</ToggleButton>
+      <ToggleButton value="monthly">เดือน</ToggleButton>
+      <ToggleButton value="yearly">ปี</ToggleButton>
     </ToggleButtonGroup>
   )
 }
