@@ -1,16 +1,17 @@
-import { useState, useEffect } from 'react'
-import { Box, Alert, Button, Typography } from '@mui/material'
+import { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Box, Alert, Button } from '@mui/material'
 import { apiClient } from '../../../api/client'
 import { AdminStatCards } from './admin/AdminStatCards'
 import { AdminQuickActions } from './admin/AdminQuickActions'
 import { AdminErrorDistribution } from './admin/AdminErrorDistribution'
 import { AdminRecentAuditLogs } from './admin/AdminRecentAuditLogs'
 import { DashboardTimeFilter, type TimeRangeType } from './admin/DashboardTimeFilter'
-
+import { AdminUsageAnalytics, type UsageTrendItem } from './admin/AdminUsageAnalytics'
 export interface DashboardStats {
   totalUsers: number
   totalExercises: number
-  totalSubmissionsToday: number
+  totalSubmissions: number
   passRatePercentage: number
 }
 
@@ -29,33 +30,60 @@ export interface SimpleAuditLog {
 }
 
 export function AdminDashboard() {
+  const navigate = useNavigate()
   const [timeRange, setTimeRange] = useState<TimeRangeType>('daily')
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [errorStats, setErrorStats] = useState<PythonErrorStat[]>([])
   const [auditLogs, setAuditLogs] = useState<SimpleAuditLog[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [usageTrends, setUsageTrends] = useState<UsageTrendItem[]>([])
+  // ข้อมูลคงที่ภาพรวมระบบที่ไม่ขึ้นกับตัวกรองช่วงเวลา (Total Users, Total Exercises)
+  const [systemCounts, setSystemCounts] = useState<{ totalUsers: number; totalExercises: number }>({
+    totalUsers: 0,
+    totalExercises: 0,
+  })
 
+  // 1. ฟังก์ชันโหลดข้อมูลภาพรวมระบบและ Recent Audit Logs (โหลดรอบเดียวตอนเปิดหน้าเว็บ)
+  const loadSystemOverview = async () => {
+    try {
+      const [logsRes, exercisesRes, usersRes] = await Promise.all([
+        apiClient.get('/admin/audit-logs?limit=5').catch(() => null),
+        apiClient.get('/exercises/manage/all').catch(() => null),
+        apiClient.get('/users').catch(() => null),
+      ])
+
+      let totalUsersCount = 0
+      if (Array.isArray(usersRes?.data)) {
+        totalUsersCount = usersRes.data.length
+      } else if (usersRes?.data?.total) {
+        totalUsersCount = usersRes.data.total
+      }
+
+      const totalExercisesCount = exercisesRes?.data?.length ?? 0
+      setSystemCounts({ totalUsers: totalUsersCount, totalExercises: totalExercisesCount })
+
+      const rawLogs = logsRes?.data?.data || (Array.isArray(logsRes?.data) ? logsRes.data : [])
+      setAuditLogs(rawLogs)
+    } catch {
+      // ละเว้น error ภาพรวมเพื่อไม่ให้บล็อกการแสดงผลหลัก
+    }
+  }
+
+  // 2. ฟังก์ชันโหลดข้อมูลสถิติตามช่วงเวลา (ยิงเฉพาะ 3 APIs ที่ขึ้นกับ timeRange)
   const loadDashboardData = async () => {
     setIsLoading(true)
     setErrorMessage(null)
 
     try {
-      // ดึงข้อมูลจริงจาก Backend API
-      const [reportsRes, errorsRes, logsRes, exercisesRes] = await Promise.all([
+      // ดึงเฉพาะข้อมูลสถิติที่ขึ้นกับ timeRange
+      const [reportsRes, errorsRes, usageRes] = await Promise.all([
         apiClient.get('/reports/students', { params: { timeRange } }).catch(() => null),
         apiClient.get('/reports/errors', { params: { timeRange } }).catch(() => null),
-        apiClient.get('/audit-log?limit=5').catch(() => null),
-        apiClient.get('/exercises/manage/all').catch(() => null),
+        apiClient.get('/reports/usage-analytics', { params: { timeRange } }).catch(() => null),
       ])
 
-      // 1. ผู้ใช้งานทั้งหมด (Student Users)
-      const totalStudentsCount = reportsRes?.data?.length ?? 0
-      
-      // 2. แบบฝึกหัดทั้งหมดในระบบ (Total Exercises)
-      const totalExercisesCount = exercisesRes?.data?.length ?? 0
-
-      // 3. จำนวนครั้งที่มีการรัน/ส่งตรวจจริง และ อัตราการผ่านสำเร็จ (%)
+      // คำนวณจำนวนครั้งที่มีการรัน/ส่งตรวจจริง และ อัตราการผ่านสำเร็จ (%)
       let realSubmissionsCount = 0
       let realPassedCount = 0
 
@@ -80,19 +108,19 @@ export function AdminDashboard() {
         }
       }
 
-      // 4. คำนวณอัตราการผ่านสำเร็จจริง (%) = (จำนวนครั้งที่ผ่าน / จำนวนครั้งที่ส่งตรวจทั้งหมด) * 100
+      // คำนวณอัตราการผ่านสำเร็จจริง (%) = (จำนวนครั้งที่ผ่าน / จำนวนครั้งที่ส่งตรวจทั้งหมด) * 100
       const realPassRate = realSubmissionsCount > 0 
         ? Math.min(100, Math.max(0, (realPassedCount / realSubmissionsCount) * 100))
         : 0
 
-      setStats({
-        totalUsers: totalStudentsCount,
-        totalExercises: totalExercisesCount,
-        totalSubmissionsToday: realSubmissionsCount,
+      setStats((prev) => ({
+        totalUsers: systemCounts.totalUsers || prev?.totalUsers || (reportsRes?.data?.length ?? 0),
+        totalExercises: systemCounts.totalExercises || prev?.totalExercises || 0,
+        totalSubmissions: realSubmissionsCount,
         passRatePercentage: Number(realPassRate.toFixed(1)),
-      })
+      }))
 
-      // 5. สถิติข้อผิดพลาดจริงจากฐานข้อมูล (Top Errors)
+      // สถิติข้อผิดพลาดจริงจากฐานข้อมูล (Top Errors)
       if (errorsRes?.data && Array.isArray(errorsRes.data)) {
         setErrorStats(errorsRes.data.map((item: any) => ({
           errorType: item.errorType || 'UnknownError',
@@ -103,8 +131,12 @@ export function AdminDashboard() {
         setErrorStats([])
       }
 
-      // 6. ประวัติกิจกรรมล่าสุดจากฐานข้อมูล (Audit Logs)
-      setAuditLogs(logsRes?.data?.data || [])
+      // สถิติความหนาแน่นของผู้ใช้งานตามช่วงเวลา (Usage Trends)
+      if (usageRes?.data && Array.isArray(usageRes.data)) {
+        setUsageTrends(usageRes.data)
+      } else {
+        setUsageTrends([])
+      }
 
     } catch (error) {
       setErrorMessage('เกิดข้อผิดพลาดในการโหลดข้อมูล Dashboard กรุณาลองใหม่อีกครั้ง')
@@ -113,22 +145,35 @@ export function AdminDashboard() {
     }
   }
 
+  // โหลดข้อมูลภาพรวมระบบรอบเดียวตอนเปิดหน้าเว็บ
+  useEffect(() => {
+    loadSystemOverview()
+  }, [])
+
+  // โหลดข้อมูลสถิติใหม่เฉพาะเมื่อผู้ใช้เปลี่ยนตัวกรองเวลา (timeRange)
   useEffect(() => {
     loadDashboardData()
   }, [timeRange])
 
+  // รวมข้อมูลสถิติภาพรวมระบบ (Users, Exercises) เข้ากับสถิติตามช่วงเวลา (Submissions, Pass Rate) อย่างแม่นยำ
+  const combinedStats = useMemo<DashboardStats | null>(() => {
+    if (!stats) return null
+    return {
+      ...stats,
+      totalUsers: systemCounts.totalUsers || stats.totalUsers,
+      totalExercises: systemCounts.totalExercises || stats.totalExercises,
+    }
+  }, [stats, systemCounts])
+
+  const handleRetry = () => {
+    loadSystemOverview()
+    loadDashboardData()
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, pb: 4 }}>
       {/* Header Bar พร้อมปุ่มกรองช่วงเวลา */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
-            ภาพรวมระบบสำหรับผู้ดูแลระบบ (Admin Dashboard)
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            ติดตามการใช้งาน สถิติข้อผิดพลาด และกิจกรรมล่าสุดแบบเรียลไทม์
-          </Typography>
-        </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <DashboardTimeFilter value={timeRange} onChange={setTimeRange} />
       </Box>
 
@@ -137,7 +182,7 @@ export function AdminDashboard() {
         <Alert
           severity="error"
           action={
-            <Button color="inherit" size="small" onClick={loadDashboardData}>
+            <Button color="inherit" size="small" onClick={handleRetry}>
               ลองอีกครั้ง
             </Button>
           }
@@ -147,12 +192,15 @@ export function AdminDashboard() {
       )}
 
       {/* 1. การ์ดสถิติ KPI ภาพรวม */}
-      <AdminStatCards stats={stats} isLoading={isLoading} timeRange={timeRange} />
+      <AdminStatCards stats={combinedStats} isLoading={isLoading} timeRange={timeRange} />
 
       {/* 2. แถบปุ่มทางลัดจัดการระบบ */}
-      <AdminQuickActions onNavigate={(path) => window.location.href = path} />
+      <AdminQuickActions onNavigate={(path) => navigate(path)} />
 
-      {/* 3. กราฟวิเคราะห์และตาราง Log ล่าสุด */}
+      {/* 3. กราฟวิเคราะห์สถิติการเข้าใช้งานตามช่วงเวลา (วางเพิ่มตรงนี้) */}
+      <AdminUsageAnalytics timeRange={timeRange} isLoading={isLoading} data={usageTrends} />
+
+      {/* 4. กราฟวิเคราะห์และตาราง Log ล่าสุด */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1.2fr' }, gap: 3 }}>
         <AdminErrorDistribution errors={errorStats} isLoading={isLoading} />
         <AdminRecentAuditLogs logs={auditLogs} isLoading={isLoading} />

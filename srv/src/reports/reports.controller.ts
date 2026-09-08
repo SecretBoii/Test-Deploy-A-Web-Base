@@ -56,4 +56,13 @@ export class ReportsController {
             startDate, endDate, education, timeRange
         });
     }
+
+    @Get('usage-analytics')
+    async getUsageAnalytics(
+        @CurrentUser() user: any,
+        @Query('timeRange') timeRange?: string,
+    ) {
+        this.checkAdminOrTeacher(user);
+        return this.reportsService.getUsageAnalytics({timeRange});  
+    }
 }
