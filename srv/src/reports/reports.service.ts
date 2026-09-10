@@ -279,7 +279,9 @@ export class ReportsService {
   }
 
   async getUsageAnalytics(filters: { timeRange?: string }) {
-    const dateRange = this.getTimeRangeDates(filters.timeRange);
+    // กำหนดค่าเริ่มต้นเป็น 'daily' ตั้งแต่ต้น เพื่อป้องกันการดึงข้อมูล Log ทั้งหมดในประวัติศาสตร์หากไม่มีการส่งพารามิเตอร์มา
+    const timeRange = filters.timeRange || 'daily';
+    const dateRange = this.getTimeRangeDates(timeRange);
 
     const dateWhere = dateRange.start || dateRange.end ? {
       createdAt: {
@@ -288,30 +290,17 @@ export class ReportsService {
       },
     } : undefined;
 
-    // ดึงประวัติกิจกรรมจริงจากทั้งตาราง Activity และ AuditLog
-    const [activities, auditLogs] = await Promise.all([
-      this.prisma.activity.findMany({
-        where: dateWhere,
-        select: { createdAt: true },
-      }),
-      this.prisma.auditLog.findMany({
-        where: dateWhere,
-        select: { createdAt: true },
-      }),
-    ]);
-
-    const timestamps = [
-      ...activities.map((a) => a.createdAt),
-      ...auditLogs.map((l) => l.createdAt),
-    ];
-
-    const timeRange = filters.timeRange || 'daily';
+    // ดึงประวัติกิจกรรมจากตาราง AuditLog เพียงตารางเดียว เพื่อความถูกต้องและสอดคล้องกับหน้า Audit Log 100% (ไม่นับเบิ้ลกับ Activity)
+    const auditLogs = await this.prisma.auditLog.findMany({
+      where: dateWhere,
+      select: { createdAt: true },
+    });
 
     // weekly: จัดกลุ่มตามวันในสัปดาห์ (อิงตามเวลาไทย)
     if (timeRange === 'weekly') {
       const counts = [0, 0, 0, 0, 0, 0, 0];
-      timestamps.forEach((t) => {
-        const thai = this.getThaiDateTime(t);
+      auditLogs.forEach((l) => {
+        const thai = this.getThaiDateTime(l.createdAt);
         counts[thai.dayOfWeek]++;
       });
 
@@ -329,8 +318,8 @@ export class ReportsService {
     // monthly: จัดกลุ่มตามสัปดาห์ของเดือน (อิงตามเวลาไทย)
     if (timeRange === 'monthly') {
       const weeks = [0, 0, 0, 0];
-      timestamps.forEach((t) => {
-        const thai = this.getThaiDateTime(t);
+      auditLogs.forEach((l) => {
+        const thai = this.getThaiDateTime(l.createdAt);
         const d = thai.dayOfMonth;
         if (d <= 7) weeks[0]++;
         else if (d <= 14) weeks[1]++;
@@ -349,8 +338,8 @@ export class ReportsService {
     // yearly: จัดกลุ่มตามไตรมาส (อิงตามเวลาไทย)
     if (timeRange === 'yearly') {
       const quarters = [0, 0, 0, 0];
-      timestamps.forEach((t) => {
-        const thai = this.getThaiDateTime(t);
+      auditLogs.forEach((l) => {
+        const thai = this.getThaiDateTime(l.createdAt);
         const q = Math.floor(thai.month / 3);
         quarters[q]++;
       });
@@ -365,8 +354,8 @@ export class ReportsService {
 
     // daily: จัดกลุ่มตามช่วงเวลา 4 ชั่วโมงต่อ Slot (อิงตามชั่วโมงเวลาไทย Asia/Bangkok)
     const slots = [0, 0, 0, 0, 0, 0];
-    timestamps.forEach((t) => {
-      const thai = this.getThaiDateTime(t);
+    auditLogs.forEach((l) => {
+      const thai = this.getThaiDateTime(l.createdAt);
       const slotIndex = Math.min(Math.floor(thai.hours / 4), 5);
       slots[slotIndex]++;
     });
