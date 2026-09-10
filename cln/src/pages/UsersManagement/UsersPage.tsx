@@ -38,9 +38,6 @@ export function UsersPage() {
   // เช็คว่ามีการตั้งค่าตัวกรองอยู่หรือไม่
   const isFiltered = Boolean(search.trim() || roleFilter !== '' || statusFilter !== '');
 
-  /**
-   * ล้างค่าตัวกรองการค้นหา สิทธิ์ และสถานะ พร้อมรีเซ็ตหน้ากลับเป็นหน้า 1
-   */
   const handleResetFilters = () => {
     setSearch('');
     setRoleFilter('');
@@ -58,10 +55,6 @@ export function UsersPage() {
   const [confirmColor, setConfirmColor] = useState<'error' | 'success' | 'primary'>('primary');
   const [confirmAction, setConfirmAction] = useState<(() => Promise<void>) | null>(null);
 
-  /**
-   * โหลดข้อมูลอัตโนมัติเมื่อมีการเปลี่ยนแปลงตัวกรอง หน้า หรือการค้นหา (พร้อม Debounce 300ms)
-   * เหตุผลที่ใช้ Debounce: ป้องกันการส่ง API request ซ้ำซ้อนจากการพิมพ์ในช่องค้นหาอย่างรวดเร็ว
-   */
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchUsers();

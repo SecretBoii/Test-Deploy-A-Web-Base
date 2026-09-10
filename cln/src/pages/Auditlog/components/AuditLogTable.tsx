@@ -93,7 +93,6 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
             <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>ผู้ใช้งาน (Username)</TableCell>
             <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>Action</TableCell>
             <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>Target (Entity)</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>IP Address</TableCell>
             <TableCell align="center" sx={{ fontWeight: 700, color: '#64748b' }}>รายละเอียด</TableCell>
           </TableRow>
         </TableHead>
@@ -126,7 +125,6 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                 <TableCell sx={{ color: '#334155' }}>
                   {log.entity} {log.entityId ? `(#${log.entityId})` : ''}
                 </TableCell>
-                <TableCell sx={{ color: '#64748b' }}>{log.ipAddress || '-'}</TableCell>
                 <TableCell align="center">
                   <IconButton
                     size="small"

@@ -10,17 +10,22 @@ import {
   UseGuards,
   ForbiddenException,
   NotFoundException,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user-decorator';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly auditLogService: AuditLogService,
+  ) {}
 
   private checkAdmin(user: any) {
     if (user.roleId !== 3) {
@@ -66,24 +71,61 @@ export class UsersController {
   async createUser(
     @CurrentUser() adminUser: any,
     @Body() createUserDto: CreateUserDto,
+    @Req() req: any,
   ) {
     this.checkAdmin(adminUser);
-    return await this.usersService.create(createUserDto);
+    const createdUser = await this.usersService.create(createUserDto);
+    await this.auditLogService.logFromRequest(req, {
+      action: 'CREATE_USER',
+      entity: 'UserProfile',
+      entityId: createdUser.userId,
+      details: {
+        createdUsername: createdUser.username,
+        roleId: createdUser.roleId,
+        email: createdUser.email,
+      },
+    });
+    return createdUser;
   }
+
 
   @Put(':id')
   async updateUser(
     @CurrentUser() adminUser: any,
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @Req() req: any,
   ) {
     this.checkAdmin(adminUser);
-    return await this.usersService.update(Number(id), updateUserDto);
+    const updatedUser = await this.usersService.update(Number(id), updateUserDto);
+    await this.auditLogService.logFromRequest(req, {
+      action: 'UPDATE_USER',
+      entity: 'UserProfile',
+      entityId: Number(id),
+      details: {
+        targetUsername: updatedUser.username,
+        updatedFields: Object.keys(updateUserDto),
+      },
+    });
+    return updatedUser;
   }
 
+
   @Delete(':id')
-  async deleteUser(@CurrentUser() adminUser: any, @Param('id') id: string) {
+  async deleteUser(
+    @CurrentUser() adminUser: any,
+    @Param('id') id: string,
+    @Req() req: any,
+  ) {
     this.checkAdmin(adminUser);
-    return await this.usersService.delete(Number(id));
+    const result = await this.usersService.delete(Number(id));
+    await this.auditLogService.logFromRequest(req, {
+      action: 'DELETE_USER',
+      entity: 'UserProfile',
+      entityId: Number(id),
+      details: { deletedUserId: Number(id) },
+    });
+    return result;
   }
+
 }

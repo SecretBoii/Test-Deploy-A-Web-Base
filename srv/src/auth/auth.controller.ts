@@ -5,15 +5,20 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/profile.dto';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Controller()
 export class AuthController{
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly auditLogService: AuditLogService,
+    ) {}
 
     @Post('login')
     async login(
         @Body() loginDto: LoginDto,
         @Res({ passthrough: true }) response: express.Response,
+        @Req() req: express.Request,
     ) {
         const user = await this.authService.validateUser(loginDto.username, loginDto.password);
         if (!user) {
@@ -28,6 +33,13 @@ export class AuthController{
             maxAge: 24 * 60 * 60 * 1000,
         });
 
+        await this.auditLogService.logFromRequest(req, {
+            action: 'LOGIN',
+            entity: 'Auth',
+            customUser: { userId: user.userId, username:user.username },
+            details: { roleId: user.roleId, method: 'PASSWORD' },
+        });
+
         return {
             userId: user.userId,
             username: user.username,
@@ -36,11 +48,20 @@ export class AuthController{
     }
 
     @Post('logout')
-    async logout(@Res({
-        passthrough: true }) response: express.Response) {
-            response.clearCookie('access_token');
-            return { message: 'logout success' };
-        }
+    async logout(
+        @Res({ passthrough: true }) response: express.Response,
+        @Req() req: express.Request,
+    ) {
+        response.clearCookie('access_token');
+        // บันทึก Audit Log เมื่อผู้ใช้ออกจากระบบ
+        await this.auditLogService.logFromRequest(req, {
+            action: 'LOGOUT',
+            entity: 'Auth',
+            details: { reason: 'USER_LOGOUT' },
+        });
+        return { message: 'logout success' };
+    }
+
     
     @UseGuards(JwtAuthGuard)
     @Get('profile')
@@ -49,13 +70,25 @@ export class AuthController{
     }
 
     @Post('register')
-    async register(@Body() registerDto: RegisterDto) {
+    async register(
+        @Body() registerDto: RegisterDto,
+        @Req() req: express.Request,
+    ) {
         try {
-            return await this.authService.register(registerDto);
+            const newUser = await this.authService.register(registerDto);
+            // บันทึก Audit Log การสมัครสมาชิกใหม่ (ตามกฎ PDPA: ไม่บันทึกรหัสผ่าน)
+            await this.auditLogService.logFromRequest(req, {
+                action: 'REGISTER',
+                entity: 'UserProfile',
+                customUser: { userId: newUser.userId, username: newUser.username },
+                details: { email: registerDto.email, gender: registerDto.gender },
+            });
+            return newUser;
         } catch (error: any) {
             throw new BadRequestException(error.message);
         }
     }
+
 
     @UseGuards(JwtAuthGuard)
     @Get('profile/details')

@@ -47,10 +47,6 @@ const getErrorTheme = (errorType: string, index: number = 0) => {
   return fallbacks[index % fallbacks.length];
 };
 
-/**
- * คอมโพเนนต์แสดงสถิติการเกิดข้อผิดพลาดในการเขียนโค้ดภาษาไพทอน (Python Syntax/Runtime Errors)
- * ดีไซน์แบบ Analytics Summary & Dynamic Accent Cards + IDE Terminal Window
- */
 export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportProps) {
   // คำนวณภาพรวมสถิติ Exception
   const totalOccurrences = data.reduce((acc, curr) => acc + curr.occurrenceCount, 0);

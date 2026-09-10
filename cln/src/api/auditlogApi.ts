@@ -8,12 +8,8 @@ export interface AuditLogItem {
   entity: string;
   entityId?: number;
   details?: any;
-  ipAddress?: string;
-  userAgent?: string;
   createdAt: string;
 }
-
-export type AuditLogitem = AuditLogItem;
 
 export interface AuditLogStats {
   total: number;
@@ -44,5 +40,3 @@ export const fetchAuditLogs = async (params: GetAuditLogParams): Promise<AuditLo
   const response = await apiClient.get('/admin/audit-logs', { params });
   return response.data;
 };
-
-export const fetchAuditlogs = fetchAuditLogs;

@@ -16,10 +16,6 @@ import {
   type ErrorAnalyticsData
 } from '../../api/reports';
 
-/**
- * หน้าหลักระบบรายงานเชิงลึก (Admin Reports Page)
- * ออกแบบตามมาตรฐาน Student Home (Card 16px, Tabs 12px, ขอบมนสวยงามไม่กลมเกินไป)
- */
 export default function ReportsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [filters, setFilters] = useState<ReportFilterParams>({});

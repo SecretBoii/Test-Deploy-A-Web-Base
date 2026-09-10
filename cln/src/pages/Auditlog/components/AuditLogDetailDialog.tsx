@@ -23,7 +23,6 @@ export const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({ sele
       <DialogContent dividers>
         {selectedLog && (
           <Stack spacing={2}>
-            <Typography variant="subtitle2">User Agent: {selectedLog.userAgent || '-'}</Typography>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
               Details Payload (JSON):
             </Typography>

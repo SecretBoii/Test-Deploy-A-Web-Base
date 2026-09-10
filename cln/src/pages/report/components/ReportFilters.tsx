@@ -8,10 +8,6 @@ interface ReportFiltersProps {
   onFilterChange: (filters: ReportFilterParams) => void;
 }
 
-/**
- * คอมโพเนนต์สำหรับกรองข้อมูลรายงาน (Search & Education Filter Bar)
- * มีระบบ Debounce 400ms และป้องกันปัญหา Double Fetching / Loading 2 ครั้งเมื่อเริ่มโหลดหรือสลับ Tab
- */
 export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps) {
   const [filters, setFilters] = useState<ReportFilterParams>({
     search: '',

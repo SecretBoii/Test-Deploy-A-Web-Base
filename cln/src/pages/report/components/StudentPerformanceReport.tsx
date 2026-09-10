@@ -14,11 +14,6 @@ interface StudentPerformanceReportProps {
 
 type SortField = 'name' | 'progress' | 'averageScore' | 'averageAttempts' | 'lastActiveAt';
 
-/**
- * คอมโพเนนต์แสดงตารางเปรียบเทียบคะแนนความคืบหน้าของผู้เรียนรายบุคคล
- * ตกแต่งตามมาตรฐาน Student Home พร้อมสไตล์หัวตารางเรียบหรู #f8fafc ถอดแบบจาก UserTable
- * พร้อมระบบ Sort ครบทุกคอลัมน์สำคัญ (คะแนนเฉลี่ย, ความคืบหน้า, ชื่อผู้เรียน, รันโค้ดเฉลี่ย, ใช้งานล่าสุด)
- */
 export function StudentPerformanceReport({ data, isLoading }: StudentPerformanceReportProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

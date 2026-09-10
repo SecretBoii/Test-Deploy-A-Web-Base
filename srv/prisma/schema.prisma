@@ -55,8 +55,6 @@ model AuditLog {
   entity     String       @db.VarChar(100) // เช่น Exercise, UserProfile, Session
   entityId   Int?         @map("entity_id")
   details    Json?        // เก็บ payload หรือ { oldData, newData }
-  ipAddress  String?      @map("ip_address") @db.VarChar(45)
-  userAgent  String?      @map("user_agent") @db.VarChar(255)
   createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamp(6)
 
   user       UserProfile? @relation(fields: [userId], references: [userId], onDelete: SetNull, onUpdate: NoAction)

@@ -7,10 +7,6 @@ interface UserStatsHeaderProps {
   loading?: boolean;
 }
 
-/**
- * คอมโพเนนต์แสดงการ์ดสรุปสถิติภาพรวมผู้ใช้งานในระบบ (4-Grid Cards Header)
- * เหตุผลที่แยกเป็นคอมโพเนนต์: เพื่อมอดูลาร์ความสามารถในการอ่านโค้ดที่ง่ายขึ้น และสามารถนำไปรียูสในส่วนอื่นๆ ได้
- */
 export function UserStatsHeader({ stats, loading }: UserStatsHeaderProps) {
   const total = stats?.total || 0;
   const onlineCount = stats?.onlineCount || 0;

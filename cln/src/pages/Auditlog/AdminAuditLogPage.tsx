@@ -24,15 +24,16 @@ export const AdminAuditLogPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
 
-  /**
-   * useRef สำหรับเก็บอ้างอิงของ Debounce Timer ป้องกันการยิง API ซ้ำซ้อนเมื่อผู้ใช้กด Enter หรือกดปุ่มค้นหาในฟอร์ม
-   */
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadData = async () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
     setLoading(true);
     try {
       const res = await fetchAuditLogs({
+
         page: page + 1,
         limit: rowsPerPage,
         search: search.trim() || undefined,
@@ -81,10 +82,6 @@ export const AdminAuditLogPage: React.FC = () => {
     setPage(0);
   };
 
-  /**
-   * โหลดข้อมูลอัตโนมัติเมื่อมีการเปลี่ยนแปลงเงื่อนไข (พร้อม Debounce 400ms)
-   * โดยจะล้าง timerRef ก่อนทุกครั้งเพื่อป้องกันการยิง API ซ้ำซ้อน
-   */
   useEffect(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -101,14 +98,10 @@ export const AdminAuditLogPage: React.FC = () => {
     };
   }, [page, rowsPerPage, search, actionFilter, startDate, endDate]);
 
-  /**
-   * จัดการการค้นหาเมื่อผู้ใช้กด Enter หรือ submit ฟอร์ม
-   * จะทำการยกเลิก Debounce Timer ที่ค้างอยู่ทันที และดึงข้อมูลใหม่เพียงครั้งเดียว
-   */
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (timerRef.current) {
-      clearTimeout(timerRef.current); // ยกเลิก Timer ที่ค้างอยู่ออกทันที
+      clearTimeout(timerRef.current);
     }
     loadData();
   };

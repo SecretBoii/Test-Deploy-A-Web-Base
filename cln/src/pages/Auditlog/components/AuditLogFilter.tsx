@@ -56,7 +56,6 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
     { label: '🗑️ Delete', value: 'DELETE_EXERCISE', color: '#dc2626', bg: '#fef2f2' },
   ];
 
-  // ถอด mb ออกเพื่อให้ระยะห่างควบคุมด้วย gap ของ AdminAuditLogPage ให้กระชับสวยงาม
   return (
     <Card
       elevation={0}
