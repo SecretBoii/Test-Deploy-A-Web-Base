@@ -50,13 +50,25 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
     if (action.includes('UPDATE') || action.includes('MODIFY')) {
       return {
         chipBg: '#fffbeb',
-        chipColor: '#d97706',
+        chipColor: '#b45309',
       };
     }
-    if (action.includes('CREATE') || action.includes('LOGIN') || action.includes('ADD')) {
+    if (action.includes('CREATE') || action.includes('ADD')) {
       return {
         chipBg: '#ecfdf5',
         chipColor: '#047857',
+      };
+    }
+    if (action.includes('RUN')) {
+      return {
+        chipBg: '#eef2ff',
+        chipColor: '#4338ca',
+      };
+    }
+    if (action.includes('SUBMIT')) {
+      return {
+        chipBg: '#f5f3ff',
+        chipColor: '#7c3aed',
       };
     }
     return {

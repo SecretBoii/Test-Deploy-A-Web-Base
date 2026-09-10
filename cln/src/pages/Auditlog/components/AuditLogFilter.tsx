@@ -49,11 +49,13 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
   const isFiltered = Boolean(search || actionFilter || startDate || endDate);
 
   const quickActions = [
-    { label: 'ทั้งหมด', value: '', color: '#2563eb', bg: '#eff6ff' },
-    { label: '🔑 Login', value: 'LOGIN', color: '#059669', bg: '#ecfdf5' },
-    { label: '➕ Create', value: 'CREATE_EXERCISE', color: '#047857', bg: '#e6f4ea' },
-    { label: '✏️ Update', value: 'UPDATE_EXERCISE', color: '#d97706', bg: '#fffbeb' },
-    { label: '🗑️ Delete', value: 'DELETE_EXERCISE', color: '#dc2626', bg: '#fef2f2' },
+    { label: 'ทั้งหมด', value: '', color: '#475569', bg: '#f8fafc' },
+    { label: 'Login', value: 'LOGIN', color: '#1d4ed8', bg: '#eff6ff' },
+    { label: 'Create', value: 'CREATE', color: '#047857', bg: '#ecfdf5' },
+    { label: 'Update', value: 'UPDATE', color: '#b45309', bg: '#fffbeb' },
+    { label: 'Delete', value: 'DELETE', color: '#dc2626', bg: '#fef2f2' },
+    { label: 'Run Code', value: 'RUN_CODE', color: '#4338ca', bg: '#eef2ff' },
+    { label: 'Submit', value: 'SUBMIT', color: '#7c3aed', bg: '#f5f3ff' },
   ];
 
   return (
@@ -89,7 +91,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
             {/* 1. Search Box */}
             <TextField
               size="small"
-              placeholder="ค้นหาชื่อผู้ใช้, IP หรือ Entity..."
+              placeholder="ค้นหาชื่อผู้ใช้"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               slotProps={{
@@ -291,7 +293,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
         </Stack>
 
         {/* Quick Filter Chips Row */}
-        <Box sx={{ mt: 2, pt: 1.8, borderTop: '1px stroke #f1f5f9', display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box sx={{ mt: 2, pt: 1.8, borderTop: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 700, mr: 0.5 }}>
             กรองด่วน:
           </Typography>

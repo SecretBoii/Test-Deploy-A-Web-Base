@@ -15,7 +15,7 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
   const cardItems = [
     {
       title: 'รายการทั้งหมดในระบบ',
-      value: total.toLocaleString(),
+      value: (stats?.total ?? total).toLocaleString(),
       unit: 'รายการ',
       icon: <AssessmentIcon sx={{ color: '#2563eb' }} />,
       bgColor: '#eff6ff',
