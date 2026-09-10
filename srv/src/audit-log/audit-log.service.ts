@@ -56,10 +56,25 @@ export class AuditLogService {
     const { page = 1, limit = 10, search, action, startDate, endDate } = query;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.AuditLogWhereInput = {};
+    // 1. เงื่อนไขช่วงเวลา (สำหรับนับสถิติภาพรวม KPI)
+    const dateWhere: Prisma.AuditLogWhereInput = {};
+    if (startDate || endDate) {
+      dateWhere.createdAt = {};
+      if (startDate) {
+        dateWhere.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        dateWhere.createdAt.lte = end;
+      }
+    }
+
+    // 2. เงื่อนไขสำหรับตารางข้อมูล (รวม Search + Action)
+    const where: Prisma.AuditLogWhereInput = { ...dateWhere };
 
     if (action) {
-      where.action = action;
+      where.action = { contains: action, mode: 'insensitive' }
     }
 
     if (search) {
@@ -70,20 +85,8 @@ export class AuditLogService {
       ];
     }
 
-    if (startDate || endDate) {
-      where.createdAt = {};
-      if (startDate) {
-        where.createdAt.gte = new Date(startDate);
-      }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        where.createdAt.lte = end;
-      }
-    }
-
-
-    const [logs, total, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
+    // 3. ดึงข้อมูลตารางและนับสถิติโดยใช้ dateWhere (ไม่ทับซ้อนกับ search)
+    const [logs, total, totalInSystem, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -91,9 +94,10 @@ export class AuditLogService {
         take: Number(limit),
       }),
       this.prisma.auditLog.count({ where }),
+      this.prisma.auditLog.count({ where: dateWhere }),
       this.prisma.auditLog.count({
         where: {
-          ...where,
+          ...dateWhere,
           OR: [
             { action: { contains: 'CREATE', mode: 'insensitive' } },
             { action: { contains: 'LOGIN', mode: 'insensitive' } },
@@ -102,13 +106,13 @@ export class AuditLogService {
       }),
       this.prisma.auditLog.count({
         where: {
-          ...where,
+          ...dateWhere,
           action: { contains: 'UPDATE', mode: 'insensitive' },
         },
       }),
       this.prisma.auditLog.count({
         where: {
-          ...where,
+          ...dateWhere,
           OR: [
             { action: { contains: 'DELETE', mode: 'insensitive' } },
             { action: { contains: 'SECURITY', mode: 'insensitive' } },
@@ -125,7 +129,7 @@ export class AuditLogService {
       limit: Number(limit),
       totalPages: Math.ceil(total / limit),
       stats: {
-        total,
+        total: totalInSystem,
         createOrAuthCount,
         updateCount,
         deleteOrSecurityCount,
