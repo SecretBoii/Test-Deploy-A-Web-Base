@@ -10,10 +10,15 @@ export interface CreateAuditLogInput {
   entity: string;
   entityId?: number;
   details?: any;
-  ipAddress?: string;
-  userAgent?: string;
 }
 
+export interface LogFromRequestParams {
+  action: string;
+  entity: string;
+  entityId?: number;
+  details?: Record<string, unknown>;
+  customUser?: { userId?: number; username?: string; };
+}
 @Injectable()
 export class AuditLogService {
   constructor(private prisma: PrismaService) {}
@@ -27,10 +32,24 @@ export class AuditLogService {
         entity: data.entity,
         entityId: data.entityId,
         details: data.details ?? Prisma.DbNull,
-        ipAddress: data.ipAddress,
-        userAgent: data.userAgent,
       },
     });
+  }
+
+  async logFromRequest(
+    req: any,
+    params: LogFromRequestParams,
+  ) {
+    const user = params.customUser || req?.user;
+
+      return this.create({
+        userId: user?.userId || user?.sub,
+        username: user?.username,
+        action: params.action,
+        entity: params.entity,
+        entityId: params.entityId,
+        details: params.details,
+      });
   }
 
   async findAll(query: AuditLogDto) {
@@ -48,7 +67,6 @@ export class AuditLogService {
         { username: { contains: search, mode: 'insensitive' } },
         { entity: { contains: search, mode: 'insensitive' } },
         { action: { contains: search, mode: 'insensitive' } },
-        { ipAddress: { contains: search, mode: 'insensitive' } },
       ];
     }
 
@@ -64,10 +82,7 @@ export class AuditLogService {
       }
     }
 
-    /**
-     * ดึงข้อมูล Audit Logs พร้อมคำนวณสรุปสถิติจริงจากฐานข้อมูล (Stats Aggregate)
-     * เพื่อให้หน้า Frontend แสดงสถิติแม่นยำตรงตามความเป็นจริง ไม่ว่าจะอยู่หน้า Pagination ใด
-     */
+
     const [logs, total, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,

@@ -96,19 +96,24 @@ async function main() {
     }
     console.log('Userprofiles seeded.');
 
-    // 4. Seed Exercises
-    console.log('Seeding exercises from python-exercises.sql...');
+    // 4. Seed Exercises (เช็คว่ามีไฟล์ไหมก่อนอ่าน เพื่อไม่ให้ Script พัง)
     const sqlPath = path.join(__dirname, '../../python-exercises.sql');
-    const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
-    await prisma.$executeRawUnsafe(sqlContent);
-    console.log('Exercises seeded.');
+    if (fs.existsSync(sqlPath)) {
+      console.log('Seeding exercises from python-exercises.sql...');
+      const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
+      await prisma.$executeRawUnsafe(sqlContent);
+      console.log('Exercises seeded.');
+    }
 
-    // 5. Seed Custom Sessions & SessionExercises from custom-sessions.sql
-    console.log('Seeding custom sessions...');
+    // 5. Seed Custom Sessions
     const customSessionsPath = path.join(__dirname, '../../custom-sessions.sql');
-    const customSessionsSql = fs.readFileSync(customSessionsPath, 'utf-8');
-    await prisma.$executeRawUnsafe(customSessionsSql);
-    console.log('Custom Sessions seeded successfully!');
+    if (fs.existsSync(customSessionsPath)) {
+      console.log('Seeding custom sessions...');
+      const customSessionsSql = fs.readFileSync(customSessionsPath, 'utf-8');
+      await prisma.$executeRawUnsafe(customSessionsSql);
+      console.log('Custom Sessions seeded successfully!');
+    }
+
 
     // 6. Reset Sequences to prevent Unique Constraint errors on auto-increment IDs
     console.log('Resetting database sequences...');

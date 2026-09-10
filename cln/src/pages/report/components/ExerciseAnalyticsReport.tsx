@@ -11,10 +11,6 @@ interface ExerciseAnalyticsReportProps {
 
 type SortField = 'difficulty' | 'successRate' | 'averageAttempts';
 
-/**
- * คอมโพเนนต์แสดงตารางสถิติและวิเคราะห์ประสิทธิภาพของโจทย์โปรแกรมมิ่ง (Exercise Analytics)
- * รองรับระบบ Sort ระดับความยาก, อัตราการผ่าน (Success %), และ รันเฉลี่ยสะสม
- */
 export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsReportProps) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);

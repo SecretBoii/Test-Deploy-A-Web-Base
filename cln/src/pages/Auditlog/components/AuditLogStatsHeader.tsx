@@ -11,10 +11,6 @@ interface AuditLogStatsHeaderProps {
   total: number;
 }
 
-/**
- * คอมโพเนนต์แสดงผลการ์ดสรุปสถิติ KPI ภาพรวมของระบบ Audit Logs
- * ดึงค่าโดยตรงจากสถิติฝั่ง Backend (stats) เพื่อให้ตัวเลขแม่นยำตรงตามฐานข้อมูลจริง
- */
 export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats, total }) => {
   const cardItems = [
     {
