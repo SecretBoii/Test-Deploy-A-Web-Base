@@ -52,16 +52,34 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
         <Chip
           label={action}
           size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#fffbeb', color: '#d97706', borderRadius: '6px' }}
+          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#fffbeb', color: '#b45309', borderRadius: '6px' }}
         />
       );
     }
-    if (action.includes('CREATE') || action.includes('LOGIN')) {
+    if (action.includes('CREATE')) {
       return (
         <Chip
           label={action}
           size="small"
           sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#ecfdf5', color: '#047857', borderRadius: '6px' }}
+        />
+      );
+    }
+    if (action.includes('RUN')) {
+      return (
+        <Chip
+          label={action}
+          size="small"
+          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#eef2ff', color: '#4338ca', borderRadius: '6px' }}
+        />
+      );
+    }
+    if (action.includes('SUBMIT')) {
+      return (
+        <Chip
+          label={action}
+          size="small"
+          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#f5f3ff', color: '#7c3aed', borderRadius: '6px' }}
         />
       );
     }
@@ -99,13 +117,13 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={6} align="center" sx={{ py: 5 }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 5 }}>
                 <CircularProgress size={30} sx={{ color: '#2563eb' }} />
               </TableCell>
             </TableRow>
           ) : logs.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} align="center" sx={{ py: 4, color: '#94a3b8' }}>
+              <TableCell colSpan={5} align="center" sx={{ py: 4, color: '#94a3b8' }}>
                 ไม่พบข้อมูล Audit Log
               </TableCell>
             </TableRow>
