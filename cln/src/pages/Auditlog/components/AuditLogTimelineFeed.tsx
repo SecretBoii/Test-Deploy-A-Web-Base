@@ -71,6 +71,12 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
         chipColor: '#7c3aed',
       };
     }
+    if (action.includes('LOGOUT')) {
+      return {
+        chipBg: '#f1f5f9',
+        chipColor: '#64748b',
+      };
+    }
     return {
       chipBg: '#eff6ff',
       chipColor: '#1d4ed8',

@@ -65,7 +65,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
               สถิติการเข้าใช้งานตามช่วงเวลา (User Usage Trends)
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              แสดงความหนาแน่นของผู้ใช้งานตามช่วงเวลา ({timeRange === 'weekly' ? 'รายวันในสัปดาห์' : timeRange === 'monthly' ? 'รายสัปดาห์ในเดือน' : timeRange === 'yearly' ? 'รายไตรมาส' : 'ช่วงเวลาในวัน'})
+              แสดงความหนาแน่นของกิจกรรมตามช่วงเวลา ({timeRange === 'weekly' ? 'รายวันในสัปดาห์' : timeRange === 'monthly' ? 'รายสัปดาห์ในเดือน' : timeRange === 'yearly' ? 'รายไตรมาส' : 'ช่วงเวลาในวัน'})
             </Typography>
           </Box>
 
@@ -203,7 +203,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>
-              รายละเอียดข้อความกิจกรรม
+              รายละเอียดกิจกรรมตามช่วงเวลา
             </Typography>
             <Chip
               label={`รวม ${totalCount} ครั้ง`}

@@ -6,12 +6,14 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/profile.dto';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { JwtService } from '@nestjs/jwt';
 
 @Controller()
 export class AuthController{
     constructor(
         private readonly authService: AuthService,
         private readonly auditLogService: AuditLogService,
+        private readonly jwtService: JwtService,
     ) {}
 
     @Post('login')
@@ -52,13 +54,30 @@ export class AuthController{
         @Res({ passthrough: true }) response: express.Response,
         @Req() req: express.Request,
     ) {
+
+        const token = req.cookies?.['access_token'];
+        let currentUser: any = null;
+        if (token) {
+            try {
+                currentUser = this.jwtService.decode(token);
+            } catch {
+                currentUser = null;
+            }
+        }
         response.clearCookie('access_token');
-        // บันทึก Audit Log เมื่อผู้ใช้ออกจากระบบ
-        await this.auditLogService.logFromRequest(req, {
-            action: 'LOGOUT',
-            entity: 'Auth',
-            details: { reason: 'USER_LOGOUT' },
-        });
+
+        // บันทึก Audit Log เมื่อผู้ใช้ออกจากระบบ (ป้องกัน Runtime Error หากไม่มี Token หรือผู้ใช้ไม่ได้ล็อกอินอยู่)
+        if (currentUser) {
+            await this.auditLogService.logFromRequest(req, {
+                action: 'LOGOUT',
+                entity: 'Auth',
+                customUser: {
+                    userId: currentUser.sub || currentUser.userId,
+                    username: currentUser.username,
+                },
+                details: { reason: 'USER_LOGOUT' },
+            });
+        }
         return { message: 'logout success' };
     }
 

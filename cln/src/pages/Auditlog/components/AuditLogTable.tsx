@@ -83,6 +83,15 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
         />
       );
     }
+    if (action.includes('LOGOUT')) {
+      return (
+        <Chip
+          label={action}
+          size="small"
+          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#f1f5f9', color: '#64748b', borderRadius: '6px' }}
+        />
+      );
+    }
     return (
       <Chip
         label={action}

@@ -51,6 +51,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
   const quickActions = [
     { label: 'ทั้งหมด', value: '', color: '#475569', bg: '#f8fafc' },
     { label: 'Login', value: 'LOGIN', color: '#1d4ed8', bg: '#eff6ff' },
+    { label: 'Logout', value: 'LOGOUT', color: '#64748b', bg: '#f1f5f9' },
     { label: 'Create', value: 'CREATE', color: '#047857', bg: '#ecfdf5' },
     { label: 'Update', value: 'UPDATE', color: '#b45309', bg: '#fffbeb' },
     { label: 'Delete', value: 'DELETE', color: '#dc2626', bg: '#fef2f2' },
