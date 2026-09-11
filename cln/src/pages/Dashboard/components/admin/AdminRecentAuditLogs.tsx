@@ -13,24 +13,40 @@ interface AdminRecentAuditLogsProps {
 const getActionStyle = (action: string) => {
   const act = action ? action.toUpperCase() : ''
 
-  // 1. กลุ่มกิจกรรมลบข้อมูล / ความเสี่ยงความปลอดภัย (สีแดง)
+  // 1. ลบข้อมูล / ความเสี่ยง (สีแดง)
   if (act.includes('DELETE') || act.includes('REMOVE') || act.includes('SECURITY')) {
-    return { bgcolor: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca' }
+    return { bgcolor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }
   }
 
-  // 2. กลุ่มกิจกรรมสร้างใหม่ / ลงทะเบียน (สีเขียว)
+  // 2. สร้างใหม่ / ลงทะเบียน (สีเขียว Emerald)
   if (act.includes('CREATE') || act.includes('REGISTER')) {
     return { bgcolor: '#ecfdf5', color: '#047857', border: '1px solid #a7f3d0' }
   }
 
-  // 3. กลุ่มกิจกรรมแก้ไขข้อมูล / อัปเดต (สีส้ม)
-  if (act.includes('UPDATE') || act.includes('EDIT')) {
+  // 3. แก้ไขข้อมูล / อัปเดต (สีส้ม Amber)
+  if (act.includes('UPDATE') || act.includes('EDIT') || act.includes('MODIFY')) {
     return { bgcolor: '#fffbeb', color: '#b45309', border: '1px solid #fde68a' }
   }
 
-  // 4. กิจกรรมทั่วไป / การเข้าสู่ระบบ (สีฟ้า)
+  // 4. ทดลองรันโค้ด Python (สีคราม Indigo)
+  if (act.includes('RUN')) {
+    return { bgcolor: '#eef2ff', color: '#4338ca', border: '1px solid #c7d2fe' }
+  }
+
+  // 5. ส่งตรวจข้อสอบ (สีม่วง Purple)
+  if (act.includes('SUBMIT')) {
+    return { bgcolor: '#f5f3ff', color: '#7c3aed', border: '1px solid #ddd6fe' }
+  }
+
+  // 6. ออกจากระบบ (สีเทาควันบุหรี่ Slate Gray)
+  if (act.includes('LOGOUT')) {
+    return { bgcolor: '#f1f5f9', color: '#64748b', border: '1px solid #e2e8f0' }
+  }
+
+  // 7. เข้าสู่ระบบ / กิจกรรมทั่วไป (สีน้ำเงิน Blue)
   return { bgcolor: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe' }
 }
+
 
 export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs, isLoading }) => {
   return (
