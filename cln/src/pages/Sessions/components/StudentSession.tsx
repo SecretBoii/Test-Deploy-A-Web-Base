@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
-import LevelCard from './components/LevelCard';
-import type { LevelSummary } from './types';
-import { apiClient } from '../../api/client';
+import LevelCard from './student/LevelCard';
+import type { LevelSummary } from '../types';
+import { apiClient } from '../../../api/client';
 
-interface SessionStudentProps {
+/**
+ * คอมโพเนนต์หน้าเลือกระดับความยากสำหรับนักศึกษา (Student)
+ * แสดงความก้าวหน้ารายบุคคลของนักเรียนที่ล็อกอิน เช่น ผ่านแล้วกี่ข้อ พร้อมปุ่มเริ่มเรียน
+ */
+interface StudentSessionProps {
   userId?: number;
   onSelectLevel: (levelId: number) => void;
 }
 
-export const SessionStudent: React.FC<SessionStudentProps> = ({
+export const StudentSession: React.FC<StudentSessionProps> = ({
   userId = 1,
   onSelectLevel,
 }) => {
@@ -59,4 +63,4 @@ export const SessionStudent: React.FC<SessionStudentProps> = ({
   );
 };
 
-export default SessionStudent;
+export default StudentSession;

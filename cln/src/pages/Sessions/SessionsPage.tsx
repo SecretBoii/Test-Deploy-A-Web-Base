@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MainLayout } from '../../components/Layout/MainLayout'
-import SessionStudent from './SessionStudent'
+import StudentSession from './components/StudentSession'
 import { useAuth } from '../../context/AuthContext'
 
 export function SessionsPage() {
@@ -23,7 +23,7 @@ export function SessionsPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <SessionStudent
+      <StudentSession
         userId={user.userId}
         onSelectLevel={(levelId) => {
           navigate(`/sessions/level${levelId}`)
@@ -34,3 +34,4 @@ export function SessionsPage() {
 }
 
 export default SessionsPage
+
