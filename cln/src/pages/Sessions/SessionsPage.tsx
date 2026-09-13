@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MainLayout } from '../../components/Layout/MainLayout'
 import StudentSession from './components/StudentSession'
+import TeacherSession from './components/TeacherSession'
 import { useAuth } from '../../context/AuthContext'
 
 export function SessionsPage() {
@@ -9,13 +10,15 @@ export function SessionsPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // รองรับการย้อนกลับสำหรับลิงก์เก่าที่ใช้ ?level=X โดย Redirect ไปยัง /sessions/levelX
+  // รองรับการย้อนกลับสำหรับลิงก์เก่าที่ใช้ ?level=X โดย Redirect ไปยัง /sessions/levelX (เฉพาะนักเรียน)
   useEffect(() => {
-    const levelParam = searchParams.get('level')
-    if (levelParam) {
-      navigate(`/sessions/level${levelParam}`, { replace: true })
+    if (user?.roleId === 1) {
+      const levelParam = searchParams.get('level')
+      if (levelParam) {
+        navigate(`/sessions/level${levelParam}`, { replace: true })
+      }
     }
-  }, [searchParams, navigate])
+  }, [searchParams, navigate, user?.roleId])
 
   if (!user) {
     return null
@@ -23,12 +26,16 @@ export function SessionsPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <StudentSession
-        userId={user.userId}
-        onSelectLevel={(levelId) => {
-          navigate(`/sessions/level${levelId}`)
-        }}
-      />
+      {user.roleId === 2 ? (
+        <TeacherSession />
+      ) : (
+        <StudentSession
+          userId={user.userId}
+          onSelectLevel={(levelId) => {
+            navigate(`/sessions/level${levelId}`)
+          }}
+        />
+      )}
     </MainLayout>
   )
 }

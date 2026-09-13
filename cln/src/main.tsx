@@ -43,15 +43,15 @@ createRoot(document.getElementById('root')!).render(
               {/* Student-only routes (roleId === 1) */}
               <Route element={<RoleProtectedRoute allowedRoles={[1]} />}>
                 <Route path="/home" element={<Home />} />
-                <Route path="/history" element={<HistoryPage />} />
-              </Route>
-
-              {/* Student & Teacher routes (sessions, editor & result) */}
-              <Route element={<RoleProtectedRoute allowedRoles={[1, 2]} />}>
-                <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/sessions/:levelId" element={<LevelDetailPage />} />
                 <Route path="/editor/:exerciseId" element={<EditorPage />} />
                 <Route path="/result/:activityId" element={<ResultPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+              </Route>
+
+              {/* Shared Sessions entry route (Student & Teacher) */}
+              <Route element={<RoleProtectedRoute allowedRoles={[1, 2]} />}>
+                <Route path="/sessions" element={<SessionsPage />} />
               </Route>
 
               {/* Shared profile route (roles 1, 2, 3) */}
