@@ -24,7 +24,9 @@ import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
 const theme = createTheme({
   typography: {
-    fontFamily: "'Roboto', 'Leelawadee UI', sans-serif",
+    // fontFamily: "'Roboto', 'Leelawadee UI', sans-serif",
+    // fontFamily: "'Inter', 'IBM Plex Sans Thai', sans-serif",
+    fontFamily: "'Inter', 'Leelawadee UI', sans-serif",
   },
 })
 
