@@ -8,7 +8,7 @@ import Home from './pages/Home/Home.tsx'
 import Dashboard from './pages/Dashboard/Dashboard.tsx'
 import ExercisesPage from './pages/Exercises/ExercisesPage.tsx'
 import SessionsPage from './pages/Sessions/SessionsPage.tsx'
-import LevelDetailPage from './pages/Sessions/LevelDetailPage.tsx'
+import LevelDetailPage from './pages/Sessions/components/student/LevelDetailPage.tsx'
 import EditorPage from './pages/Editor/EditorPage.tsx'
 import { AuthProvider } from './context/AuthContext.tsx'
 import ProtectedRoute from './components/Auth/ProtectedRoute.tsx'
@@ -43,15 +43,15 @@ createRoot(document.getElementById('root')!).render(
               {/* Student-only routes (roleId === 1) */}
               <Route element={<RoleProtectedRoute allowedRoles={[1]} />}>
                 <Route path="/home" element={<Home />} />
-                <Route path="/editor/:exerciseId" element={<EditorPage />} />
-                <Route path="/result/:activityId" element={<ResultPage />} />
                 <Route path="/history" element={<HistoryPage />} />
               </Route>
 
-              {/* Student & Teacher routes (sessions) */}
+              {/* Student & Teacher routes (sessions, editor & result) */}
               <Route element={<RoleProtectedRoute allowedRoles={[1, 2]} />}>
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/sessions/:levelId" element={<LevelDetailPage />} />
+                <Route path="/editor/:exerciseId" element={<EditorPage />} />
+                <Route path="/result/:activityId" element={<ResultPage />} />
               </Route>
 
               {/* Shared profile route (roles 1, 2, 3) */}
