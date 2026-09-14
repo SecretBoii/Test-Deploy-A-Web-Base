@@ -10,10 +10,10 @@ import {
   Box,
   Typography,
   IconButton,
+  InputAdornment,
 } from '@mui/material'
-import { X, Save, Pencil, Plus } from 'lucide-react'
+import { X, Save, Pencil, Plus, BookOpen, FileText } from 'lucide-react'
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty'
-import { ConfirmDialog } from './ConfirmDialog'
 
 interface ExerciseDialogProps {
   open: boolean
@@ -23,8 +23,8 @@ interface ExerciseDialogProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'active', label: 'active - เผยแพร่แล้ว' },
-  { value: 'inactive', label: 'inactive - แบบร่าง' },
+  { value: 'active', label: 'Active - เปิดใช้งานแล้ว' },
+  { value: 'inactive', label: 'Inactive - ฉบับร่าง' },
 ]
 
 export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
@@ -45,7 +45,6 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
-  const [confirmOpen, setConfirmOpen] = useState(false)
 
   useEffect(() => {
     if (exerciseData) {
@@ -72,7 +71,6 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
       })
     }
     setErrors({})
-    setConfirmOpen(false)
   }, [exerciseData, open])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,17 +101,11 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
 
   const handleSubmitClick = () => {
     if (validate()) {
-      setConfirmOpen(true)
+      onSave(form)
     }
   }
 
-  const handleConfirmSave = () => {
-    setConfirmOpen(false)
-    onSave(form)
-  }
-
   return (
-    <>
       <Dialog
         open={open}
         onClose={onClose}
@@ -122,335 +114,505 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
         slotProps={{
           paper: {
             sx: {
-              borderRadius: '16px',
-              boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+              borderRadius: '20px',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
               overflow: 'hidden',
               border: '1px solid #e2e8f0',
+              bgcolor: '#ffffff',
             },
-          }
+          },
         }}
       >
-        {/* Header aligned with UI mockup */}
+        {/* 1. ส่วนหัว Header ของหน้าต่าง */}
         <Box
           sx={{
-            px: 3,
-            py: 2,
+            px: 3.5,
+            py: 2.5,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             borderBottom: '1px solid #f1f5f9',
-            color: '#0f172a',
+            bgcolor: '#ffffff',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {exerciseData ? (
-              <Pencil size={20} color="#f97316" />
-            ) : (
-              <Plus size={20} color="#10b981" />
-            )}
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a' }}>
-              {exerciseData ? 'แก้ไขโจทย์' : 'สร้างโจทย์ใหม่'}
-            </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
+            <Box
+              sx={{
+                width: 42,
+                height: 42,
+                borderRadius: '12px',
+                bgcolor: '#eef2ff',
+                border: '1px solid #e0e7ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#4f46e5',
+                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.08)',
+              }}
+            >
+              {exerciseData ? <Pencil size={20} /> : <Plus size={22} />}
+            </Box>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '18px', lineHeight: 1.2 }}>
+                {exerciseData ? `แก้ไขโจทย์ #${exerciseData.exerciseId}` : 'สร้างโจทย์แบบฝึกหัดใหม่'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12.5px', mt: 0.25, display: 'block' }}>
+                {exerciseData
+                  ? 'ปรับปรุงข้อมูล คำอธิบาย และการตั้งค่าของโจทย์ในระบบ'
+                  : 'กรอกข้อมูลรายละเอียดและเนื้อหาโจทย์สำหรับให้นักเรียนฝึกเขียนโปรแกรม'}
+              </Typography>
+            </Box>
           </Box>
-          <IconButton onClick={onClose} sx={{ color: '#94a3b8', '&:hover': { color: '#64748b' } }}>
+          <IconButton
+            onClick={onClose}
+            sx={{
+              color: '#94a3b8',
+              borderRadius: '8px',
+              p: 1,
+              '&:hover': { color: '#0f172a', bgcolor: '#f1f5f9' },
+              transition: 'all 0.15s ease',
+            }}
+          >
             <X size={20} />
           </IconButton>
         </Box>
 
-        <DialogContent sx={{ p: 4, bgcolor: '#ffffff' }}>
-          <Grid container spacing={3}>
-            
-            {/* TITLE */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  TITLE *
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  name="title"
-                  value={form.title}
-                  onChange={handleChange}
-                  error={!!errors.title}
-                  helperText={errors.title}
-                  placeholder="กรอกชื่อโจทย์..."
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* TOPIC */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  TOPIC *
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  name="topic"
-                  value={form.topic}
-                  onChange={handleChange}
-                  error={!!errors.topic}
-                  helperText={errors.topic}
-                  placeholder="เช่น Variables, Syntax"
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* OBJECTIVE */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  OBJECTIVE
-                </Typography>
-                <TextField
-                  fullWidth
-                  name="objective"
-                  value={form.objective}
-                  onChange={handleChange}
-                  placeholder="เช่น Variables, Print"
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* EXPECTED TIME */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  EXPECTED_TIME (นาที)
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  name="expectedTime"
-                  value={form.expectedTime}
-                  onChange={handleChange}
-                  error={!!errors.expectedTime}
-                  helperText={errors.expectedTime}
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* DIFFICULTY */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  DIFFICULTY (BLOOM'S TAXONOMY)
-                </Typography>
-                <TextField
-                  select
-                  fullWidth
-                  name="difficultyLevel"
-                  value={form.difficultyLevel}
-                  onChange={handleChange}
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                >
-                  {Object.entries(DIFFICULTY_LEVELS).map(([key, meta]) => (
-                    <MenuItem key={key} value={Number(key)}>
-                      {`Lv.${key} - ${meta.label}`}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
-            </Grid>
-
-            {/* STATUS */}
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  STATUS
-                </Typography>
-                <TextField
-                  select
-                  fullWidth
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                >
-                  {STATUS_OPTIONS.map((option) => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Box>
-            </Grid>
-
-            {/* DESCRIPTION */}
-            <Grid size={12}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  DESCRIPTION * (พิมพ์โจทย์)
-                </Typography>
-                <TextField
-                  required
-                  fullWidth
-                  multiline
-                  rows={5}
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  error={!!errors.description}
-                  helperText={errors.description}
-                  placeholder="ประกาศตัวแปร x=10 และ y=Python แล้วแสดงผลลัพธ์..."
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontFamily: 'inherit',
-                        fontSize: '14px',
-                      },
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-
-            {/* HINT */}
-            <Grid size={12}>
-              <Box sx={{ mb: 0.5 }}>
-                <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', display: 'block', mb: 0.75 }}>
-                  HINT (ไม่บังคับ)
-                </Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={2}
-                  name="hint"
-                  value={form.hint}
-                  onChange={handleChange}
-                  placeholder="พิมพ์คำใบ้ เช่น ใช้ print() และ = ..."
-                  slotProps={{
-                    input: {
-                      sx: {
-                        borderRadius: '8px',
-                        bgcolor: '#ffffff',
-                        fontSize: '14px',
-                      }
-                    }
-                  }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
-        </DialogContent>
-
-        <DialogActions sx={{ px: 4, py: 2.5, borderTop: '1px solid #f1f5f9', gap: 1.5 }}>
-          <Button
-            onClick={handleSubmitClick}
-            variant="contained"
-            startIcon={<Save size={16} />}
+        {/* 2. เนื้อหาฟอร์ม (Modern Clean Form แบ่งการ์ดซอฟต์ๆ #f8fafc พร้อม Top Labels) */}
+        <DialogContent sx={{ p: 3.5, bgcolor: '#ffffff', display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* หมวดที่ 1: ข้อมูลทั่วไปและการตั้งค่าโจทย์ */}
+          <Box
             sx={{
-              borderRadius: '8px',
-              textTransform: 'none',
-              fontWeight: 700,
-              bgcolor: '#10b981', // mockup green
-              color: '#ffffff',
-              px: 3,
-              py: 1,
-              boxShadow: 'none',
-              '&:hover': {
-                bgcolor: '#059669',
-                boxShadow: 'none',
-              },
-              transition: 'all 0.15s ease',
+              p: 2.5,
+              bgcolor: '#f8fafc',
+              borderRadius: '14px',
+              border: '1px solid #e2e8f0',
             }}
           >
-            บันทึก
-          </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2.25 }}>
+              <Box
+                sx={{
+                  p: 0.6,
+                  borderRadius: '8px',
+                  bgcolor: '#eef2ff',
+                  color: '#4f46e5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <BookOpen size={16} />
+              </Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                ข้อมูลทั่วไปและการตั้งค่าโจทย์
+              </Typography>
+            </Box>
+
+            <Grid container spacing={2.25}>
+              {/* ชื่อโจทย์ */}
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      mb: 0.75,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    ชื่อโจทย์ <Box component="span" sx={{ color: '#ef4444' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="title"
+                    value={form.title}
+                    onChange={handleChange}
+                    error={!!errors.title}
+                    helperText={errors.title}
+                    placeholder="เช่น ประกาศตัวแปรและพิมพ์ผลลัพธ์..."
+                    slotProps={{
+                      input: {
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              {/* หัวข้อบทเรียน */}
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      mb: 0.75,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    หัวข้อบทเรียน (Topic) <Box component="span" sx={{ color: '#ef4444' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="topic"
+                    value={form.topic}
+                    onChange={handleChange}
+                    error={!!errors.topic}
+                    helperText={errors.topic}
+                    placeholder="เช่น Variables, Loops"
+                    slotProps={{
+                      input: {
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              {/* วัตถุประสงค์การเรียนรู้ */}
+              <Grid size={12}>
+                <Box>
+                  <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
+                    วัตถุประสงค์การเรียนรู้ (Objective)
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    name="objective"
+                    value={form.objective}
+                    onChange={handleChange}
+                    placeholder="เช่น เพื่อให้ผู้เรียนเข้าใจการกำหนดค่าตัวแปรและแสดงผลออกหน้าจอ"
+                    slotProps={{
+                      input: {
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              {/* ระดับความยาก Bloom */}
+              <Grid size={{ xs: 12, sm: 5 }}>
+                <Box>
+                  <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
+                    ระดับความยาก (Bloom's Taxonomy)
+                  </Typography>
+                  <TextField
+                    select
+                    fullWidth
+                    name="difficultyLevel"
+                    value={form.difficultyLevel}
+                    onChange={handleChange}
+                    slotProps={{
+                      input: {
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {Object.entries(DIFFICULTY_LEVELS).map(([key, meta]) => (
+                      <MenuItem key={key} value={Number(key)} sx={{ fontSize: '13.5px', py: 1 }}>
+                        {`Lv.${key} - ${meta.label}`}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </Grid>
+
+              {/* เวลาที่แนะนำ */}
+              <Grid size={{ xs: 12, sm: 3.5 }}>
+                <Box>
+                  <Typography
+                    sx={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#334155',
+                      mb: 0.75,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    เวลาที่แนะนำ <Box component="span" sx={{ color: '#ef4444' }}>*</Box>
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    name="expectedTime"
+                    value={form.expectedTime}
+                    onChange={handleChange}
+                    error={!!errors.expectedTime}
+                    helperText={errors.expectedTime}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position="end" sx={{ color: '#64748b', '& p': { fontSize: '13px' } }}>
+                            นาที
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  />
+                </Box>
+              </Grid>
+
+              {/* สถานะการเผยแพร่ */}
+              <Grid size={{ xs: 12, sm: 3.5 }}>
+                <Box>
+                  <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
+                    สถานะการเผยแพร่
+                  </Typography>
+                  <TextField
+                    select
+                    fullWidth
+                    name="status"
+                    value={form.status}
+                    onChange={handleChange}
+                    slotProps={{
+                      input: {
+                        sx: {
+                          borderRadius: '10px',
+                          bgcolor: '#ffffff',
+                          '& fieldset': { borderColor: '#cbd5e1' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#4f46e5',
+                            borderWidth: '1.5px',
+                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value} sx={{ fontSize: '13.5px', py: 1 }}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Box>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* หมวดที่ 2: เนื้อหาโจทย์และคำใบ้ */}
+          <Box
+            sx={{
+              p: 2.5,
+              bgcolor: '#f8fafc',
+              borderRadius: '14px',
+              border: '1px solid #e2e8f0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 2.25,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
+              <Box
+                sx={{
+                  p: 0.6,
+                  borderRadius: '8px',
+                  bgcolor: '#eef2ff',
+                  color: '#4f46e5',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileText size={16} />
+              </Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                เนื้อหาโจทย์และคำใบ้
+              </Typography>
+            </Box>
+
+            {/* คำอธิบายโจทย์ */}
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  color: '#334155',
+                  mb: 0.75,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                คำอธิบายโจทย์ (Problem Description) <Box component="span" sx={{ color: '#ef4444' }}>*</Box>
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                error={!!errors.description}
+                helperText={errors.description}
+                placeholder="พิมพ์คำอธิบายโจทย์ รายละเอียดเงื่อนไข และสิ่งที่ต้องการให้ผู้เรียนเขียนโค้ดแก้ปัญหา..."
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: '10px',
+                      bgcolor: '#ffffff',
+                      lineHeight: 1.6,
+                      fontSize: '14px',
+                      '& fieldset': { borderColor: '#cbd5e1' },
+                      '&:hover fieldset': { borderColor: '#94a3b8' },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#4f46e5',
+                        borderWidth: '1.5px',
+                        boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                      },
+                    },
+                  },
+                }}
+              />
+            </Box>
+
+            {/* คำใบ้สำหรับผู้เรียน */}
+            <Box>
+              <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
+                คำใบ้สำหรับผู้เรียน (Hint - ไม่บังคับ)
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={2}
+                name="hint"
+                value={form.hint}
+                onChange={handleChange}
+                placeholder="พิมพ์คำใบ้ หรือแนวทางสำหรับช่วยเหลือนักเรียนเมื่อติดปัญหา..."
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: '10px',
+                      bgcolor: '#ffffff',
+                      fontSize: '13.5px',
+                      '& fieldset': { borderColor: '#cbd5e1' },
+                      '&:hover fieldset': { borderColor: '#94a3b8' },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#4f46e5',
+                        borderWidth: '1.5px',
+                        boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+                      },
+                    },
+                  },
+                }}
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+
+        {/* 3. ส่วนท้าย Actions */}
+        <DialogActions
+          sx={{
+            px: 3.5,
+            py: 2.25,
+            borderTop: '1px solid #f1f5f9',
+            bgcolor: '#ffffff',
+            gap: 1.5,
+          }}
+        >
           <Button
             onClick={onClose}
             variant="outlined"
             sx={{
-              borderRadius: '8px',
+              borderRadius: '10px',
               textTransform: 'none',
-              fontWeight: 700,
+              fontWeight: 600,
               borderColor: '#cbd5e1',
               color: '#475569',
               px: 3,
-              py: 1,
+              py: 0.9,
               '&:hover': {
                 bgcolor: '#f8fafc',
-                borderColor: '#cbd5e1',
+                borderColor: '#94a3b8',
               },
             }}
           >
             ยกเลิก
           </Button>
+          <Button
+            onClick={handleSubmitClick}
+            variant="contained"
+            startIcon={<Save size={16} />}
+            sx={{
+              borderRadius: '10px',
+              textTransform: 'none',
+              fontWeight: 700,
+              bgcolor: '#4f46e5',
+              color: '#ffffff',
+              px: 3.5,
+              py: 0.9,
+              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              '&:hover': {
+                bgcolor: '#4338ca',
+                boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)',
+              },
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {exerciseData ? 'บันทึกการแก้ไข' : 'บันทึกโจทย์'}
+          </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Reusable Confirm Save Dialog */}
-      <ConfirmDialog
-        open={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={handleConfirmSave}
-        title={exerciseData ? 'ยืนยันการแก้ไขโจทย์?' : 'ยืนยันการสร้างโจทย์ใหม่?'}
-        message={
-          exerciseData
-            ? 'คุณแน่ใจหรือไม่ว่าต้องการบันทึกการแก้ไขข้อมูลโจทย์ข้อนี้?'
-            : 'คุณแน่ใจหรือไม่ว่าต้องการสร้างโจทย์ใหม่นี้ลงในคลัง?'
-        }
-        confirmColor="primary"
-      />
-    </>
   )
 }
 
-export default ExerciseDialog;
+export default ExerciseDialog
