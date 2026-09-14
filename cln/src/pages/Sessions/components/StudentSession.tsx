@@ -4,10 +4,6 @@ import LevelCard from './student/LevelCard';
 import type { LevelSummary } from '../types';
 import { apiClient } from '../../../api/client';
 
-/**
- * คอมโพเนนต์หน้าเลือกระดับความยากสำหรับนักศึกษา (Student)
- * แสดงความก้าวหน้ารายบุคคลของนักเรียนที่ล็อกอิน เช่น ผ่านแล้วกี่ข้อ พร้อมปุ่มเริ่มเรียน
- */
 interface StudentSessionProps {
   userId?: number;
   onSelectLevel: (levelId: number) => void;
@@ -39,7 +35,7 @@ export const StudentSession: React.FC<StudentSessionProps> = ({
   };
 
   return (
-    <Box sx={{ p: 2.5, maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2.5, width: '100%' }}>
+    <Box sx={{ width: '100%', maxWidth: '1440px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
       <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a', mb: 0.5 }}>
         เลือกระดับความยากของบทเรียน (Learning Levels)
       </Typography>
