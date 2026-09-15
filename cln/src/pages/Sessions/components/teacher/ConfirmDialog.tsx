@@ -50,6 +50,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             p: 1,
             border: '1px solid #e2e8f0',
             boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+            maxWidth: '90vw',
+            width: 'fit-content',
+            minWidth: '380px',
           },
         },
       }}
