@@ -290,11 +290,14 @@ export class ReportsService {
       },
     } : undefined;
 
-    // ดึงประวัติกิจกรรมจากตาราง AuditLog เพียงตารางเดียว เพื่อความถูกต้องและสอดคล้องกับหน้า Audit Log 100% (ไม่นับเบิ้ลกับ Activity)
+    // ดึงเฉพาะประวัติการเข้าสู่ระบบ (LOGIN) จากตาราง AuditLog เพื่อนำมาทำสถิติความหนาแน่นของการ Login ตามช่วงเวลา
     const auditLogs = await this.prisma.auditLog.findMany({
-      where: dateWhere,
+      where: {
+        ...dateWhere,
+        action: 'LOGIN',
+      },
       select: { createdAt: true },
-    });
+   });
 
     // weekly: จัดกลุ่มตามวันในสัปดาห์ (อิงตามเวลาไทย)
     if (timeRange === 'weekly') {
