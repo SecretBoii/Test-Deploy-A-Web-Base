@@ -62,10 +62,10 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>
-              สถิติการเข้าใช้งานตามช่วงเวลา (User Usage Trends)
+              สถิติการเข้าสู่ระบบตามช่วงเวลา (User Login Trends)
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              แสดงความหนาแน่นของกิจกรรมตามช่วงเวลา ({timeRange === 'weekly' ? 'รายวันในสัปดาห์' : timeRange === 'monthly' ? 'รายสัปดาห์ในเดือน' : timeRange === 'yearly' ? 'รายไตรมาส' : 'ช่วงเวลาในวัน'})
+              แสดงความหนาแน่นของการเข้าสู่ระบบ (Login) ตามช่วงเวลา ({timeRange === 'weekly' ? 'รายวันในสัปดาห์' : timeRange === 'monthly' ? 'รายสัปดาห์ในเดือน' : timeRange === 'yearly' ? 'รายไตรมาส' : 'ช่วงเวลาในวัน'})
             </Typography>
           </Box>
 
@@ -78,7 +78,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
           ) : chartData.length === 0 ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160 }}>
               <Typography variant="body2" color="text.secondary">
-                ยังไม่มีข้อมูลกิจกรรมสถิติในช่วงเวลานี้
+                ยังไม่มีข้อมูลการเข้าสู่ระบบในช่วงเวลานี้
               </Typography>
             </Box>
           ) : (
@@ -203,7 +203,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#0f172a', fontSize: '0.9rem' }}>
-              รายละเอียดกิจกรรมตามช่วงเวลา
+              รายละเอียดการเข้าสู่ระบบตามช่วงเวลา
             </Typography>
             <Chip
               label={`รวม ${totalCount} ครั้ง`}
@@ -226,7 +226,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
             </Box>
           ) : chartData.length === 0 ? (
             <Typography variant="caption" color="text.secondary">
-              ยังไม่มีข้อมูลกิจกรรมในช่วงเวลานี้
+              ยังไม่มีข้อมูลการเข้าสู่ระบบในช่วงเวลานี้
             </Typography>
           ) : (
             <Box
