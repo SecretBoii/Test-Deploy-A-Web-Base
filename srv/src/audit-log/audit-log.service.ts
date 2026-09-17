@@ -86,12 +86,26 @@ export class AuditLogService {
     }
 
     // 3. ดึงข้อมูลตารางและนับสถิติโดยใช้ dateWhere (ไม่ทับซ้อนกับ search)
+    // ทำการ Join ไปยังตาราง UserProfile -> Role เพื่อดึงข้อมูล Role ของผู้ใช้งานที่กระทำการ
     const [logs, total, totalInSystem, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: Number(limit),
+        include: {
+          user: {
+            select: {
+              firstName: true,
+              lastName: true,
+              role: {
+                select: {
+                  roleName: true,
+                },
+              },
+            },
+          },
+        },
       }),
       this.prisma.auditLog.count({ where }),
       this.prisma.auditLog.count({ where: dateWhere }),
@@ -122,8 +136,38 @@ export class AuditLogService {
       }),
     ]);
 
+    // จัดเตรียมข้อมูล Log ส่งกลับให้ Frontend โดยแนบ roleName และ fullName (ชื่อ-นามสกุลจริง) เพื่อนำไปแสดงผล
+    const formattedLogs = logs.map((log: any) => {
+      let roleName = log.user?.role?.roleName;
+
+      // กรณีที่ผู้ใช้ไม่ได้ผูก relation หรือเป็น log เดิม ให้ตรวจสอบจาก payload details หรือ username
+      if (!roleName && log.details && typeof log.details === 'object') {
+        const detailsObj = log.details as Record<string, any>;
+        if (detailsObj.roleId === 1) roleName = 'Student';
+        else if (detailsObj.roleId === 2) roleName = 'Teacher';
+        else if (detailsObj.roleId === 3) roleName = 'Admin';
+      }
+
+      if (!roleName && log.username?.toLowerCase() === 'admin') {
+        roleName = 'Admin';
+      }
+
+      // ประกอบชื่อ-นามสกุลจริงของผู้ใช้งาน
+      let fullName: string | undefined = undefined;
+      if (log.user?.firstName || log.user?.lastName) {
+        fullName = `${log.user.firstName || ''} ${log.user.lastName || ''}`.trim();
+      }
+
+      const { user, ...rest } = log;
+      return {
+        ...rest,
+        roleName: roleName || undefined,
+        fullName: fullName || undefined,
+      };
+    });
+
     return {
-      data: logs,
+      data: formattedLogs,
       total,
       page: Number(page),
       limit: Number(limit),

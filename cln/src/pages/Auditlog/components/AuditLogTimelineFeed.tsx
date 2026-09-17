@@ -139,7 +139,7 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
         <Stack divider={<Divider sx={{ borderColor: '#f1f5f9' }} />}>
           {logs.map((log) => {
             const config = getActionConfig(log.action);
-            const userInitial = (log.username || 'S')[0].toUpperCase();
+            const userInitial = (log.fullName || log.username || 'S')[0].toUpperCase();
 
             return (
               <Box
@@ -176,7 +176,20 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
                     <Box>
                       <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
                         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                          {log.username || 'System Administrator'}
+                          {log.fullName || log.username || 'System Administrator'}
+                          {log.roleName && (
+                            <Typography
+                              component="span"
+                              sx={{
+                                fontWeight: 600,
+                                color: '#64748b',
+                                fontSize: '0.875rem',
+                                ml: 0.6,
+                              }}
+                            >
+                              ({log.roleName})
+                            </Typography>
+                          )}
                         </Typography>
                         <Chip
                           label={log.action}

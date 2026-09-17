@@ -88,7 +88,16 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
         <Chip
           label={action}
           size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#f1f5f9', color: '#64748b', borderRadius: '6px' }}
+          sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569', borderRadius: '6px', border: '1px solid #e2e8f0' }}
+        />
+      );
+    }
+    if (action.includes('LOGIN')) {
+      return (
+        <Chip
+          label={action}
+          size="small"
+          sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px', border: '1px solid #dbeafe' }}
         />
       );
     }
@@ -96,7 +105,7 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
       <Chip
         label={action}
         size="small"
-        sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px' }}
+        sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px' }}
       />
     );
   };
@@ -116,11 +125,21 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
       <Table sx={{ minWidth: 650 }}>
         <TableHead sx={{ backgroundColor: '#f8fafc' }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>ID / วัน-เวลา</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>ผู้ใช้งาน (Username)</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>Action</TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>Target (Entity)</TableCell>
-            <TableCell align="center" sx={{ fontWeight: 700, color: '#64748b' }}>รายละเอียด</TableCell>
+            <TableCell sx={{ width: '22%', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+              ID / วัน-เวลา
+            </TableCell>
+            <TableCell sx={{ width: '26%', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+              ผู้ใช้งาน (Username)
+            </TableCell>
+            <TableCell sx={{ width: '18%', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+              Action
+            </TableCell>
+            <TableCell sx={{ width: '20%', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+              Target (Entity)
+            </TableCell>
+            <TableCell align="center" sx={{ width: '14%', fontWeight: 700, color: '#64748b', whiteSpace: 'nowrap' }}>
+              รายละเอียด
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -147,16 +166,47 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                     {new Date(log.createdAt).toLocaleString('th-TH')}
                   </Typography>
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{log.username || 'System'}</TableCell>
+                <TableCell sx={{ py: 1.5 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#1e293b' }}>
+                    {log.fullName || log.username || 'System'}
+                    {log.roleName && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 500,
+                          color: '#64748b',
+                          fontSize: '0.8rem',
+                          ml: 0.5,
+                        }}
+                      >
+                        ({log.roleName})
+                      </Typography>
+                    )}
+                  </Typography>
+                </TableCell>
                 <TableCell>{getActionChip(log.action)}</TableCell>
-                <TableCell sx={{ color: '#334155' }}>
-                  {log.entity} {log.entityId ? `(#${log.entityId})` : ''}
+                <TableCell>
+                  <Chip
+                    label={`${log.entity}${log.entityId ? ` (#${log.entityId})` : ''}`}
+                    size="small"
+                    variant="outlined"
+                    sx={{
+                      fontSize: '0.75rem',
+                      height: 24,
+                      fontWeight: 600,
+                      bgcolor: '#f8fafc',
+                      borderColor: '#cbd5e1',
+                      borderRadius: '6px',
+                      color: '#475569',
+                    }}
+                  />
                 </TableCell>
                 <TableCell align="center">
                   <IconButton
                     size="small"
                     onClick={() => onSelectLog(log)}
                     sx={{ bgcolor: '#eff6ff', borderRadius: '8px', '&:hover': { bgcolor: '#dbeafe' } }}
+                    title="ดูรายละเอียด"
                   >
                     <Eye size={18} color="#2563eb" />
                   </IconButton>
