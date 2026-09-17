@@ -94,7 +94,22 @@ export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs
             ) : (
               logs.map((log) => (
                 <TableRow key={log.id} hover>
-                  <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>{log.username || 'System'}</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: '#1e293b' }}>
+                    {log.username || 'System'}
+                    {log.roleName && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          fontWeight: 500,
+                          color: '#64748b',
+                          fontSize: '0.8rem',
+                          ml: 0.5,
+                        }}
+                      >
+                        ({log.roleName})
+                      </Typography>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={log.action}

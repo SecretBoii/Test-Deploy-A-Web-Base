@@ -22,6 +22,7 @@ export interface PythonErrorStat {
 export interface SimpleAuditLog {
   id: number
   username: string
+  roleName?: string
   action: string
   entity: string
   createdAt: string
