@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box, Card, Typography } from '@mui/material';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import LoginIcon from '@mui/icons-material/Login';
+import AddCircleOutlinedIcon from '@mui/icons-material/AddCircleOutlined';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import SecurityIcon from '@mui/icons-material/Security';
 import { type AuditLogStats } from '../../../api/auditlogApi';
@@ -21,11 +22,18 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
       bgColor: '#eff6ff',
     },
     {
-      title: 'เข้าสู่ระบบ / เพิ่มข้อมูล',
-      value: (stats?.createOrAuthCount ?? 0).toLocaleString(),
+      title: 'เข้าสู่ระบบ',
+      value: (stats?.authCount ?? 0).toLocaleString(),
       unit: 'ครั้ง',
-      icon: <PersonAddIcon sx={{ color: '#059669' }} />,
+      icon: <LoginIcon sx={{ color: '#059669' }} />,
       bgColor: '#ecfdf5',
+    },
+    {
+      title: 'สร้าง / เพิ่มข้อมูล',
+      value: (stats?.createCount ?? 0).toLocaleString(),
+      unit: 'ครั้ง',
+      icon: <AddCircleOutlinedIcon sx={{ color: '#0891b2' }} />,
+      bgColor: '#ecfeff',
     },
     {
       title: 'แก้ไข / อัปเดตข้อมูล',
@@ -43,13 +51,17 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
     },
   ];
 
-  // ปรับการจัด Layout โดยถอด mb ออกเพื่อให้ระยะห่างถูกควบคุมผ่าน gap ของ Parent Box (AdminAuditLogPage) อย่างเป็นระเบียบ
   return (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: 'repeat(4, 1fr)' },
-        gap: 2.5,
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(5, 1fr)',
+        },
+        gap: 2,
       }}
     >
       {cardItems.map((item, index) => (
@@ -57,14 +69,14 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
           key={index}
           elevation={0}
           sx={{
-            p: 2.5,
+            p: 2,
             borderRadius: '16px',
             border: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
             boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
             display: 'flex',
             alignItems: 'center',
-            gap: 2,
+            gap: 1.75,
             transition: 'transform 0.2s, box-shadow 0.2s',
             '&:hover': {
               transform: 'translateY(-2px)',
@@ -74,9 +86,9 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
         >
           <Box
             sx={{
-              width: 52,
-              height: 52,
-              borderRadius: '14px',
+              width: 48,
+              height: 48,
+              borderRadius: '12px',
               bgcolor: item.bgColor,
               display: 'flex',
               alignItems: 'center',
@@ -87,13 +99,23 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
             {item.icon}
           </Box>
 
-          <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, mb: 0.5 }}>
+          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+            <Typography
+              variant="body2"
+              noWrap
+              sx={{
+                color: '#64748b',
+                fontWeight: 500,
+                fontSize: '0.8125rem',
+                mb: 0.25,
+              }}
+              title={item.title}
+            >
               {item.title}
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
               {item.value}{' '}
-              <Typography component="span" variant="caption" sx={{ color: '#94a3b8', ml: 0.5 }}>
+              <Typography component="span" variant="caption" sx={{ color: '#94a3b8', ml: 0.5, fontWeight: 500 }}>
                 {item.unit}
               </Typography>
             </Typography>
@@ -103,3 +125,4 @@ export const AuditLogStatsHeader: React.FC<AuditLogStatsHeaderProps> = ({ stats,
     </Box>
   );
 };
+

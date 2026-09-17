@@ -15,7 +15,9 @@ export interface AuditLogItem {
 
 export interface AuditLogStats {
   total: number;
-  createOrAuthCount: number;
+  authCount?: number;
+  createCount?: number;
+  createOrAuthCount?: number;
   updateCount: number;
   deleteOrSecurityCount: number;
 }

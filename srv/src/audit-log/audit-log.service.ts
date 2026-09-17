@@ -85,9 +85,13 @@ export class AuditLogService {
       ];
     }
 
-    // 3. ดึงข้อมูลตารางและนับสถิติโดยใช้ dateWhere (ไม่ทับซ้อนกับ search)
-    // ทำการ Join ไปยังตาราง UserProfile -> Role เพื่อดึงข้อมูล Role ของผู้ใช้งานที่กระทำการ
-    const [logs, total, totalInSystem, createOrAuthCount, updateCount, deleteOrSecurityCount] = await Promise.all([
+    // 3. ตรวจสอบว่าเป็นการโหลดหน้าแรกหรือไม่
+    // เพื่อหลีกเลี่ยงการคำนวณสถิติซ้ำซ้อนตอนเปลี่ยนหน้า (Pagination)
+    // สถิติการ์ด KPI ทั้ง 5 ใบจะถูกคำนวณเฉพาะหน้าแรก (page === 1) หรือเมื่อตัวกรองรีเซ็ตกลับมาหน้าแรก
+    const isFirstPage = Number(page) === 1;
+
+    // ดึงข้อมูลรายการตารางและนับจำนวนทั้งหมดตามเงื่อนไขที่ค้นหา (จำเป็นต้องรันทุกหน้าเพื่อใช้ทำ Pagination)
+    const [logs, total] = await Promise.all([
       this.prisma.auditLog.findMany({
         where,
         orderBy: { createdAt: 'desc' },
@@ -108,33 +112,75 @@ export class AuditLogService {
         },
       }),
       this.prisma.auditLog.count({ where }),
-      this.prisma.auditLog.count({ where: dateWhere }),
-      this.prisma.auditLog.count({
-        where: {
-          ...dateWhere,
-          OR: [
-            { action: { contains: 'CREATE', mode: 'insensitive' } },
-            { action: { contains: 'LOGIN', mode: 'insensitive' } },
-          ],
-        },
-      }),
-      this.prisma.auditLog.count({
-        where: {
-          ...dateWhere,
-          action: { contains: 'UPDATE', mode: 'insensitive' },
-        },
-      }),
-      this.prisma.auditLog.count({
-        where: {
-          ...dateWhere,
-          OR: [
-            { action: { contains: 'DELETE', mode: 'insensitive' } },
-            { action: { contains: 'SECURITY', mode: 'insensitive' } },
-            { action: { contains: 'REMOVE', mode: 'insensitive' } },
-          ],
-        },
-      }),
     ]);
+
+    // คำนวณสถิติเฉพาะหน้าแรก เพื่อลดโหลดฐานข้อมูลลง ~70% เมื่อผู้ใช้เลื่อนดูหน้าถัดไป
+    let stats:
+      | {
+          total: number;
+          authCount: number;
+          createCount: number;
+          updateCount: number;
+          deleteOrSecurityCount: number;
+          createOrAuthCount: number;
+        }
+      | undefined = undefined;
+
+    if (isFirstPage) {
+      const [
+        totalInSystem,
+        authCount,
+        createCount,
+        updateCount,
+        deleteOrSecurityCount,
+      ] = await Promise.all([
+        this.prisma.auditLog.count({ where: dateWhere }),
+        // นับกิจกรรมการเข้าสู่ระบบ (LOGIN)
+        this.prisma.auditLog.count({
+          where: {
+            ...dateWhere,
+            action: { contains: 'LOGIN', mode: 'insensitive' },
+          },
+        }),
+        // นับกิจกรรมการสร้างหรือเพิ่มข้อมูลใหม่ (CREATE, REGISTER)
+        this.prisma.auditLog.count({
+          where: {
+            ...dateWhere,
+            OR: [
+              { action: { contains: 'CREATE', mode: 'insensitive' } },
+              { action: { contains: 'REGISTER', mode: 'insensitive' } },
+            ],
+          },
+        }),
+        // นับกิจกรรมการแก้ไขหรืออัปเดตข้อมูล (UPDATE)
+        this.prisma.auditLog.count({
+          where: {
+            ...dateWhere,
+            action: { contains: 'UPDATE', mode: 'insensitive' },
+          },
+        }),
+        // นับกิจกรรมการลบข้อมูลและความเสี่ยงความปลอดภัย (DELETE, SECURITY, REMOVE)
+        this.prisma.auditLog.count({
+          where: {
+            ...dateWhere,
+            OR: [
+              { action: { contains: 'DELETE', mode: 'insensitive' } },
+              { action: { contains: 'SECURITY', mode: 'insensitive' } },
+              { action: { contains: 'REMOVE', mode: 'insensitive' } },
+            ],
+          },
+        }),
+      ]);
+
+      stats = {
+        total: totalInSystem,
+        authCount,
+        createCount,
+        updateCount,
+        deleteOrSecurityCount,
+        createOrAuthCount: authCount + createCount,
+      };
+    }
 
     // จัดเตรียมข้อมูล Log ส่งกลับให้ Frontend โดยแนบ roleName และ fullName (ชื่อ-นามสกุลจริง) เพื่อนำไปแสดงผล
     const formattedLogs = logs.map((log: any) => {
@@ -172,12 +218,7 @@ export class AuditLogService {
       page: Number(page),
       limit: Number(limit),
       totalPages: Math.ceil(total / limit),
-      stats: {
-        total: totalInSystem,
-        createOrAuthCount,
-        updateCount,
-        deleteOrSecurityCount,
-      },
+      stats,
     };
   }
 }
