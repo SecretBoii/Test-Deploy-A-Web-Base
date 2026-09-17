@@ -6,22 +6,41 @@ import CodeIcon from '@mui/icons-material/Code'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
 import type { DashboardStats } from '../AdminDashboard'
-import type { TimeRangeType } from './DashboardTimeFilter'
 
 interface AdminStatCardsProps {
   stats: DashboardStats | null
   isLoading: boolean
-  timeRange?: TimeRangeType
+  selectedDate?: string
 }
 
-export const AdminStatCards: React.FC<AdminStatCardsProps> = ({ stats, isLoading, timeRange = 'daily' }) => {
-  const submissionTitle = timeRange === 'weekly' 
-    ? 'ทดลองรันโค้ดสัปดาห์นี้'
-    : timeRange === 'monthly'
-    ? 'ทดลองรันโค้ดเดือนนี้'
-    : timeRange === 'yearly'
-    ? 'ทดลองรันโค้ดปีนี้'
-    : 'ทดลองรันโค้ดวันนี้'
+export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
+  stats,
+  isLoading,
+  selectedDate,
+}) => {
+  const getTodayStr = () => {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    const parts = dateStr.split('-')
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+  }
+
+  const todayStr = getTodayStr()
+  const isToday = !selectedDate || selectedDate === todayStr
+
+  const submissionTitle = isToday
+    ? 'ทดลองรันโค้ดวันนี้'
+    : `ทดลองรันโค้ด (${formatDisplayDate(selectedDate)})`
 
   const cardItems = [
     {

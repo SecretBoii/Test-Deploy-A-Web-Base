@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import { Card, Typography, Box, Skeleton, LinearProgress, Chip } from '@mui/material'
-import type { TimeRangeType } from './DashboardTimeFilter'
 
 export interface UsageTrendItem {
   periodLabel: string
@@ -8,13 +7,40 @@ export interface UsageTrendItem {
 }
 
 interface AdminUsageAnalyticsProps {
-  timeRange: TimeRangeType
+  selectedDate?: string
   isLoading: boolean
   data?: UsageTrendItem[]
 }
 
+export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
+  selectedDate,
+  isLoading,
+  data,
+}) => {
+  const formatDisplayDate = (dateStr: string) => {
+    if (!dateStr) return ''
+    const parts = dateStr.split('-')
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`
+    }
+    return dateStr
+  }
 
-export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRange, isLoading, data }) => {
+  const getTodayStr = () => {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  const todayStr = getTodayStr()
+  const isToday = !selectedDate || selectedDate === todayStr
+
+  const rangeDescription = isToday
+    ? 'ช่วงเวลาในวันนี้'
+    : `วันที่ ${formatDisplayDate(selectedDate)}`
+
   // 1. อ่านข้อมูลสถิติตามช่วงเวลาที่เลือก (จาก DB เท่านั้น ไม่มี Mockup)
   const chartData: UsageTrendItem[] = useMemo(() => {
     if (data && data.length > 0) {
@@ -65,7 +91,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({ timeRa
               สถิติการเข้าสู่ระบบตามช่วงเวลา (User Login Trends)
             </Typography>
             <Typography variant="caption" sx={{ color: '#64748b' }}>
-              แสดงความหนาแน่นของการเข้าสู่ระบบ (Login) ตามช่วงเวลา ({timeRange === 'weekly' ? 'รายวันในสัปดาห์' : timeRange === 'monthly' ? 'รายสัปดาห์ในเดือน' : timeRange === 'yearly' ? 'รายไตรมาส' : 'ช่วงเวลาในวัน'})
+              แสดงความหนาแน่นของการเข้าสู่ระบบ (Login) ตามช่วงเวลา ({rangeDescription})
             </Typography>
           </Box>
 

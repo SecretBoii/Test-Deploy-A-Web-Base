@@ -1,12 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Box, Alert, Button } from '@mui/material'
 import { apiClient } from '../../../api/client'
 import { AdminStatCards } from './admin/AdminStatCards'
-import { AdminQuickActions } from './admin/AdminQuickActions'
 import { AdminErrorDistribution } from './admin/AdminErrorDistribution'
 import { AdminRecentAuditLogs } from './admin/AdminRecentAuditLogs'
-import { DashboardTimeFilter, type TimeRangeType } from './admin/DashboardTimeFilter'
+import { DashboardTimeFilter } from './admin/DashboardTimeFilter'
 import { AdminUsageAnalytics, type UsageTrendItem } from './admin/AdminUsageAnalytics'
 export interface DashboardStats {
   totalUsers: number
@@ -30,8 +28,16 @@ export interface SimpleAuditLog {
 }
 
 export function AdminDashboard() {
-  const navigate = useNavigate()
-  const [timeRange, setTimeRange] = useState<TimeRangeType>('daily')
+  // คำนวณวันปัจจุบันรูปแบบ YYYY-MM-DD ตามเวลาท้องถิ่น
+  const getTodayStr = () => {
+    const d = new Date()
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  }
+
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr)
   const [stats, setStats] = useState<DashboardStats | null>(null)
   const [errorStats, setErrorStats] = useState<PythonErrorStat[]>([])
   const [auditLogs, setAuditLogs] = useState<SimpleAuditLog[]>([])
@@ -70,17 +76,18 @@ export function AdminDashboard() {
     }
   }
 
-  // 2. ฟังก์ชันโหลดข้อมูลสถิติตามช่วงเวลา (ยิงเฉพาะ 3 APIs ที่ขึ้นกับ timeRange)
+  // 2. ฟังก์ชันโหลดข้อมูลสถิติตามช่วงเวลา (ยิงเฉพาะ 3 APIs ที่ขึ้นกับช่วงวันที่เลือก)
   const loadDashboardData = async () => {
     setIsLoading(true)
     setErrorMessage(null)
 
     try {
-      // ดึงเฉพาะข้อมูลสถิติที่ขึ้นกับ timeRange
+      // ดึงเฉพาะข้อมูลสถิติที่ขึ้นกับวันที่เลือก (selectedDate)
+      const params = { startDate: selectedDate, endDate: selectedDate }
       const [reportsRes, errorsRes, usageRes] = await Promise.all([
-        apiClient.get('/reports/students', { params: { timeRange } }).catch(() => null),
-        apiClient.get('/reports/errors', { params: { timeRange } }).catch(() => null),
-        apiClient.get('/reports/usage-analytics', { params: { timeRange } }).catch(() => null),
+        apiClient.get('/reports/students', { params }).catch(() => null),
+        apiClient.get('/reports/errors', { params }).catch(() => null),
+        apiClient.get('/reports/usage-analytics', { params }).catch(() => null),
       ])
 
       // คำนวณจำนวนครั้งที่มีการรัน/ส่งตรวจจริง และ อัตราการผ่านสำเร็จ (%)
@@ -150,10 +157,10 @@ export function AdminDashboard() {
     loadSystemOverview()
   }, [])
 
-  // โหลดข้อมูลสถิติใหม่เฉพาะเมื่อผู้ใช้เปลี่ยนตัวกรองเวลา (timeRange)
+  // โหลดข้อมูลสถิติใหม่เฉพาะเมื่อผู้ใช้เปลี่ยนตัวกรองวันที่ (selectedDate)
   useEffect(() => {
     loadDashboardData()
-  }, [timeRange])
+  }, [selectedDate])
 
   // รวมข้อมูลสถิติภาพรวมระบบ (Users, Exercises) เข้ากับสถิติตามช่วงเวลา (Submissions, Pass Rate) อย่างแม่นยำ
   const combinedStats = useMemo<DashboardStats | null>(() => {
@@ -172,9 +179,12 @@ export function AdminDashboard() {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, pb: 4 }}>
-      {/* Header Bar พร้อมปุ่มกรองช่วงเวลา */}
+      {/* Header Bar พร้อมปุ่มกรองวันที่แบบเลือกวันเดียว (Single Date Filter) */}
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <DashboardTimeFilter value={timeRange} onChange={setTimeRange} />
+        <DashboardTimeFilter
+          value={selectedDate}
+          onChange={setSelectedDate}
+        />
       </Box>
 
       {/* แสดง Error Alert หากดึงข้อมูลล้มเหลว */}
@@ -192,15 +202,12 @@ export function AdminDashboard() {
       )}
 
       {/* 1. การ์ดสถิติ KPI ภาพรวม */}
-      <AdminStatCards stats={combinedStats} isLoading={isLoading} timeRange={timeRange} />
+      <AdminStatCards stats={combinedStats} isLoading={isLoading} selectedDate={selectedDate} />
 
-      {/* 2. แถบปุ่มทางลัดจัดการระบบ */}
-      <AdminQuickActions onNavigate={(path) => navigate(path)} />
+      {/* 2. กราฟวิเคราะห์สถิติการเข้าใช้งานตามช่วงเวลา */}
+      <AdminUsageAnalytics selectedDate={selectedDate} isLoading={isLoading} data={usageTrends} />
 
-      {/* 3. กราฟวิเคราะห์สถิติการเข้าใช้งานตามช่วงเวลา (วางเพิ่มตรงนี้) */}
-      <AdminUsageAnalytics timeRange={timeRange} isLoading={isLoading} data={usageTrends} />
-
-      {/* 4. กราฟวิเคราะห์และตาราง Log ล่าสุด */}
+      {/* 3. กราฟวิเคราะห์และตาราง Log ล่าสุด */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1.2fr' }, gap: 3 }}>
         <AdminErrorDistribution errors={errorStats} isLoading={isLoading} />
         <AdminRecentAuditLogs logs={auditLogs} isLoading={isLoading} />

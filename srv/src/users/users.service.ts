@@ -8,11 +8,6 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * ค้นหาผู้ใช้งานทั้งหมดตามเงื่อนไข (Search, Role, Status) พร้อมรองรับ Pagination
-   * เหตุผลที่ใช้ Promise.all: เพื่อดึงข้อมูล User (findMany) และนับจำนวนรายการทั้งหมด (count) พร้อมกันในระดับ Database
-   * เพื่อลด latency และเพิ่มประสิทธิภาพการประมวลผลของระบบ
-   */
   async findAll(
     search?: string,
     roleId?: number,
@@ -54,7 +49,8 @@ export class UsersService {
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit ? limit : undefined;
 
-    const [users, total, systemTotal, onlineCount, studentCount, teacherCount] = await Promise.all([
+    // ดึงข้อมูลผู้ใช้งานและนับสถิติตามประเภทบทบาทแยกกัน (Student: 1, Teacher: 2, Admin: 3)
+    const [users, total, systemTotal, onlineCount, studentCount, teacherCount, adminCount] = await Promise.all([
       this.prisma.userProfile.findMany({
         where,
         include: {
@@ -73,7 +69,8 @@ export class UsersService {
         where: { lastActiveAt: { gte: fiveMinutesAgo } },
       }),
       this.prisma.userProfile.count({ where: { roleId: 1 } }),
-      this.prisma.userProfile.count({ where: { roleId: { in: [2, 3] } } }),
+      this.prisma.userProfile.count({ where: { roleId: 2 } }),
+      this.prisma.userProfile.count({ where: { roleId: 3 } }),
     ]);
 
     const data = users.map((user) => {
@@ -95,6 +92,7 @@ export class UsersService {
         onlineCount,
         studentCount,
         teacherCount,
+        adminCount,
       },
       page: page || 1,
       limit: limit || total,
@@ -122,10 +120,6 @@ export class UsersService {
     };
   }
 
-  /**
-   * สร้างบัญชีผู้ใช้ใหม่พร้อมตรวจสอบความซ้ำซ้อนของ Username และ Email
-   * เหตุผลที่ต้อง trim() อีเมล: ป้องกันปัญหาการตัดคำและช่องว่างเกินในระบบล็อกอิน
-   */
   async create(dto: CreateUserDto) {
     const trimmedEmail = dto.email.trim();
 
@@ -175,10 +169,6 @@ export class UsersService {
     return result;
   }
 
-  /**
-   * อัปเดตข้อมูลผู้ใช้งานพร้อมจัดการ Education และ Password แบบปลอดภัย
-   * เหตุผลที่เช็ค user.educationId: ป้องกัน Prisma runtime error หากผู้ใช้ยังไม่มีข้อมูลการศึกษาเดิมใน DB
-   */
   async update(userId: number, dto: UpdateUserDto) {
     const user = await this.prisma.userProfile.findUnique({
       where: { userId },
