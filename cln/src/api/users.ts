@@ -40,6 +40,7 @@ export interface UserStats {
     onlineCount: number;
     studentCount: number;
     teacherCount: number;
+    adminCount?: number;
 }
 
 export interface GetUsersResponse {
@@ -58,7 +59,8 @@ export const getUsers = async (params: UserFilterParams): Promise<GetUsersRespon
         const total = response.data.length;
         const onlineCount = response.data.filter((u) => u.isOnline).length;
         const studentCount = response.data.filter((u) => u.roleId === 1).length;
-        const teacherCount = response.data.filter((u) => u.roleId === 2 || u.roleId === 3).length;
+        const teacherCount = response.data.filter((u) => u.roleId === 2).length;
+        const adminCount = response.data.filter((u) => u.roleId === 3).length;
         const page = params.page || 1;
         const limit = params.limit || 10;
         const start = (page - 1) * limit;
@@ -71,6 +73,7 @@ export const getUsers = async (params: UserFilterParams): Promise<GetUsersRespon
                 onlineCount,
                 studentCount,
                 teacherCount,
+                adminCount,
             },
             page,
             limit,
