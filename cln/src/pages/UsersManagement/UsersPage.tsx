@@ -21,6 +21,7 @@ import { UserDialog } from './components/UserDialog';
 import { UserTable } from './components/UserTable';
 import { ConfirmDialog } from './components/ConfirmDialog';
 import { UserStatsHeader } from './components/UserStatsHeader';
+import { UserDetailDialog } from './components/UserDetailDialog'; 
 
 export function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -47,6 +48,7 @@ export function UsersPage() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [previewUser, setPreviewUser] = useState<User | null>(null);
 
   // State สำหรับ Confirm Dialog
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -357,6 +359,7 @@ export function UsersPage() {
               users={users}
               onEdit={handleEditClick}
               onDelete={handleDeleteClick}
+              onPreview={(user) => setPreviewUser(user)}
               formatDate={formatDate}
               getRelativeTime={getRelativeTime}
               total={total}
@@ -378,6 +381,17 @@ export function UsersPage() {
         onClose={() => setDialogOpen(false)}
         onSubmit={handleDialogSubmit}
         user={selectedUser}
+      />
+
+      {/* Quick Preview Dialog สำหรับแสดงข้อมูลส่วนตัวผู้ใช้ (สไตล์เดียวกับ ExercisePreviewDialog) */}
+      <UserDetailDialog
+        open={Boolean(previewUser)}
+        user={previewUser}
+        onClose={() => setPreviewUser(null)}
+        onEdit={(user) => {
+          setPreviewUser(null);
+          handleEditClick(user); // เมื่อกดปุ่มแก้ไขในหน้าดูข้อมูล จะเปิดหน้าต่างแก้ไขต่อได้ทันที
+        }}
       />
 
       {/* Confirm Dialog */}
