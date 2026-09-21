@@ -14,11 +14,45 @@ export interface StudentReportData {
   fullName: string;
   university: string;
   faculty: string;
+  passedExercises?: number;
+  totalExercises?: number;
   completedSessions: number;
   totalSessions: number;
   averageScore: number;
   averageAttempts: number;
+  totalSubmissions?: number;
+  passedSubmissions?: number;
   lastActiveAt?: string;
+}
+
+export interface StudentActivityItem {
+  activityId: number;
+  userId: number;
+  exerciseId: number;
+  sessionId: number;
+  startedAt: string;
+  submittedAt: string;
+  hintUsed: boolean;
+  answer: string;
+  score: number;
+  status: string;
+  output?: string | null;
+  exceptionMessage?: string | null;
+  aiFeedback?: string | null;
+  eventType: 'run' | 'submit' | string;
+  runCount: number;
+  exercise?: {
+    exerciseId: number;
+    title: string;
+    topic: string;
+    difficultyLevel: number;
+    expectedTime: number;
+  };
+  session?: {
+    sessionId: number;
+    sessionName: string;
+    targetLevel?: number;
+  };
 }
 
 export interface ExerciseAnalyticsData {
@@ -53,4 +87,34 @@ export const getExerciseAnalyticsReport = async (params: ReportFilterParams) => 
 export const getErrorAnalyticsReport = async (params: ReportFilterParams) => {
     const response = await apiClient.get<ErrorAnalyticsData[]>("/reports/errors", { params });
     return response.data;
+};
+
+export interface StudentActivitiesStats {
+  passedCount: number;
+  percentage: number;
+  averageScore: number;
+  totalActivities: number;
+  submitCount: number;
+  runCount: number;
+}
+
+export interface StudentActivitiesResponse {
+  student: {
+    userId: number;
+    username: string;
+    fullName: string;
+    email: string;
+    university: string;
+    faculty: string;
+    major: string;
+    lastActiveAt?: string;
+  } | null;
+  totalExercises: number;
+  stats?: StudentActivitiesStats;
+  activities: StudentActivityItem[];
+}
+
+export const getStudentActivities = async (userId: number) => {
+  const response = await apiClient.get<StudentActivitiesResponse>(`/reports/students/${userId}/activities`);
+  return response.data;
 };

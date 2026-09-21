@@ -30,7 +30,9 @@ export class ReportsService {
       if (startDate) {
         const parts = startDate.split('-').map(Number);
         if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-          start = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0) - MS_7_HOURS);
+          start = new Date(
+            Date.UTC(parts[0], parts[1] - 1, parts[2], 0, 0, 0, 0) - MS_7_HOURS,
+          );
         } else {
           start = new Date(startDate);
         }
@@ -39,7 +41,10 @@ export class ReportsService {
       if (endDate) {
         const parts = endDate.split('-').map(Number);
         if (parts.length === 3 && parts[0] && parts[1] && parts[2]) {
-          end = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999) - MS_7_HOURS);
+          end = new Date(
+            Date.UTC(parts[0], parts[1] - 1, parts[2], 23, 59, 59, 999) -
+              MS_7_HOURS,
+          );
         } else {
           const ed = new Date(endDate);
           ed.setHours(23, 59, 59, 999);
@@ -58,7 +63,6 @@ export class ReportsService {
     const month = nowThai.getUTCMonth();
     const date = nowThai.getUTCDate();
     const day = nowThai.getUTCDay();
-
 
     if (timeRange === 'daily') {
       // เวลาไทย 00:00:00.000 ถึง 23:59:59.999 ของวันนี้
@@ -152,6 +156,7 @@ export class ReportsService {
               : {}),
           },
           select: {
+            exerciseId: true,
             score: true,
             runCount: true,
             eventType: true,
@@ -161,30 +166,51 @@ export class ReportsService {
       },
     });
 
+    const totalExercises = await this.prisma.exercise.count({
+      where: { status: 'active' },
+    });
+
     const totalSessions = await this.prisma.session.count();
 
     return students.map((student) => {
-      // 1. จำนวนครั้งที่มีการกดทดลองรันโค้ดจริง (eventType === 'run')
-      const totalSubmissions = student.activities.filter(
-        (a) => a.eventType === 'run' || !a.eventType,
-      ).length;
-
-      // 2. จำนวนครั้งที่ทดลองรัน/ส่งตรวจแล้วผ่านเกณฑ์สำเร็จ (คะแนน >= 80)
-      const passedSubmissions = student.activities.filter(
+      // กรองเฉพาะกิจกรรมที่เป็นการส่งตรวจ (Submit) เพื่อวัดผลสัมฤทธิ์จริงของแบบฝึกหัด
+      // โดยไม่นำการทดลองรันโค้ด (Run Code) ระหว่างฝึกฝนมาปะปนกับผลการประเมิน
+      const submitActivities = student.activities.filter(
+        (a) => a.eventType === 'submit',
+      );
+      const totalSubmissions = submitActivities.length;
+      const passedSubmissions = submitActivities.filter(
         (a) => a.score >= 80,
       ).length;
 
-      const completedSessions = student.userSessions.filter(
-        (us) => us.status === 'COMPLETED',
-      ).length;
+      // คำนวณจำนวนโจทย์ที่ไม่ซ้ำที่ส่งตรวจผ่านเกณฑ์ (>= 80 คะแนน)
+      const passedExerciseSet = new Set(
+        submitActivities
+          .filter((a) => a.score >= 80)
+          .map((a) => a.exerciseId),
+      );
+      const passedExercises = passedExerciseSet.size;
 
-      const scores = student.activities.map((a) => a.score);
+      // รวมคะแนนที่ดีที่สุดในแต่ละแบบฝึกหัดที่ผู้เรียน "ส่งตรวจ" (Best score per submitted exercise)
+      // ป้องกัน Bug: ต้องตรวจสอบ !bestScoreMap.has(act.exerciseId) เพื่อให้บันทึกข้อที่ส่งตรวจแล้วได้ 0 คะแนนด้วย
+      // ป้องกันไม่ให้ข้อที่ได้ 0 คะแนนหลุดออกจากตัวหารจนคะแนนเฉลี่ยสูงเกินจริง
+      const bestScoreMap = new Map<number, number>();
+      for (const act of submitActivities) {
+        if (
+          !bestScoreMap.has(act.exerciseId) ||
+          act.score > (bestScoreMap.get(act.exerciseId) ?? 0)
+        ) {
+          bestScoreMap.set(act.exerciseId, act.score);
+        }
+      }
+      const bestScores = Array.from(bestScoreMap.values());
       const averageScore =
-        scores.length > 0
-          ? scores.reduce((sum, s) => sum + s, 0) / scores.length
+        bestScores.length > 0
+          ? bestScores.reduce((sum, s) => sum + s, 0) / bestScores.length
           : 0;
 
-      const runs = student.activities.map((a) => a.runCount);
+      // คำนวณจำนวนครั้งที่รันโค้ดเฉลี่ยต่อการส่งตรวจแต่ละครั้ง
+      const runs = submitActivities.map((a) => a.runCount);
       const averageAttempts =
         runs.length > 0 ? runs.reduce((sum, r) => sum + r, 0) / runs.length : 0;
 
@@ -194,15 +220,108 @@ export class ReportsService {
         fullName: `${student.firstName} ${student.lastName}`,
         university: student.education?.university || '-',
         faculty: student.education?.faculty || '-',
-        completedSessions,
-        totalSubmissions, // จำนวนครั้งส่งตรวจ/รันโค้ดจริง
-        passedSubmissions, // จำนวนครั้งที่ตรวจผ่านสำเร็จ
-        totalSessions,
+        passedExercises, // จำนวนโจทย์ที่ผ่านจริงจากการส่งตรวจ
+        totalExercises, // จำนวนโจทย์ทั้งหมดในระบบ
+        completedSessions: passedExercises, // รองรับกรณีโค้ดเก่าเรียกใช้
+        totalSessions: totalExercises,
+        totalSubmissions,
+        passedSubmissions,
         averageScore,
         averageAttempts,
         lastActiveAt: student.lastActiveAt,
       };
     });
+  }
+
+  // ดึงประวัติกิจกรรมทั้งหมดของผู้เรียนรายบุคคล พร้อมข้อมูลโปรไฟล์, จำนวนโจทย์ทั้งหมด และ AI Feedback
+  async getStudentActivities(userId: number) {
+    const student = await this.prisma.userProfile.findUnique({
+      where: { userId },
+      include: { education: true },
+    });
+
+    const activities = await this.prisma.activity.findMany({
+      where: { userId },
+      orderBy: { submittedAt: 'desc' },
+      include: {
+        exercise: {
+          select: {
+            exerciseId: true,
+            title: true,
+            topic: true,
+            difficultyLevel: true,
+            expectedTime: true,
+          },
+        },
+        session: {
+          select: {
+            sessionId: true,
+            sessionName: true,
+            targetLevel: true,
+          },
+        },
+      },
+    });
+
+    const totalExercises = await this.prisma.exercise.count({
+      where: { status: 'active' },
+    });
+
+    // คำนวณสถิติภาพรวมของผู้เรียนคนนี้ที่ Backend (Single Source of Truth)
+    // โดยคิดผลการประเมินจากกิจกรรม Submit และบันทึกข้อที่ได้ 0 คะแนนเข้าตัวหารอย่างถูกต้อง
+    const submitActivities = activities.filter((a) => a.eventType === 'submit');
+    const runActivities = activities.filter((a) => a.eventType === 'run');
+
+    const passedExerciseSet = new Set(
+      submitActivities
+        .filter((a) => a.score >= 80)
+        .map((a) => a.exerciseId),
+    );
+    const passedCount = passedExerciseSet.size;
+    const percentage =
+      totalExercises > 0 ? (passedCount / totalExercises) * 100 : 0;
+
+    const bestScoreMap = new Map<number, number>();
+    for (const act of submitActivities) {
+      if (
+        !bestScoreMap.has(act.exerciseId) ||
+        act.score > (bestScoreMap.get(act.exerciseId) ?? 0)
+      ) {
+        bestScoreMap.set(act.exerciseId, act.score);
+      }
+    }
+    const bestScores = Array.from(bestScoreMap.values());
+    const averageScore =
+      bestScores.length > 0
+        ? bestScores.reduce((sum, s) => sum + s, 0) / bestScores.length
+        : 0;
+
+    const stats = {
+      passedCount,
+      percentage,
+      averageScore,
+      totalActivities: activities.length,
+      submitCount: submitActivities.length,
+      runCount: runActivities.length,
+    };
+
+    return {
+      student: student
+        ? {
+            userId: student.userId,
+            username: student.username,
+            fullName: `${student.firstName} ${student.lastName}`,
+            email: student.email,
+            university: student.education?.university || '-',
+            faculty: student.education?.faculty || '-',
+            major: student.education?.major || '-',
+            lastActiveAt: student.lastActiveAt,
+          }
+        : null,
+      totalExercises,
+      stats,
+      activities,
+    };
   }
 
   async getExerciseReport(filters: {
@@ -250,6 +369,7 @@ export class ReportsService {
           },
           select: {
             status: true,
+            score: true,
             runCount: true,
             hintUsed: true,
             startedAt: true,
@@ -261,8 +381,9 @@ export class ReportsService {
 
     return exercises.map((ex) => {
       const totalActivities = ex.activities.length;
+      // เกณฑ์การทำโจทย์สำเร็จของระบบคือคะแนนตั้งแต่ 80 คะแนนขึ้นไป
       const successActivities = ex.activities.filter(
-        (a) => a.status === 'SUCCESS',
+        (a) => a.score >= 80,
       ).length;
       const successRate =
         totalActivities > 0 ? (successActivities / totalActivities) * 100 : 0;
@@ -382,9 +503,12 @@ export class ReportsService {
       .sort((a, b) => b.occurrenceCount - a.occurrenceCount);
   }
 
-
   async getUsageAnalytics(filters: { startDate?: string; endDate?: string }) {
-    const dateRange = this.getTimeRangeDates(undefined, filters.startDate, filters.endDate);
+    const dateRange = this.getTimeRangeDates(
+      undefined,
+      filters.startDate,
+      filters.endDate,
+    );
 
     const dateWhere =
       dateRange.start || dateRange.end

@@ -2,8 +2,9 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Typography, Box, LinearProgress, Button, Tooltip, TablePagination, Avatar, TableSortLabel
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-import { Download, Award, Users, GraduationCap } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Download, Award, Users, GraduationCap, Eye } from 'lucide-react';
 import type { StudentReportData } from '../../../api/reports';
 import { SortIconIndicator } from './SortIconIndicator';
 
@@ -15,15 +16,12 @@ interface StudentPerformanceReportProps {
 type SortField = 'name' | 'progress' | 'averageScore' | 'averageAttempts' | 'lastActiveAt';
 
 export function StudentPerformanceReport({ data, isLoading }: StudentPerformanceReportProps) {
+  const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortField, setSortField] = useState<SortField>('averageScore');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-
-  useEffect(() => {
-    setPage(0);
-  }, [data.length, sortField, sortOrder]);
-
+  
   const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
   };
@@ -34,6 +32,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
   };
 
   const handleSort = (field: SortField) => {
+    setPage(0);
     if (sortField === field) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -53,8 +52,12 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
     let valA = 0;
     let valB = 0;
     if (sortField === 'progress') {
-      valA = a.totalSessions > 0 ? a.completedSessions / a.totalSessions : 0;
-      valB = b.totalSessions > 0 ? b.completedSessions / b.totalSessions : 0;
+      const totalA = a.totalExercises || a.totalSessions || 1;
+      const totalB = b.totalExercises || b.totalSessions || 1;
+      const passedA = a.passedExercises ?? a.completedSessions ?? 0;
+      const passedB = b.passedExercises ?? b.completedSessions ?? 0;
+      valA = passedA / totalA;
+      valB = passedB / totalB;
     } else if (sortField === 'averageScore') {
       valA = a.averageScore;
       valB = b.averageScore;
@@ -133,7 +136,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
         </Tooltip>
       </Box>
 
-      {/* TableContainer ตารางสถิติผู้เรียน - วางบน Card โดยตรงพร้อมหัวตาราง #f8fafc ถอดแบบจาก UserTable */}
+      {/* TableContainer ตารางสถิติผู้เรียน */}
       <TableContainer sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: 900 }}>
           <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -176,22 +179,24 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                 </TableSortLabel>
               </TableCell>
               <TableCell align="center">
-                <TableSortLabel
-                  active={sortField === 'averageScore'}
-                  direction={sortField === 'averageScore' ? sortOrder : 'desc'}
-                  onClick={() => handleSort('averageScore')}
-                  IconComponent={() => (
-                    <SortIconIndicator active={sortField === 'averageScore'} direction={sortOrder} />
-                  )}
-                  sx={{
-                    fontWeight: 700,
-                    color: '#475569',
-                    '&.MuiTableSortLabel-root': { color: '#475569' },
-                    '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
-                  }}
-                >
-                  คะแนนรวมเฉลี่ย
-                </TableSortLabel>
+                <Tooltip title="คำนวณจากคะแนนที่ดีที่สุดของแต่ละข้อที่ผู้เรียนทำ">
+                  <TableSortLabel
+                    active={sortField === 'averageScore'}
+                    direction={sortField === 'averageScore' ? sortOrder : 'desc'}
+                    onClick={() => handleSort('averageScore')}
+                    IconComponent={() => (
+                      <SortIconIndicator active={sortField === 'averageScore'} direction={sortOrder} />
+                    )}
+                    sx={{
+                      fontWeight: 700,
+                      color: '#475569',
+                      '&.MuiTableSortLabel-root': { color: '#475569' },
+                      '&.MuiTableSortLabel-root:hover': { color: '#2563eb' },
+                    }}
+                  >
+                    คะแนนเฉลี่ย
+                  </TableSortLabel>
+                </Tooltip>
               </TableCell>
               <TableCell align="center">
                 <TableSortLabel
@@ -229,12 +234,15 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                   ใช้งานล่าสุด
                 </TableSortLabel>
               </TableCell>
+              <TableCell align="center" sx={{ minWidth: '130px', fontWeight: 700, color: '#475569' }}>
+                การจัดการ
+              </TableCell>
             </TableRow>
           </TableHead>
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Box sx={{ width: '100%', maxWidth: 300, mx: 'auto' }}>
                       <LinearProgress sx={{ borderRadius: 3, height: 6 }} />
                       <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดรายงานความคืบหน้า...</Typography>
@@ -243,14 +251,16 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
+                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Users size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
                     <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>ไม่พบข้อมูลรายชื่อผู้เรียน</Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 paginatedData.map((student) => {
-                  const percentage = student.totalSessions > 0 ? (student.completedSessions / student.totalSessions) * 100 : 0;
+                  const totalEx = student.totalExercises || student.totalSessions || 25;
+                  const passedEx = student.passedExercises ?? student.completedSessions ?? 0;
+                  const percentage = totalEx > 0 ? (passedEx / totalEx) * 100 : 0;
                   return (
                     <TableRow key={student.userId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                       <TableCell>
@@ -272,7 +282,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
-                              {student.completedSessions} / {student.totalSessions} เซสชัน
+                              ผ่าน {passedEx} / {totalEx} ข้อ
                             </Typography>
                             <Typography variant="caption" sx={{ fontWeight: 700, color: '#10b981' }}>
                               {percentage.toFixed(0)}%
@@ -298,6 +308,31 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                       </TableCell>
                       <TableCell sx={{ fontSize: '13px', color: '#64748b' }}>
                         {student.lastActiveAt ? new Date(student.lastActiveAt).toLocaleDateString('th-TH') : '-'}
+                      </TableCell>
+                      <TableCell align="center">
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<Eye size={15} />}
+                          onClick={() => navigate(`/reports/students/${student.userId}`)}
+                          sx={{
+                            borderRadius: '8px',
+                            borderColor: '#cbd5e1',
+                            color: '#2563eb',
+                            fontWeight: 700,
+                            fontSize: '12px',
+                            textTransform: 'none',
+                            py: 0.5,
+                            px: 1.5,
+                            whiteSpace: 'nowrap',
+                            '&:hover': {
+                              bgcolor: '#eff6ff',
+                              borderColor: '#93c5fd',
+                            }
+                          }}
+                        >
+                          ดูประวัติการทำ
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
@@ -330,6 +365,3 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
     </Box>
   );
 }
-
-
-

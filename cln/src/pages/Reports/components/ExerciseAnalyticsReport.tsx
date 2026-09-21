@@ -1,5 +1,5 @@
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, Box, Chip, LinearProgress, TablePagination, TableSortLabel } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BookOpen, HelpCircle } from 'lucide-react';
 import type { ExerciseAnalyticsData } from '../../../api/reports';
 import { SortIconIndicator } from './SortIconIndicator';
@@ -17,10 +17,6 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
   const [sortField, setSortField] = useState<SortField>('difficulty');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  useEffect(() => {
-    setPage(0);
-  }, [data.length, sortField, sortOrder]);
-
   const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
   };
@@ -31,6 +27,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
   };
 
   const handleSort = (field: SortField) => {
+    setPage(0);
     if (sortField === field) {
       setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -98,7 +95,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
         </Typography>
       </Box>
 
-      {/* TableContainer ตารางสถิติโจทย์ - วางบน Card โดยตรงพร้อมหัวตาราง #f8fafc ถอดแบบจาก UserTable */}
+      {/* TableContainer ตารางสถิติโจทย์ */}
       <TableContainer sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: 900 }}>
           <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -258,4 +255,3 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
     </Box>
   );
 }
-

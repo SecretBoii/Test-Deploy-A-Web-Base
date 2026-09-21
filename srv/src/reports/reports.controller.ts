@@ -4,6 +4,7 @@ import {
   Query,
   UseGuards,
   ForbiddenException,
+  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user-decorator';
@@ -83,5 +84,14 @@ export class ReportsController {
   ) {
     this.checkAdminOrTeacher(user);
     return this.reportsService.getUsageAnalytics({ startDate, endDate });
+  }
+
+  @Get('students/:userId/activities')
+  async getStudentActivities(
+    @CurrentUser() user: any,
+    @Param('userId') userId: string,
+  ) {
+    this.checkAdminOrTeacher(user);
+    return this.reportsService.getStudentActivities(Number(userId));
   }
 }
