@@ -103,7 +103,7 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
         </Grid>
       )}
 
-      {/* Grid รายการข้อผิดพลาดที่พบในระบบ - ขอบมน 16px ตามแบบ Student Home */}
+      {/* Grid รายการข้อผิดพลาดที่พบในระบบ */}
       <Grid container spacing={2.5}>
         {isLoading ? (
           <Grid size={{ xs: 12 }}>
@@ -169,7 +169,7 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
                     sx={{ height: 7, borderRadius: 3, bgcolor: theme.barBg, '& .MuiLinearProgress-bar': { bgcolor: theme.barColor, borderRadius: 3 } }}
                   />
 
-                  {/* กล่อง Terminal จำลองแสดง Exception Message (มุมมน 12px) */}
+                  {/* กล่อง Terminal จำลองแสดง Exception Message */}
                   <Box sx={{ p: 2, bgcolor: '#0f172a', borderRadius: '12px', color: '#f8fafc' }}>
                     <Typography sx={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', fontSize: '12px', color: theme.textColor, wordBreak: 'break-all', lineHeight: 1.5 }}>
                       {err.commonExceptionMessage || 'ไม่มีตัวอย่างข้อความสถิติ'}
@@ -184,7 +184,3 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
     </Box>
   );
 }
-
-
-
-

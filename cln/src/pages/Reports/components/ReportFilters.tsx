@@ -16,15 +16,20 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
     education: '',
   });
 
-  const isInitialMount = useRef(true);
+  // ปรับสถานะ search ให้ว่างเมื่อ activeTab เปลี่ยนแปลง (ตามแนวทางทางการของ React: Adjusting state on prop change)
+  const [prevTab, setPrevTab] = useState(activeTab);
+  if (prevTab !== activeTab) {
+    setPrevTab(activeTab);
+    if (filters.search) {
+      setFilters((prev) => ({ ...prev, search: '' }));
+    }
+  }
 
-  // รีเซ็ตข้อความค้นหาเมื่อเปลี่ยน Tab โดยป้องกันการยิง API ซ้ำด้วย State Bail-out
+  const isInitialMount = useRef(true);
+  const onFilterChangeRef = useRef(onFilterChange);
   useEffect(() => {
-    setFilters((prev) => {
-      if (!prev.search) return prev; // หากว่างไม่อัปเดตเพื่อหลีกเลี่ยง Re-render/Fetch ซ้ำ
-      return { ...prev, search: '' };
-    });
-  }, [activeTab]);
+    onFilterChangeRef.current = onFilterChange;
+  });
 
   // ใช้ useEffect สำหรับ Debounce หน่วงเวลา 400ms (เว้น Initial Mount เพื่อไม่ให้โหลดซ้ำรอบสอง)
   useEffect(() => {
@@ -34,7 +39,7 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
     }
 
     const timer = setTimeout(() => {
-      onFilterChange(filters);
+      onFilterChangeRef.current(filters);
     }, 400);
 
     return () => {
@@ -153,6 +158,3 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
     </Box>
   );
 }
-
-
-
