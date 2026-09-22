@@ -9,21 +9,20 @@ interface ReportFiltersProps {
 }
 
 export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps) {
-  const [filters, setFilters] = useState<ReportFilterParams>({
-    search: '',
-    startDate: '',
-    endDate: '',
-    education: '',
-  });
+  const [search, setSearch] = useState('');
+  const [education, setEducation] = useState('');
 
-  // ปรับสถานะ search ให้ว่างเมื่อ activeTab เปลี่ยนแปลง (ตามแนวทางทางการของ React: Adjusting state on prop change)
-  const [prevTab, setPrevTab] = useState(activeTab);
-  if (prevTab !== activeTab) {
-    setPrevTab(activeTab);
-    if (filters.search) {
-      setFilters((prev) => ({ ...prev, search: '' }));
+  // ติดตามการสลับแท็บเพื่อรีเซ็ตข้อความค้นหา โดยไม่ปล่อยให้ Debounce ยิง API ซ้ำรอบสอง
+  const prevTabRef = useRef(activeTab);
+  const skipDebounceRef = useRef(false);
+
+  useEffect(() => {
+    if (prevTabRef.current !== activeTab) {
+      prevTabRef.current = activeTab;
+      skipDebounceRef.current = true;
+      setSearch('');
     }
-  }
+  }, [activeTab]);
 
   const isInitialMount = useRef(true);
   const onFilterChangeRef = useRef(onFilterChange);
@@ -31,30 +30,31 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
     onFilterChangeRef.current = onFilterChange;
   });
 
-  // ใช้ useEffect สำหรับ Debounce หน่วงเวลา 400ms (เว้น Initial Mount เพื่อไม่ให้โหลดซ้ำรอบสอง)
+  // ใช้ useEffect สำหรับ Debounce หน่วงเวลา 400ms เมื่อผู้ใช้พิมพ์ค้นหา
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
+    if (skipDebounceRef.current) {
+      skipDebounceRef.current = false;
+      return;
+    }
 
     const timer = setTimeout(() => {
-      onFilterChangeRef.current(filters);
+      onFilterChangeRef.current({ search, education });
     }, 400);
 
     return () => {
       clearTimeout(timer);
     };
-  }, [filters]);
-
-  // อัปเดตค่า Filter ใน Local State (พิมพ์ติดปุ๊บปั๊บลื่นไหล ไม่กระตุก)
-  const handleInputChange = (field: keyof ReportFilterParams, value: string) => {
-    setFilters((prev) => ({ ...prev, [field]: value }));
-  };
+  }, [search, education]);
 
   // รีเซ็ตค่าการกรองทั้งหมดกลับเป็นค่าเริ่มต้น
   const handleReset = () => {
-    setFilters({ search: '', startDate: '', endDate: '', education: '' });
+    setSearch('');
+    setEducation('');
+    onFilterChangeRef.current({ search: '', education: '' });
   };
 
   // กำหนดข้อความ Placeholder ช่องค้นหาให้ตรงตาม Context ของ Tab ที่เปิดอยู่
@@ -72,8 +72,8 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
           <TextField
             fullWidth
             placeholder={getSearchPlaceholder()}
-            value={filters.search}
-            onChange={(e) => handleInputChange('search', e.target.value)}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             slotProps={{
               input: {
                 startAdornment: (
@@ -101,8 +101,8 @@ export function ReportFilters({ activeTab, onFilterChange }: ReportFiltersProps)
           <TextField
             fullWidth
             placeholder="สังกัด / สถาบันการศึกษา / มหาวิทยาลัย..."
-            value={filters.education || ''}
-            onChange={(e) => handleInputChange('education', e.target.value)}
+            value={education}
+            onChange={(e) => setEducation(e.target.value)}
             slotProps={{
               input: {
                 startAdornment: (

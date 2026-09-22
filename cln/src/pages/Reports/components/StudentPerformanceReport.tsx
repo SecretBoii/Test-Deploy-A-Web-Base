@@ -71,7 +71,11 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
     return sortOrder === 'asc' ? valA - valB : valB - valA;
   });
 
-  const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริง
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
+  const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
+
+  const paginatedData = sortedData.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
 
   // ฟังก์ชันดาวน์โหลดรายงานเป็นไฟล์ CSV
   const exportToCSV = () => {
@@ -347,7 +351,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
           component="div"
           count={data.length}
           rowsPerPage={rowsPerPage}
-          page={page}
+          page={safePage}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           labelRowsPerPage="แสดงแถวต่อหน้า:"

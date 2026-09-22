@@ -48,6 +48,7 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('education') education?: string,
+    @Query('search') search?: string,
     @Query('timeRange') timeRange?: string,
   ) {
     this.checkAdminOrTeacher(user);
@@ -55,7 +56,21 @@ export class ReportsController {
       startDate,
       endDate,
       education,
+      search,
       timeRange,
+    });
+  }
+
+  // ดึงรายละเอียดผลงานของนักศึกษารายคนสำหรับโจทย์ข้อที่เลือก (Drill-Down)
+  @Get('exercises/:exerciseId/students')
+  async getExerciseStudentBreakdown(
+    @CurrentUser() user: any,
+    @Param('exerciseId') exerciseId: string,
+    @Query('education') education?: string,
+  ) {
+    this.checkAdminOrTeacher(user);
+    return this.reportsService.getExerciseStudentBreakdown(Number(exerciseId), {
+      education,
     });
   }
 
@@ -65,6 +80,7 @@ export class ReportsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
     @Query('education') education?: string,
+    @Query('search') search?: string,
     @Query('timeRange') timeRange?: string,
   ) {
     this.checkAdminOrTeacher(user);
@@ -72,6 +88,7 @@ export class ReportsController {
       startDate,
       endDate,
       education,
+      search,
       timeRange,
     });
   }

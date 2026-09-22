@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Paper, Typography, Box, Grid, LinearProgress, Chip } from '@mui/material';
 import { AlertTriangle, CheckCircle, Bug, Activity, Layers } from 'lucide-react';
 import type { ErrorAnalyticsData } from '../../../api/reports';
@@ -5,6 +6,7 @@ import type { ErrorAnalyticsData } from '../../../api/reports';
 interface ErrorAnalyticsReportProps {
   data: ErrorAnalyticsData[];
   isLoading: boolean;
+  searchQuery?: string;
 }
 
 // ฟังก์ชันช่วยกำหนดธีมสีและป้ายบอกหมวดหมู่ของ Exception แต่ละประเภท
@@ -47,10 +49,17 @@ const getErrorTheme = (errorType: string, index: number = 0) => {
   return fallbacks[index % fallbacks.length];
 };
 
-export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportProps) {
-  // คำนวณภาพรวมสถิติ Exception
-  const totalOccurrences = data.reduce((acc, curr) => acc + curr.occurrenceCount, 0);
-  const topError = data.length > 0 ? [...data].sort((a, b) => b.occurrenceCount - a.occurrenceCount)[0] : null;
+export function ErrorAnalyticsReport({ data, isLoading, searchQuery = '' }: ErrorAnalyticsReportProps) {
+  // กรองตามประเภท Exception ด้วยคำค้นหา
+  const filteredData = useMemo<ErrorAnalyticsData[]>(() => {
+    if (!searchQuery.trim()) return data;
+    const q = searchQuery.toLowerCase().trim();
+    return data.filter((err: ErrorAnalyticsData) => err.errorType.toLowerCase().includes(q));
+  }, [data, searchQuery]);
+
+  // คำนวณภาพรวมสถิติ Exception จากข้อมูลที่กรอง
+  const totalOccurrences = filteredData.reduce((acc: number, curr: ErrorAnalyticsData) => acc + curr.occurrenceCount, 0);
+  const topError = filteredData.length > 0 ? [...filteredData].sort((a, b) => b.occurrenceCount - a.occurrenceCount)[0] : null;
 
   return (
     <Box>
@@ -60,12 +69,12 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
           <AlertTriangle size={18} />
         </Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
-          รายงานสถิติข้อผิดพลาดและ Exceptions ภาษาไพทอน ({data.length} ประเภท)
+          รายงานสถิติข้อผิดพลาดและ Exceptions ภาษาไพทอน ({filteredData.length}{searchQuery.trim() ? ` / ${data.length}` : ''} ประเภท)
         </Typography>
       </Box>
 
       {/* Top KPI Analytics Summary Cards */}
-      {!isLoading && data.length > 0 && (
+      {!isLoading && filteredData.length > 0 && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
             <Paper sx={{ p: 2, borderRadius: '12px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -96,7 +105,7 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
               </Box>
               <Box>
                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>หมวดหมู่ Error ที่พบ</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>{data.length} หมวด</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>{filteredData.length} หมวด</Typography>
               </Box>
             </Paper>
           </Grid>
@@ -112,16 +121,22 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
               <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดวิเคราะห์ข้อผิดพลาด...</Typography>
             </Box>
           </Grid>
-        ) : data.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <Grid size={{ xs: 12 }}>
             <Box sx={{ py: 6, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
               <CheckCircle size={36} color="#10b981" style={{ marginBottom: 8 }} />
-              <Typography sx={{ color: '#64748b', fontWeight: 700, fontSize: '14px' }}>ไม่พบประวัติข้อผิดพลาดในระบบ</Typography>
-              <Typography variant="caption" sx={{ color: '#94a3b8' }}>นักเรียนสามารถรันโค้ดและผ่านโจทย์โดยไม่มี Exception รุนแรง</Typography>
+              <Typography sx={{ color: '#64748b', fontWeight: 700, fontSize: '14px' }}>
+                {data.length === 0 ? 'ไม่พบประวัติข้อผิดพลาดในระบบ' : 'ไม่พบประเภทข้อผิดพลาดที่ตรงกับคำค้นหา'}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                {data.length === 0 
+                  ? 'นักเรียนสามารถรันโค้ดและผ่านโจทย์โดยไม่มี Exception รุนแรง'
+                  : `ไม่พบข้อมูล Error ที่มีคำว่า "${searchQuery}"`}
+              </Typography>
             </Box>
           </Grid>
         ) : (
-          data.map((err, index) => {
+          filteredData.map((err, index) => {
             const theme = getErrorTheme(err.errorType, index);
             return (
               <Grid size={{ xs: 12, md: 6 }} key={err.errorType}>
