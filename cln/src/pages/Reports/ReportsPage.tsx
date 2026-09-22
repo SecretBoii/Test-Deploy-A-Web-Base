@@ -50,6 +50,12 @@ export default function ReportsPage() {
     fetchReport();
   }, [activeTab, filters]);
 
+  // เมื่อเปลี่ยน Tab ให้เคลียร์ search ทันที เพื่อไม่ให้เกิด Double Fetch หรือเอาคำค้นหาเก่าไปใช้กับแท็บใหม่
+  const handleTabChange = (_: React.SyntheticEvent, newTab: number) => {
+    setActiveTab(newTab);
+    setFilters((prev) => (prev.search ? { ...prev, search: '' } : prev));
+  };
+
   const handleFilterChange = (newFilters: ReportFilterParams) => {
     setFilters(newFilters);
   };
@@ -61,43 +67,44 @@ export default function ReportsPage() {
         {/* Main Content Area wrapped in Card - ขอบมน 16px ตามมาตรฐาน Student Home */}
         <Card sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
           
-          {/* Component ตัวกรองข้อมูล */}
-          <ReportFilters activeTab={activeTab} onFilterChange={handleFilterChange} />
-
-          {/* Clean Segmented Tabs - ขอบมน 12px */}
-          <Box sx={{ mb: 3 }}>
+          {/* แถบนำทางเลือกประเภทรายงาน - Modern Underline Tabs */}
+          <Box sx={{ borderBottom: '1px solid #e2e8f0', mb: 3 }}>
             <Tabs 
               value={activeTab} 
-              onChange={(_, val) => setActiveTab(val)} 
+              onChange={handleTabChange} 
+              textColor="primary"
+              indicatorColor="primary"
               sx={{ 
-                bgcolor: '#f8fafc',
-                p: '4px',
-                borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                minHeight: 'auto',
-                '& .MuiTabs-indicator': { display: 'none' },
+                minHeight: '48px',
+                '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: '#2563eb' },
                 '& .MuiTab-root': { 
-                  fontWeight: 700, 
+                  fontWeight: 600, 
                   textTransform: 'none', 
-                  fontSize: '14px',
-                  borderRadius: '8px',
-                  minHeight: '40px',
+                  fontSize: '14.5px',
+                  minHeight: '48px',
                   color: '#64748b',
                   px: 2.5,
                   transition: 'all 0.15s ease',
+                  '&:hover': {
+                    color: '#1e293b'
+                  },
                   '&.Mui-selected': { 
-                    bgcolor: '#ffffff', 
                     color: '#2563eb',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                    fontWeight: 700
                   } 
                 }
               }}
             >
-              <Tab icon={<Users size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="รายงานผู้เรียนรายบุคคล" />
-              <Tab icon={<BookOpen size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="วิเคราะห์ประสิทธิภาพโจทย์" />
-              <Tab icon={<AlertTriangle size={16} style={{ marginRight: 6 }} />} iconPosition="start" label="สรุปข้อผิดพลาด & Exceptions" />
+              <Tab icon={<Users size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="รายงานผู้เรียนรายบุคคล" />
+              <Tab icon={<BookOpen size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="วิเคราะห์ประสิทธิภาพโจทย์" />
+              <Tab icon={<AlertTriangle size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="สรุปข้อผิดพลาด & Exceptions" />
             </Tabs>
           </Box>
+
+          {/* Component ตัวกรองข้อมูลส่วนกลาง (แสดงเฉพาะแท็บ 0 ผู้เรียน และ แท็บ 2 ข้อผิดพลาด ส่วนแท็บ 1 มี Toolbar ครบในตัว) */}
+          {activeTab !== 1 && (
+            <ReportFilters activeTab={activeTab} onFilterChange={handleFilterChange} />
+          )}
 
           {/* Tab Panel Display */}
           <Box>
@@ -105,10 +112,10 @@ export default function ReportsPage() {
               <StudentPerformanceReport data={studentData} isLoading={loading} />
             )}
             {activeTab === 1 && (
-              <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} />
+              <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} searchQuery={filters.search} />
             )}
             {activeTab === 2 && (
-              <ErrorAnalyticsReport data={errorData} isLoading={loading} />
+              <ErrorAnalyticsReport data={errorData} isLoading={loading} searchQuery={filters.search} />
             )}
           </Box>
         </Card>

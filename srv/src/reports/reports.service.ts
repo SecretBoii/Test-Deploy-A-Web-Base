@@ -324,10 +324,12 @@ export class ReportsService {
     };
   }
 
+  // ดึงรายงานสถิติของแบบฝึกหัดทั้งหมด พร้อมคำนวณสถิติผู้เข้าทำและอัตราผ่านรายบุคคล (Unique Students)
   async getExerciseReport(filters: {
     startDate?: string;
     endDate?: string;
     education?: string;
+    search?: string;
     timeRange?: string;
   }) {
     const dateRange = this.getTimeRangeDates(
@@ -335,7 +337,32 @@ export class ReportsService {
       filters.startDate,
       filters.endDate,
     );
+
+    // 1. นับจำนวนนักศึกษาทั้งหมดในระบบ (หรือตามตัวกรองสถาบัน) เพื่อใช้เป็นตัวหารของ Overall Pass Rate
+    const totalStudents = await this.prisma.userProfile.count({
+      where: {
+        roleId: 1, // เฉพาะนักศึกษา
+        education: filters.education
+          ? {
+              OR: [
+                { university: { contains: filters.education, mode: 'insensitive' } },
+                { faculty: { contains: filters.education, mode: 'insensitive' } },
+              ],
+            }
+          : undefined,
+      },
+    });
+
+    // 2. ดึงข้อมูลโจทย์พร้อมกิจกรรม (Activities) โดยกรองตามชื่อโจทย์หรือหัวข้อหากมีคำค้นหา
     const exercises = await this.prisma.exercise.findMany({
+      where: filters.search
+        ? {
+            OR: [
+              { title: { contains: filters.search, mode: 'insensitive' } },
+              { topic: { contains: filters.search, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
       include: {
         activities: {
           where: {
@@ -343,18 +370,8 @@ export class ReportsService {
               ? {
                   education: {
                     OR: [
-                      {
-                        university: {
-                          contains: filters.education,
-                          mode: 'insensitive',
-                        },
-                      },
-                      {
-                        faculty: {
-                          contains: filters.education,
-                          mode: 'insensitive',
-                        },
-                      },
+                      { university: { contains: filters.education, mode: 'insensitive' } },
+                      { faculty: { contains: filters.education, mode: 'insensitive' } },
                     ],
                   },
                 }
@@ -368,10 +385,12 @@ export class ReportsService {
                 : undefined,
           },
           select: {
+            userId: true,
             status: true,
             score: true,
             runCount: true,
             hintUsed: true,
+            eventType: true,
             startedAt: true,
             submittedAt: true,
           },
@@ -380,59 +399,227 @@ export class ReportsService {
     });
 
     return exercises.map((ex) => {
-      const totalActivities = ex.activities.length;
-      // เกณฑ์การทำโจทย์สำเร็จของระบบคือคะแนนตั้งแต่ 80 คะแนนขึ้นไป
-      const successActivities = ex.activities.filter(
-        (a) => a.score >= 80,
-      ).length;
-      const successRate =
-        totalActivities > 0 ? (successActivities / totalActivities) * 100 : 0;
+      const submitActivities = ex.activities.filter((a) => a.eventType === 'submit');
+      const runActivities = ex.activities.filter((a) => a.eventType === 'run');
 
-      const runs = ex.activities.map((a) => a.runCount);
-      const averageAttempts =
-        runs.length > 0 ? runs.reduce((sum, r) => sum + r, 0) / runs.length : 0;
+      // รวมคะแนนที่ดีที่สุดของนักศึกษาแต่ละคน (Unique User) เพื่อวัดผลสัมฤทธิ์ที่แท้จริง
+      const userBestScoreMap = new Map<number, number>();
+      for (const act of submitActivities) {
+        const currentBest = userBestScoreMap.get(act.userId) ?? -1;
+        if (act.score > currentBest) {
+          userBestScoreMap.set(act.userId, act.score);
+        }
+      }
 
+      // นับจำนวนนักศึกษาที่ไม่ซ้ำที่เข้าทำโจทย์ข้อนี้
+      const attemptedUserIds = Array.from(new Set(ex.activities.map((a) => a.userId)));
+      const attemptedStudents = attemptedUserIds.length;
+
+      // จำนวนนักศึกษาที่ทำผ่านเกณฑ์ (>= 80 คะแนน)
+      let passedStudents = 0;
+      userBestScoreMap.forEach((score) => {
+        if (score >= 80) passedStudents += 1;
+      });
+
+      // อัตราการผ่านคิดจากคนที่เข้าทำ (Pass Rate among Attempted)
+      const passRateAttempted = attemptedStudents > 0 ? (passedStudents / attemptedStudents) * 100 : 0;
+
+      // อัตราการผ่านคิดจากนักศึกษาทั้งหมดในระบบ (Overall Pass Rate)
+      const passRateOverall = totalStudents > 0 ? (passedStudents / totalStudents) * 100 : 0;
+
+      // ค่าเฉลี่ยจำนวนครั้ง Run และ Submit ต่อคนที่เข้าทำ
+      const totalRuns = runActivities.length;
+      const totalSubmits = submitActivities.length;
+      const avgRuns = attemptedStudents > 0 ? totalRuns / attemptedStudents : 0;
+      const avgSubmits = attemptedStudents > 0 ? totalSubmits / attemptedStudents : 0;
+
+      // อัตราการขอคำใบ้
       const hintUsedCount = ex.activities.filter((a) => a.hintUsed).length;
-      const hintUsageRate =
-        totalActivities > 0 ? (hintUsedCount / totalActivities) * 100 : 0;
+      const hintUsageRate = ex.activities.length > 0 ? (hintUsedCount / ex.activities.length) * 100 : 0;
 
-      const times = ex.activities
+      // เวลาเฉลี่ยที่ใช้จริง (นาที)
+      // ป้องกัน Outlier ข้ามวัน: กรองเฉพาะช่วงเวลาที่ทำต่อเนื่องจริง (ไม่เกิน 120 นาที) เพื่อไม่ให้ค่าเฉลี่ยเพี้ยนจากคนที่เปิดจอทิ้งไว้
+      const rawTimes = submitActivities
         .filter((a) => a.startedAt && a.submittedAt)
-        .map((a) => {
-          const diffMs =
-            new Date(a.submittedAt).getTime() - new Date(a.startedAt).getTime();
-          return diffMs / (1000 * 60);
-        });
+        .map((a) => Math.max(0, (new Date(a.submittedAt).getTime() - new Date(a.startedAt).getTime()) / (1000 * 60)));
 
-      const averageTimeSpentMinutes =
-        times.length > 0
-          ? times.reduce((sum, t) => sum + t, 0) / times.length
-          : 0;
+      const realisticTimes = rawTimes.filter((t) => t <= 120);
+      const timesToAverage = realisticTimes.length > 0 
+        ? realisticTimes 
+        : rawTimes.map((t) => Math.min(t, Math.max((ex.expectedTime || 10) * 3, 60)));
+
+      const avgTimeSpentMinutes = timesToAverage.length > 0
+        ? timesToAverage.reduce((s, t) => s + t, 0) / timesToAverage.length
+        : 0;
 
       return {
         exerciseId: ex.exerciseId,
         title: ex.title,
         topic: ex.topic,
         difficultyLevel: ex.difficultyLevel,
-        successRate,
-        averageAttempts,
+        attemptedStudents,
+        totalStudents,
+        passedStudents,
+        successRate: passRateAttempted,
+        passRateAttempted,
+        passRateOverall,
+        averageAttempts: avgRuns,
+        avgRuns,
+        avgSubmits,
+        totalRuns,
+        totalSubmits,
         hintUsageRate,
-        avgTimeSpentMinutes: averageTimeSpentMinutes,
+        avgTimeSpentMinutes,
         expectedTimeMinutes: ex.expectedTime,
       };
     });
+  }
+
+  // ดึงรายละเอียดผลงานของนักศึกษารายคนสำหรับโจทย์ข้อที่ระบุ (Drill-Down)
+  async getExerciseStudentBreakdown(exerciseId: number, filters?: { education?: string }) {
+    // 1. ดึงรายละเอียดโจทย์
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { exerciseId },
+    });
+    if (!exercise) {
+      throw new Error('ไม่พบข้อมูลแบบฝึกหัดที่ระบุ');
+    }
+
+    // 2. ดึงนักศึกษาทั้งหมดในระบบ (หรือกรองตามสถาบัน)
+    const students = await this.prisma.userProfile.findMany({
+      where: {
+        roleId: 1, // เฉพาะนักศึกษา
+        education: filters?.education
+          ? {
+              OR: [
+                { university: { contains: filters.education, mode: 'insensitive' } },
+                { faculty: { contains: filters.education, mode: 'insensitive' } },
+              ],
+            }
+          : undefined,
+      },
+      include: {
+        education: true,
+        activities: {
+          where: { exerciseId },
+          orderBy: { submittedAt: 'desc' },
+        },
+      },
+      orderBy: { firstName: 'asc' },
+    });
+
+    // 3. รวบรวมสถิติรายบุคคล
+    let totalRunsSum = 0;
+    let totalSubmitsSum = 0;
+    let passedCount = 0;
+    let attemptedCount = 0;
+    let bestScoreSum = 0;
+
+    const studentList = students.map((student) => {
+      const acts = student.activities;
+      const submits = acts.filter((a) => a.eventType === 'submit');
+      const runs = acts.filter((a) => a.eventType === 'run');
+
+      const isAttempted = acts.length > 0;
+      if (isAttempted) attemptedCount += 1;
+
+      let bestScore = 0;
+      const hasSubmit = submits.length > 0;
+      if (hasSubmit) {
+        bestScore = Math.max(...submits.map((s) => s.score));
+        bestScoreSum += bestScore;
+      }
+
+      const isPassed = bestScore >= 80;
+      if (isPassed) passedCount += 1;
+
+      totalRunsSum += runs.length;
+      totalSubmitsSum += submits.length;
+
+      const latestSubmit = submits[0] || acts[0] || null;
+
+      return {
+        userId: student.userId,
+        username: student.username,
+        fullName: `${student.firstName} ${student.lastName}`.trim(),
+        university: student.education?.university || '-',
+        faculty: student.education?.faculty || '-',
+        isAttempted,
+        status: !isAttempted ? 'NOT_STARTED' : isPassed ? 'PASSED' : 'FAILED',
+        bestScore: hasSubmit ? bestScore : null,
+        runCount: runs.length,
+        submitCount: submits.length,
+        totalAttempts: acts.length,
+        lastSubmittedAt: latestSubmit ? latestSubmit.submittedAt : null,
+        latestActivity: latestSubmit
+          ? {
+              activityId: latestSubmit.activityId,
+              userId: student.userId,
+              exerciseId: exercise.exerciseId,
+              sessionId: latestSubmit.sessionId,
+              startedAt: latestSubmit.startedAt,
+              submittedAt: latestSubmit.submittedAt,
+              hintUsed: latestSubmit.hintUsed,
+              score: latestSubmit.score,
+              status: latestSubmit.status,
+              answer: latestSubmit.answer,
+              output: latestSubmit.output,
+              exceptionMessage: latestSubmit.exceptionMessage,
+              aiFeedback: latestSubmit.aiFeedback,
+              eventType: latestSubmit.eventType,
+              runCount: latestSubmit.runCount,
+            }
+          : null,
+      };
+    });
+
+    const totalStudents = students.length;
+    const avgScore = attemptedCount > 0 ? bestScoreSum / attemptedCount : 0;
+
+    return {
+      exercise: {
+        exerciseId: exercise.exerciseId,
+        title: exercise.title,
+        topic: exercise.topic,
+        objective: exercise.objective,
+        difficultyLevel: exercise.difficultyLevel,
+        expectedTime: exercise.expectedTime,
+        hint: exercise.hint,
+      },
+      stats: {
+        totalStudents,
+        attemptedCount,
+        passedCount,
+        passRateAttempted: attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
+        passRateOverall: totalStudents > 0 ? (passedCount / totalStudents) * 100 : 0,
+        totalRuns: totalRunsSum,
+        totalSubmits: totalSubmitsSum,
+        avgRuns: attemptedCount > 0 ? totalRunsSum / attemptedCount : 0,
+        avgSubmits: attemptedCount > 0 ? totalSubmitsSum / attemptedCount : 0,
+        avgScore,
+      },
+      students: studentList,
+    };
   }
 
   async getErrorReport(filter: {
     startDate?: string;
     endDate?: string;
     education?: string;
+    search?: string;
     timeRange?: string;
   }) {
     const where: any = {
       eventType: 'run',
       exceptionMessage: { not: null },
     };
+
+    if (filter.search) {
+      where.exceptionMessage = {
+        contains: filter.search,
+        mode: 'insensitive',
+      };
+    }
 
     if (filter.education) {
       where.user = {

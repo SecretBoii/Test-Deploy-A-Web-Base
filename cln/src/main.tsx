@@ -21,6 +21,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import UsersPage from './pages/UsersManagement/UsersPage.tsx'
 import ReportsPage from './pages/Reports/ReportsPage.tsx'
 import StudentReportDetailPage from './pages/StudentReportDetail/StudentReportDetailPage.tsx'
+import ExerciseReportDetailPage from './pages/ExerciseReportDetail/ExerciseReportDetailPage.tsx'
 import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
 const theme = createTheme({
@@ -66,15 +67,17 @@ createRoot(document.getElementById('root')!).render(
               </Route>
 
               {/* Teacher & Admin dashboard routes */}
+              {/* Teacher & Admin routes */}
               <Route element={<RoleProtectedRoute allowedRoles={[2, 3]} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/reports/students/:userId" element={<StudentReportDetailPage />} />
+                <Route path="/reports/exercises/:exerciseId" element={<ExerciseReportDetailPage />} />
               </Route>
 
                {/* Admin-only routes (roleId === 3) */}
               <Route element={<RoleProtectedRoute allowedRoles={[3]} />}>
                 <Route path="/users" element={<UsersPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/reports/students/:userId" element={<StudentReportDetailPage />} />
                 <Route path="/audit-logs" element={<AdminAuditLogPage />} />
              </Route>
             </Route>
