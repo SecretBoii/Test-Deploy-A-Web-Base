@@ -1,5 +1,6 @@
 import { Box, Tabs, Tab, Card } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Users, BookOpen, AlertTriangle } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { ReportFilters } from './components/ReportFilters';
@@ -13,17 +14,27 @@ import {
   type ReportFilterParams,
   type StudentReportData,
   type ExerciseAnalyticsData,
-  type ErrorAnalyticsData
+  type ErrorReportResponse
 } from '../../api/reports';
 
 export default function ReportsPage() {
-  const [activeTab, setActiveTab] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  // คำนวณ activeTab จาก URL Query Parameter (?tab=exercises หรือ ?tab=errors)
+  // เพื่อให้ระบบจำแท็บที่เปิดอยู่ได้ แม้กดย้อนกลับมาจากหน้ารายละเอียด
+  const activeTab = useMemo(() => {
+    if (tabParam === 'exercises') return 1;
+    if (tabParam === 'errors') return 2;
+    return 0;
+  }, [tabParam]);
+
   const [filters, setFilters] = useState<ReportFilterParams>({});
   const [loading, setLoading] = useState(false);
 
   const [studentData, setStudentData] = useState<StudentReportData[]>([]);
   const [exerciseData, setExerciseData] = useState<ExerciseAnalyticsData[]>([]);
-  const [errorData, setErrorData] = useState<ErrorAnalyticsData[]>([]);
+  const [errorData, setErrorData] = useState<ErrorReportResponse | null>(null);
 
   // ดึงข้อมูลรายงานจาก Backend API ตาม Tab ที่เปิดอยู่และ Filter ที่ระบุ
   useEffect(() => {
@@ -37,8 +48,9 @@ export default function ReportsPage() {
           const res = await getExerciseAnalyticsReport(filters);
           setExerciseData(res || []);
         } else if (activeTab === 2) {
-          const res = await getErrorAnalyticsReport(filters);
-          setErrorData(res || []);
+          // ดึงรายงานภาพรวมข้อผิดพลาดทั้งระบบ โดยไม่ส่ง filters ตกค้างจากแท็บอื่น เพื่อความโปร่งใส
+          const res = await getErrorAnalyticsReport();
+          setErrorData(res || null);
         }
       } catch (err) {
         console.error('ไม่สามารถเรียกรายงานความคืบหน้าได้:', err);
@@ -50,10 +62,19 @@ export default function ReportsPage() {
     fetchReport();
   }, [activeTab, filters]);
 
-  // เมื่อเปลี่ยน Tab ให้เคลียร์ search ทันที เพื่อไม่ให้เกิด Double Fetch หรือเอาคำค้นหาเก่าไปใช้กับแท็บใหม่
+  // เมื่อเปลี่ยน Tab ให้อัปเดต URL Query Params ทันที และเคลียร์ search เก่า
   const handleTabChange = (_: React.SyntheticEvent, newTab: number) => {
-    setActiveTab(newTab);
-    setFilters((prev) => (prev.search ? { ...prev, search: '' } : prev));
+    const tabName = newTab === 1 ? 'exercises' : newTab === 2 ? 'errors' : 'students';
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (newTab === 0) {
+        next.delete('tab');
+      } else {
+        next.set('tab', tabName);
+      }
+      return next;
+    }, { replace: true });
+    setFilters({});
   };
 
   const handleFilterChange = (newFilters: ReportFilterParams) => {
@@ -101,8 +122,8 @@ export default function ReportsPage() {
             </Tabs>
           </Box>
 
-          {/* Component ตัวกรองข้อมูลส่วนกลาง (แสดงเฉพาะแท็บ 0 ผู้เรียน และ แท็บ 2 ข้อผิดพลาด ส่วนแท็บ 1 มี Toolbar ครบในตัว) */}
-          {activeTab !== 1 && (
+          {/* Component ตัวกรองข้อมูลส่วนกลาง (แสดงเฉพาะแท็บ 0 รายงานผู้เรียนรายบุคคล) */}
+          {activeTab === 0 && (
             <ReportFilters activeTab={activeTab} onFilterChange={handleFilterChange} />
           )}
 
@@ -112,10 +133,10 @@ export default function ReportsPage() {
               <StudentPerformanceReport data={studentData} isLoading={loading} />
             )}
             {activeTab === 1 && (
-              <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} searchQuery={filters.search} />
+              <ExerciseAnalyticsReport data={exerciseData} isLoading={loading} />
             )}
             {activeTab === 2 && (
-              <ErrorAnalyticsReport data={errorData} isLoading={loading} searchQuery={filters.search} />
+              <ErrorAnalyticsReport data={errorData} isLoading={loading} />
             )}
           </Box>
         </Card>

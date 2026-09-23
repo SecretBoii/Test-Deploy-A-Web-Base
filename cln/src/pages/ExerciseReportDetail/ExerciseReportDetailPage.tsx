@@ -95,7 +95,7 @@ export default function ExerciseReportDetailPage() {
           <Button
             variant="text"
             startIcon={<ArrowLeft size={18} />}
-            onClick={() => navigate('/reports')}
+            onClick={() => navigate('/reports?tab=exercises')}
             sx={{
               color: '#475569',
               fontWeight: 700,
