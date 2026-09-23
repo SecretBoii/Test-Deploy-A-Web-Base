@@ -1,201 +1,329 @@
-import { useMemo } from 'react';
-import { Paper, Typography, Box, Grid, LinearProgress, Chip } from '@mui/material';
-import { AlertTriangle, CheckCircle, Bug, Activity, Layers } from 'lucide-react';
-import type { ErrorAnalyticsData } from '../../../api/reports';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import {
+  Paper, Typography, Box, Grid, Chip,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Button, TablePagination, Avatar, LinearProgress,
+  TextField, InputAdornment, IconButton
+} from '@mui/material';
+import {
+  CheckCircle, Bug, Activity, Users, Eye, Search, X
+} from 'lucide-react';
+import type { ErrorReportResponse } from '../../../api/reports';
 
 interface ErrorAnalyticsReportProps {
-  data: ErrorAnalyticsData[];
+  data: ErrorReportResponse | null;
   isLoading: boolean;
-  searchQuery?: string;
 }
 
-// ฟังก์ชันช่วยกำหนดธีมสีและป้ายบอกหมวดหมู่ของ Exception แต่ละประเภท
-const getErrorTheme = (errorType: string, index: number = 0) => {
-  if (errorType.includes('Syntax') || errorType.includes('Indentation')) {
-    return {
-      chipBg: '#fffbe6', chipColor: '#b45309', chipBorder: '#fde68a',
-      cardBorder: '#fef08a', barColor: '#d97706', barBg: '#fffbeb',
-      headerColor: '#92400e', iconColor: '#d97706', textColor: '#fbbf24', label: 'ไวยากรณ์ (Syntax)'
-    };
-  }
-  if (errorType.includes('Runtime') || errorType.includes('ZeroDivision') || errorType.includes('Recursion')) {
-    return {
-      chipBg: '#fff1f2', chipColor: '#be123c', chipBorder: '#fecdd3',
-      cardBorder: '#ffe4e6', barColor: '#e11d48', barBg: '#fef2f2',
-      headerColor: '#9f1239', iconColor: '#e11d48', textColor: '#f87171', label: 'การทำงาน (Runtime)'
-    };
-  }
-  if (errorType.includes('Name') || errorType.includes('Type') || errorType.includes('Value')) {
-    return {
-      chipBg: '#f5f3ff', chipColor: '#6d28d9', chipBorder: '#ddd6fe',
-      cardBorder: '#ede9fe', barColor: '#7c3aed', barBg: '#faf5ff',
-      headerColor: '#5b21b6', iconColor: '#7c3aed', textColor: '#c084fc', label: 'ตัวแปร/ชนิดข้อมูล (Type/Name)'
-    };
-  }
-  if (errorType.includes('Index') || errorType.includes('Key') || errorType.includes('Attribute')) {
-    return {
-      chipBg: '#f0f9ff', chipColor: '#0369a1', chipBorder: '#bae6fd',
-      cardBorder: '#e0f2fe', barColor: '#0284c7', barBg: '#f0f9ff',
-      headerColor: '#075985', iconColor: '#0284c7', textColor: '#38bdf8', label: 'ดัชนี/คีย์ (Index/Key)'
-    };
-  }
-  
-  const fallbacks = [
-    { chipBg: '#fff1f2', chipColor: '#be123c', chipBorder: '#fecdd3', cardBorder: '#ffe4e6', barColor: '#e11d48', barBg: '#fef2f2', headerColor: '#9f1239', iconColor: '#e11d48', textColor: '#f87171', label: 'การทำงาน (Runtime)' },
-    { chipBg: '#f5f3ff', chipColor: '#6d28d9', chipBorder: '#ddd6fe', cardBorder: '#ede9fe', barColor: '#7c3aed', barBg: '#faf5ff', headerColor: '#5b21b6', iconColor: '#7c3aed', textColor: '#c084fc', label: 'ตัวแปร (Variables)' },
-    { chipBg: '#fffbe6', chipColor: '#b45309', chipBorder: '#fde68a', cardBorder: '#fef08a', barColor: '#d97706', barBg: '#fffbeb', headerColor: '#92400e', iconColor: '#d97706', textColor: '#fbbf24', label: 'ไวยากรณ์ (Syntax)' },
-    { chipBg: '#ecfdf5', chipColor: '#047857', chipBorder: '#a7f3d0', cardBorder: '#d1fae5', barColor: '#10b981', barBg: '#ecfdf5', headerColor: '#065f46', iconColor: '#10b981', textColor: '#34d399', label: 'ระบบ (System)' },
-  ];
-  return fallbacks[index % fallbacks.length];
-};
+export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportProps) {
+  const navigate = useNavigate();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [userSearch, setUserSearch] = useState('');
 
-export function ErrorAnalyticsReport({ data, isLoading, searchQuery = '' }: ErrorAnalyticsReportProps) {
-  // กรองตามประเภท Exception ด้วยคำค้นหา
-  const filteredData = useMemo<ErrorAnalyticsData[]>(() => {
-    if (!searchQuery.trim()) return data;
-    const q = searchQuery.toLowerCase().trim();
-    return data.filter((err: ErrorAnalyticsData) => err.errorType.toLowerCase().includes(q));
-  }, [data, searchQuery]);
+  const studentList = useMemo(() => data?.studentExceptions || [], [data?.studentExceptions]);
 
-  // คำนวณภาพรวมสถิติ Exception จากข้อมูลที่กรอง
-  const totalOccurrences = filteredData.reduce((acc: number, curr: ErrorAnalyticsData) => acc + curr.occurrenceCount, 0);
-  const topError = filteredData.length > 0 ? [...filteredData].sort((a, b) => b.occurrenceCount - a.occurrenceCount)[0] : null;
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserSearch(e.target.value);
+    setPage(0);
+  };
+
+  // กรองข้อมูลผู้เรียนตามคำค้นหาแบบ Real-time เพื่อให้อาจารย์ค้นหาชื่อ, username หรือสถาบันได้ทันที
+  const filteredStudents = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return studentList;
+    return studentList.filter((st) => {
+      const matchName = (st.fullName || '').toLowerCase().includes(q);
+      const matchUsername = (st.username || '').toLowerCase().includes(q);
+      const matchUni = (st.university || '').toLowerCase().includes(q);
+      const matchFaculty = (st.faculty || '').toLowerCase().includes(q);
+      return matchName || matchUsername || matchUni || matchFaculty;
+    });
+  }, [studentList, userSearch]);
+
+  // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
+  const totalPages = Math.ceil(filteredStudents.length / rowsPerPage);
+  const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
+
+  const paginatedStudents = useMemo(() => {
+    return filteredStudents.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
+  }, [filteredStudents, safePage, rowsPerPage]);
 
   return (
     <Box>
-      {/* Header สรุปข้อผิดพลาด */}
+      {/* 1. Header สรุปภาพรวม */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 2.5 }}>
-        <Box sx={{ p: 1, bgcolor: '#fff1f2', borderRadius: '8px', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <AlertTriangle size={18} />
-        </Box>
+
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
-          รายงานสถิติข้อผิดพลาดและ Exceptions ภาษาไพทอน ({filteredData.length}{searchQuery.trim() ? ` / ${data.length}` : ''} ประเภท)
+          สรุปข้อผิดพลาด & Exceptions
         </Typography>
       </Box>
 
-      {/* Top KPI Analytics Summary Cards */}
-      {!isLoading && filteredData.length > 0 && (
+      {/* 2. Top KPI Cards สรุปตัวเลขทั้งระบบ (การ์ดขาว คลีน มินิมอล) */}
+      {!isLoading && data && (
         <Grid container spacing={2} sx={{ mb: 3 }}>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2, borderRadius: '12px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1, bgcolor: '#fee2e2', color: '#dc2626', borderRadius: '8px' }}>
-                <Bug size={20} />
+            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+                <Activity size={22} />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>พบบ่อยที่สุด</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>{topError?.errorType || '-'}</Typography>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>จำนวน Exception รวมทั้งระบบ</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.totalSystemExceptions} ครั้ง</Typography>
               </Box>
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2, borderRadius: '12px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1, bgcolor: '#e0f2fe', color: '#0284c7', borderRadius: '8px' }}>
-                <Activity size={20} />
+            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+                <Users size={22} />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>จำนวนเกิดขึ้นทั้งหมด</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>{totalOccurrences} ครั้ง</Typography>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>ผู้เรียนที่พบข้อผิดพลาด</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.totalAffectedStudents} คน</Typography>
               </Box>
             </Paper>
           </Grid>
           <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2, borderRadius: '12px', border: '1px solid #e2e8f0', bgcolor: '#f8fafc', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1, bgcolor: '#f3e8ff', color: '#9333ea', borderRadius: '8px' }}>
-                <Layers size={20} />
+            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
+                <Bug size={22} />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>หมวดหมู่ Error ที่พบ</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>{filteredData.length} หมวด</Typography>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>พบบ่อยที่สุดในระบบ</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.topErrorType}</Typography>
               </Box>
             </Paper>
           </Grid>
         </Grid>
       )}
 
-      {/* Grid รายการข้อผิดพลาดที่พบในระบบ */}
-      <Grid container spacing={2.5}>
-        {isLoading ? (
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ py: 6, textAlign: 'center', maxWidth: 300, mx: 'auto' }}>
-              <LinearProgress sx={{ borderRadius: 3, height: 8, bgcolor: '#fef2f2', '& .MuiLinearProgress-bar': { bgcolor: '#ef4444', borderRadius: 3 } }} />
-              <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดวิเคราะห์ข้อผิดพลาด...</Typography>
-            </Box>
-          </Grid>
-        ) : filteredData.length === 0 ? (
-          <Grid size={{ xs: 12 }}>
-            <Box sx={{ py: 6, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
-              <CheckCircle size={36} color="#10b981" style={{ marginBottom: 8 }} />
-              <Typography sx={{ color: '#64748b', fontWeight: 700, fontSize: '14px' }}>
-                {data.length === 0 ? 'ไม่พบประวัติข้อผิดพลาดในระบบ' : 'ไม่พบประเภทข้อผิดพลาดที่ตรงกับคำค้นหา'}
-              </Typography>
-              <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-                {data.length === 0 
-                  ? 'นักเรียนสามารถรันโค้ดและผ่านโจทย์โดยไม่มี Exception รุนแรง'
-                  : `ไม่พบข้อมูล Error ที่มีคำว่า "${searchQuery}"`}
-              </Typography>
-            </Box>
-          </Grid>
-        ) : (
-          filteredData.map((err, index) => {
-            const theme = getErrorTheme(err.errorType, index);
-            return (
-              <Grid size={{ xs: 12, md: 6 }} key={err.errorType}>
-                <Paper 
-                  sx={{ 
-                    p: 2.5, 
-                    borderRadius: '16px', 
-                    border: `1px solid ${theme.cardBorder}`, 
-                    bgcolor: '#ffffff',
-                    boxShadow: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 1.8,
-                    transition: 'all 0.25s ease-in-out',
-                    '&:hover': {
-                      boxShadow: '0 6px 16px rgba(15, 23, 42, 0.05)',
-                    }
-                  }}
-                >
-                  {/* Error Header & Occurrence Chip */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AlertTriangle size={18} color={theme.iconColor} />
-                      <Typography sx={{ fontWeight: 700, fontSize: '15px', color: theme.headerColor }}>{err.errorType}</Typography>
+      {/* 3. แถบสัดส่วนประเภท Exception ในระบบ (สีขาว เทา สบายตา) */}
+      {!isLoading && data?.errorTypeDistribution && data.errorTypeDistribution.length > 0 && (
+        <Paper sx={{ p: 2.5, mb: 3, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none' }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', mb: 1.2, display: 'block', fontSize: '13px' }}>
+            สัดส่วนหมวดหมู่ Exception ในระบบ:  รอทำchart
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {data.errorTypeDistribution.map((item) => (
+              <Chip
+                key={item.errorType}
+                label={`${item.errorType}: ${item.occurrenceCount} ครั้ง (${item.percentage.toFixed(1)}%)`}
+                sx={{
+                  bgcolor: '#f8fafc',
+                  color: '#1e293b',
+                  border: '1px solid #e2e8f0',
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  borderRadius: '8px',
+                  py: 0.5,
+                }}
+              />
+            ))}
+          </Box>
+        </Paper>
+      )}
+
+      {/* 4. ส่วนหัวและช่องค้นหาผู้เรียน (Minimalist Search Bar) */}
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          justifyContent: 'space-between', 
+          alignItems: { xs: 'stretch', sm: 'center' }, 
+          gap: 1.5, 
+          mb: 2 
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
+            รายชื่อผู้เรียนที่พบข้อผิดพลาด
+          </Typography>
+          {filteredStudents.length > 0 && (
+            <Chip
+              label={`${filteredStudents.length} คน`}
+              size="small"
+              sx={{
+                bgcolor: '#f1f5f9',
+                color: '#475569',
+                fontWeight: 700,
+                fontSize: '12px',
+                height: '22px',
+                borderRadius: '6px'
+              }}
+            />
+          )}
+        </Box>
+
+        {/* ช่องค้นหา User กะทัดรัด คลีนมินิมอล */}
+        <TextField
+          size="small"
+          placeholder="ค้นหาชื่อผู้เรียน หรือ Username..."
+          value={userSearch}
+          onChange={handleSearchChange}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <Search size={16} color="#64748b" />
+                </InputAdornment>
+              ),
+              endAdornment: userSearch ? (
+                <InputAdornment position="end">
+                  <IconButton 
+                    size="small" 
+                    onClick={() => { setUserSearch(''); setPage(0); }} 
+                    sx={{ p: 0.5 }}
+                    aria-label="ล้างคำค้น"
+                  >
+                    <X size={14} color="#94a3b8" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            }
+          }}
+          sx={{
+            width: { xs: '100%', sm: 280 },
+            bgcolor: '#ffffff',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '10px',
+              fontSize: '13px',
+              bgcolor: '#ffffff',
+              '& fieldset': { borderColor: '#e2e8f0' },
+              '&:hover fieldset': { borderColor: '#cbd5e1' },
+              '&.Mui-focused fieldset': { borderColor: '#2563eb' },
+            }
+          }}
+        />
+      </Box>
+
+      {/* ตารางสรุปภาพรวมรายบุคคลแบบเหลี่ยม ชิดขอบ ไร้ขอบมน (Square / Seamless Table) เหมือนแท็บวิเคราะห์ประสิทธิภาพโจทย์ */}
+      <TableContainer sx={{ overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 900 }}>
+          <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow sx={{ '& th': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', py: 1.8, fontSize: '13px', fontWeight: 700, color: '#475569' } }}>
+              <TableCell>ผู้เรียน (Student)</TableCell>
+              <TableCell>สถาบัน / คณะ</TableCell>
+              <TableCell align="center">จำนวนแบบฝึกหัดที่ติดปัญหา</TableCell>
+              <TableCell align="center">จำนวน Exception รวม</TableCell>
+              <TableCell align="center">รายละเอียด</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 6, borderBottom: '1px solid #f1f5f9' }}>
+                  <Box sx={{ maxWidth: 300, mx: 'auto' }}>
+                    <LinearProgress sx={{ borderRadius: 3, height: 6 }} />
+                    <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>
+                      กำลังโหลดข้อมูลข้อผิดพลาด...
+                    </Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : filteredStudents.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 6, borderBottom: '1px solid #f1f5f9' }}>
+                  <CheckCircle size={36} color="#10b981" style={{ marginBottom: 8 }} />
+                  <Typography sx={{ color: '#64748b', fontWeight: 700, fontSize: '14px' }}>
+                    {studentList.length === 0 ? 'ไม่พบประวัติข้อผิดพลาดในระบบ' : 'ไม่พบข้อมูลที่ตรงกับคำค้นหา'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedStudents.map((st) => (
+                <TableRow key={st.userId} hover sx={{ '& td': { borderBottom: '1px solid #f1f5f9' } }}>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: '#fee2e2', color: '#dc2626', fontSize: '13px', fontWeight: 700 }}>
+                        {st.fullName ? st.fullName.charAt(0) : 'U'}
+                      </Avatar>
+                      <Box>
+                        <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                          {st.fullName}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b' }}>
+                          @{st.username}
+                        </Typography>
+                      </Box>
                     </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                      {st.university || '-'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>
+                      {st.faculty || '-'}
+                    </Typography>
+                  </TableCell>
+                  <TableCell align="center">
                     <Chip
-                      label={`${err.occurrenceCount} ครั้ง (${err.percentage.toFixed(1)}%)`}
+                      label={`${st.exercises.length} แบบฝึกหัด`}
+                      size="small"
+                      sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, borderRadius: '8px' }}
+                    />
+                  </TableCell>
+                  <TableCell align="center">
+                    <Chip
+                      label={`${st.totalExceptions} ครั้ง`}
                       size="small"
                       sx={{
-                        bgcolor: theme.chipBg,
-                        color: theme.chipColor,
-                        border: `1px solid ${theme.chipBorder}`,
-                        fontWeight: 700,
+                        bgcolor: '#fff1f2',
+                        color: '#dc2626',
+                        border: '1px solid #fecdd3',
+                        fontWeight: 800,
+                        fontSize: '12.5px',
                         borderRadius: '8px',
-                        fontSize: '12px',
                         px: 0.5,
                       }}
                     />
-                  </Box>
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<Eye size={14} />}
+                      onClick={() => navigate(`/reports/students/${st.userId}/errors`)}
+                      sx={{
+                        borderRadius: '8px',
+                        borderColor: '#cbd5e1',
+                        color: '#2563eb',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                        textTransform: 'none',
+                        py: 0.5,
+                        px: 1.5,
+                        whiteSpace: 'nowrap',
+                        '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' },
+                      }}
+                    >
+                      รายละเอียด
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-                  {/* Progress Bar ของข้อผิดพลาด */}
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={err.percentage} 
-                    sx={{ height: 7, borderRadius: 3, bgcolor: theme.barBg, '& .MuiLinearProgress-bar': { bgcolor: theme.barColor, borderRadius: 3 } }}
-                  />
-
-                  {/* กล่อง Terminal จำลองแสดง Exception Message */}
-                  <Box sx={{ p: 2, bgcolor: '#0f172a', borderRadius: '12px', color: '#f8fafc' }}>
-                    <Typography sx={{ fontFamily: 'Consolas, Monaco, "Courier New", monospace', fontSize: '12px', color: theme.textColor, wordBreak: 'break-all', lineHeight: 1.5 }}>
-                      {err.commonExceptionMessage || 'ไม่มีตัวอย่างข้อความสถิติ'}
-                    </Typography>
-                  </Box>
-                </Paper>
-              </Grid>
-            );
-          })
-        )}
-      </Grid>
+      {/* ส่วนเปลี่ยนหน้า (Pagination) ใต้ตารางแบบเหลี่ยม ไร้กรอบมนหุ้ม */}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filteredStudents.length}
+        rowsPerPage={rowsPerPage}
+        page={safePage}
+        onPageChange={(_, newPage) => setPage(newPage)}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        labelRowsPerPage="แสดงแถวต่อหน้า:"
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+        sx={{ borderTop: '1px solid #e2e8f0' }}
+      />
     </Box>
   );
 }

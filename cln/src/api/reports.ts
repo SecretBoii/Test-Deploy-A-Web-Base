@@ -142,8 +142,35 @@ export interface ErrorAnalyticsData {
   commonExceptionMessage: string;
 }
 
-export const getErrorAnalyticsReport = async (params: ReportFilterParams) => {
-    const response = await apiClient.get<ErrorAnalyticsData[]>("/reports/errors", { params });
+export interface StudentExerciseExceptionDetail {
+  exerciseId: number;
+  title: string;
+  topic?: string;
+  totalExceptions: number;
+  errorTypes: Record<string, number>;
+  latestActivity?: StudentActivityItem;
+}
+
+export interface StudentExceptionSummary {
+  userId: number;
+  username: string;
+  fullName: string;
+  university: string;
+  faculty: string;
+  totalExceptions: number;
+  exercises: StudentExerciseExceptionDetail[];
+}
+
+export interface ErrorReportResponse {
+  totalSystemExceptions: number;
+  totalAffectedStudents: number;
+  topErrorType: string;
+  errorTypeDistribution: ErrorAnalyticsData[];
+  studentExceptions: StudentExceptionSummary[];
+}
+
+export const getErrorAnalyticsReport = async (params?: ReportFilterParams) => {
+    const response = await apiClient.get<ErrorReportResponse>("/reports/errors", params ? { params } : undefined);
     return response.data;
 };
 

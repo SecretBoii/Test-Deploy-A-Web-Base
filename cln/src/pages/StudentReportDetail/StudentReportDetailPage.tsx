@@ -114,7 +114,7 @@ export default function StudentReportDetailPage() {
           <Button
             variant="text"
             startIcon={<ArrowLeft size={18} />}
-            onClick={() => navigate('/reports')}
+            onClick={() => navigate('/reports?tab=students')}
             sx={{
               color: '#475569',
               fontWeight: 700,

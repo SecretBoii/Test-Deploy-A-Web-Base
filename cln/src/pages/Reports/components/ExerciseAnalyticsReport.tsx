@@ -12,10 +12,9 @@ import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 interface ExerciseAnalyticsReportProps {
   data: ExerciseAnalyticsData[];
   isLoading: boolean;
-  searchQuery?: string;
 }
 
-export function ExerciseAnalyticsReport({ data, isLoading, searchQuery = '' }: ExerciseAnalyticsReportProps) {
+export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsReportProps) {
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -43,7 +42,7 @@ export function ExerciseAnalyticsReport({ data, isLoading, searchQuery = '' }: E
 
   // กรองข้อมูลโจทย์ตามตัวกรองที่เลือก และคำค้นหา
   const filteredData = useMemo(() => {
-    const q = (search || searchQuery).toLowerCase().trim();
+    const q = search.toLowerCase().trim();
 
     return data.filter((ex) => {
       // 0. กรองตามคำค้นหา (ชื่อโจทย์ หรือ หัวข้อบทเรียน)
@@ -80,10 +79,10 @@ export function ExerciseAnalyticsReport({ data, isLoading, searchQuery = '' }: E
 
       return true;
     });
-  }, [data, search, searchQuery, difficultyFilter, topicFilter, passRateFilter, attemptFilter]);
+  }, [data, search, difficultyFilter, topicFilter, passRateFilter, attemptFilter]);
 
   const isFiltered = Boolean(
-    search.trim() || searchQuery.trim() || difficultyFilter || topicFilter || passRateFilter || attemptFilter
+    search.trim() || difficultyFilter || topicFilter || passRateFilter || attemptFilter
   );
 
   const handleResetFilters = () => {

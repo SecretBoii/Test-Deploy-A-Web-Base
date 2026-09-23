@@ -21,6 +21,7 @@ import CssBaseline from '@mui/material/CssBaseline'
 import UsersPage from './pages/UsersManagement/UsersPage.tsx'
 import ReportsPage from './pages/Reports/ReportsPage.tsx'
 import StudentReportDetailPage from './pages/StudentReportDetail/StudentReportDetailPage.tsx'
+import StudentErrorReportDetailPage from './pages/StudentErrorReportDetail/StudentErrorReportDetailPage.tsx'
 import ExerciseReportDetailPage from './pages/ExerciseReportDetail/ExerciseReportDetailPage.tsx'
 import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
@@ -72,6 +73,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/reports/students/:userId" element={<StudentReportDetailPage />} />
+                <Route path="/reports/students/:userId/errors" element={<StudentErrorReportDetailPage />} />
                 <Route path="/reports/exercises/:exerciseId" element={<ExerciseReportDetailPage />} />
               </Route>
 

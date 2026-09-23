@@ -109,11 +109,10 @@ export function AdminDashboard() {
       }
 
       // หาก totalSubmissions ยังไม่ส่งมาจาก Backend หรือเป็น 0 แต่มีประวัติการเจอ Error ในระบบ ให้ใช้ผลรวม Error เป็นค่าสำรองขั้นต่ำ
-      if (realSubmissionsCount === 0 && errorsRes?.data && Array.isArray(errorsRes.data)) {
-        const errorTotal = errorsRes.data.reduce((sum: number, err: any) => sum + (err.occurrenceCount || err.count || 0), 0);
-        if (errorTotal > 0) {
-          realSubmissionsCount = errorTotal;
-        }
+      const errorTotal = errorsRes?.data?.totalSystemExceptions 
+        ?? (Array.isArray(errorsRes?.data) ? errorsRes.data.reduce((sum: number, err: any) => sum + (err.occurrenceCount || err.count || 0), 0) : 0);
+      if (realSubmissionsCount === 0 && errorTotal > 0) {
+        realSubmissionsCount = errorTotal;
       }
 
       // คำนวณอัตราการผ่านสำเร็จจริง (%) = (จำนวนครั้งที่ผ่าน / จำนวนครั้งที่ส่งตรวจทั้งหมด) * 100
@@ -129,8 +128,12 @@ export function AdminDashboard() {
       }))
 
       // สถิติข้อผิดพลาดจริงจากฐานข้อมูล (Top Errors)
-      if (errorsRes?.data && Array.isArray(errorsRes.data)) {
-        setErrorStats(errorsRes.data.map((item: any) => ({
+      const errorList = Array.isArray(errorsRes?.data)
+        ? errorsRes.data
+        : (errorsRes?.data?.errorTypeDistribution || []);
+
+      if (errorList.length > 0) {
+        setErrorStats(errorList.map((item: any) => ({
           errorType: item.errorType || 'UnknownError',
           count: item.occurrenceCount || item.count || 0,
           percentage: Number(item.percentage?.toFixed(1) || 0),
