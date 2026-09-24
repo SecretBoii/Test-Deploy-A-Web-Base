@@ -1,10 +1,11 @@
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Box, LinearProgress, Button, Tooltip, TablePagination, Avatar, TableSortLabel
+  Typography, Box, LinearProgress, Button, Tooltip, TablePagination, Avatar, TableSortLabel,
+  TextField, InputAdornment, Grid
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, Award, Users, GraduationCap, Eye } from 'lucide-react';
+import { Download, Award, Users, GraduationCap, Eye, Search, Building2, RotateCcw } from 'lucide-react';
 import type { StudentReportData } from '../../../api/reports';
 import { SortIconIndicator } from './SortIconIndicator';
 
@@ -21,6 +22,10 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sortField, setSortField] = useState<SortField>('averageScore');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+  // ตัวกรองผู้เรียนแบบ Client-side Real-time (ค้นหาชื่อ, username, มหาวิทยาลัย, คณะ)
+  const [search, setSearch] = useState('');
+  const [education, setEducation] = useState('');
   
   const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
@@ -41,35 +46,68 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
     }
   };
 
-  // เรียงลำดับข้อมูลผู้เรียนตาม sortField และ sortOrder
-  const sortedData = [...data].sort((a, b) => {
-    if (sortField === 'name') {
-      const nameA = a.fullName || '';
-      const nameB = b.fullName || '';
-      return sortOrder === 'asc' ? nameA.localeCompare(nameB, 'th') : nameB.localeCompare(nameA, 'th');
-    }
-    
-    let valA = 0;
-    let valB = 0;
-    if (sortField === 'progress') {
-      const totalA = a.totalExercises || a.totalSessions || 1;
-      const totalB = b.totalExercises || b.totalSessions || 1;
-      const passedA = a.passedExercises ?? a.completedSessions ?? 0;
-      const passedB = b.passedExercises ?? b.completedSessions ?? 0;
-      valA = passedA / totalA;
-      valB = passedB / totalB;
-    } else if (sortField === 'averageScore') {
-      valA = a.averageScore;
-      valB = b.averageScore;
-    } else if (sortField === 'averageAttempts') {
-      valA = a.averageAttempts;
-      valB = b.averageAttempts;
-    } else if (sortField === 'lastActiveAt') {
-      valA = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
-      valB = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
-    }
-    return sortOrder === 'asc' ? valA - valB : valB - valA;
-  });
+  const handleReset = () => {
+    setSearch('');
+    setEducation('');
+    setPage(0);
+  };
+
+  // ตรวจสอบสถานะว่ามีการกรองข้อมูลอยู่หรือไม่
+  const isFiltered = Boolean(search.trim() || education.trim());
+
+  // กรองข้อมูลผู้เรียนบน Client-side ทันทีเมื่อผู้ใช้พิมพ์ ไม่ต้องยิง API ซ้ำรอบสอง
+  const filteredData = useMemo(() => {
+    const qSearch = search.trim().toLowerCase();
+    const qEdu = education.trim().toLowerCase();
+
+    if (!qSearch && !qEdu) return data;
+
+    return data.filter((student) => {
+      if (qSearch) {
+        const matchName = (student.fullName || '').toLowerCase().includes(qSearch);
+        const matchUsername = (student.username || '').toLowerCase().includes(qSearch);
+        if (!matchName && !matchUsername) return false;
+      }
+      if (qEdu) {
+        const matchUni = (student.university || '').toLowerCase().includes(qEdu);
+        const matchFaculty = (student.faculty || '').toLowerCase().includes(qEdu);
+        if (!matchUni && !matchFaculty) return false;
+      }
+      return true;
+    });
+  }, [data, search, education]);
+
+  // เรียงลำดับข้อมูลผู้เรียนตาม sortField และ sortOrder จากข้อมูลที่ผ่านการกรองแล้ว
+  const sortedData = useMemo(() => {
+    return [...filteredData].sort((a, b) => {
+      if (sortField === 'name') {
+        const nameA = a.fullName || '';
+        const nameB = b.fullName || '';
+        return sortOrder === 'asc' ? nameA.localeCompare(nameB, 'th') : nameB.localeCompare(nameA, 'th');
+      }
+      
+      let valA = 0;
+      let valB = 0;
+      if (sortField === 'progress') {
+        const totalA = a.totalExercises || a.totalSessions || 1;
+        const totalB = b.totalExercises || b.totalSessions || 1;
+        const passedA = a.passedExercises ?? a.completedSessions ?? 0;
+        const passedB = b.passedExercises ?? b.completedSessions ?? 0;
+        valA = passedA / totalA;
+        valB = passedB / totalB;
+      } else if (sortField === 'averageScore') {
+        valA = a.averageScore;
+        valB = b.averageScore;
+      } else if (sortField === 'averageAttempts') {
+        valA = a.averageAttempts;
+        valB = b.averageAttempts;
+      } else if (sortField === 'lastActiveAt') {
+        valA = a.lastActiveAt ? new Date(a.lastActiveAt).getTime() : 0;
+        valB = b.lastActiveAt ? new Date(b.lastActiveAt).getTime() : 0;
+      }
+      return sortOrder === 'asc' ? valA - valB : valB - valA;
+    });
+  }, [filteredData, sortField, sortOrder]);
 
   // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริง
   const totalPages = Math.ceil(sortedData.length / rowsPerPage);
@@ -79,7 +117,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
 
   // ฟังก์ชันดาวน์โหลดรายงานเป็นไฟล์ CSV
   const exportToCSV = () => {
-    if (data.length === 0) return;
+    if (sortedData.length === 0) return;
     const headers = ['Username', 'ชื่อ-นามสกุล', 'มหาวิทยาลัย', 'คณะ', 'บทเรียนที่สำเร็จ', 'คะแนนเฉลี่ย', 'รันโค้ดเฉลี่ย/ข้อ'];
     const rows = sortedData.map(item => [
       `"${item.username}"`,
@@ -105,12 +143,117 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
 
   return (
     <Box>
+      {/* ส่วนแถบตัวกรองข้อมูลผู้เรียนแบบ Client-side Toolbar */}
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+          {/* ช่องค้นหาชื่อผู้เรียน, นามสกุล หรือ Username */}
+          <Grid size={{ xs: 12, md: 5 }}>
+            <TextField
+              fullWidth
+              placeholder="ค้นหาชื่อผู้เรียน, นามสกุล หรือ Username..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start" sx={{ color: '#94a3b8', mr: 1 }}>
+                      <Search size={18} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: '12px',
+                    bgcolor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    height: '46px',
+                    fontSize: '14px',
+                    '& fieldset': { border: 'none' },
+                    '&:hover': { bgcolor: '#f1f5f9' },
+                    transition: 'all 0.15s ease',
+                  },
+                }
+              }}
+            />
+          </Grid>
+
+          {/* ช่องกรองสังกัด / สถาบันการศึกษา */}
+          <Grid size={{ xs: 12, md: 5 }}>
+            <TextField
+              fullWidth
+              placeholder="สังกัด / สถาบันการศึกษา / มหาวิทยาลัย..."
+              value={education}
+              onChange={(e) => {
+                setEducation(e.target.value);
+                setPage(0);
+              }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start" sx={{ color: '#94a3b8', mr: 1 }}>
+                      <Building2 size={18} />
+                    </InputAdornment>
+                  ),
+                  sx: {
+                    borderRadius: '12px',
+                    bgcolor: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    height: '46px',
+                    fontSize: '14px',
+                    '& fieldset': { border: 'none' },
+                    '&:hover': { bgcolor: '#f1f5f9' },
+                    transition: 'all 0.15s ease',
+                  },
+                }
+              }}
+            />
+          </Grid>
+
+          {/* ปุ่มล้างตัวกรอง */}
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              onClick={handleReset}
+              disabled={!isFiltered}
+              startIcon={<RotateCcw size={16} />}
+              sx={{
+                color: '#64748b',
+                borderColor: '#e2e8f0',
+                bgcolor: '#f8fafc',
+                textTransform: 'none',
+                borderRadius: '12px',
+                height: '46px',
+                fontWeight: 700,
+                fontSize: '14px',
+                boxShadow: 'none',
+                '&:hover': {
+                  bgcolor: '#f1f5f9',
+                  borderColor: '#cbd5e1',
+                  color: '#334155',
+                  boxShadow: 'none',
+                },
+                '&.Mui-disabled': {
+                  bgcolor: '#f8fafc',
+                  borderColor: '#f1f5f9',
+                  color: '#cbd5e1',
+                },
+                transition: 'all 0.15s ease',
+              }}
+            >
+              ล้างตัวกรอง
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
+
       {/* Header ของตาราง และปุ่มส่งออก CSV */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2.5, flexWrap: 'wrap', gap: 1.5 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <GraduationCap size={20} color="#2563eb" />
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
-            ตารางเปรียบเทียบคะแนนผู้เรียน ({data.length} คน)
+            ตารางเปรียบเทียบคะแนนผู้เรียน ({filteredData.length}{isFiltered ? ` / ${data.length}` : ''} คน)
           </Typography>
         </Box>
         <Tooltip title="ดาวน์โหลดรายงานนี้เป็นไฟล์ CSV">
@@ -253,11 +396,13 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                     </Box>
                   </TableCell>
                 </TableRow>
-              ) : data.length === 0 ? (
+              ) : filteredData.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Users size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
-                    <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>ไม่พบข้อมูลรายชื่อผู้เรียน</Typography>
+                    <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>
+                      {isFiltered ? 'ไม่พบข้อมูลรายชื่อผู้เรียนที่ตรงกับเงื่อนไข' : 'ไม่พบข้อมูลรายชื่อผู้เรียน'}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -349,7 +494,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
         <TablePagination
           rowsPerPageOptions={[5, 10, 25, 50]}
           component="div"
-          count={data.length}
+          count={filteredData.length}
           rowsPerPage={rowsPerPage}
           page={safePage}
           onPageChange={handleChangePage}

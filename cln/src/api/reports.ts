@@ -117,12 +117,12 @@ export interface ExerciseStudentBreakdownResponse {
   students: ExerciseStudentItem[];
 }
 
-export const getStudentPerformanceReport = async (params: ReportFilterParams) => {
+export const getStudentPerformanceReport = async (params?: ReportFilterParams) => {
   const response = await apiClient.get<StudentReportData[]>("/reports/students", { params });
   return response.data;
 };
 
-export const getExerciseAnalyticsReport = async (params: ReportFilterParams) => {
+export const getExerciseAnalyticsReport = async (params?: ReportFilterParams) => {
     const response = await apiClient.get<ExerciseAnalyticsData[]>("/reports/exercises", { params });
     return response.data;
 };
