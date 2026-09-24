@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Paper, Box, Chip, Typography, Button, Grid } from '@mui/material';
-import { Clock, Copy, Check, Code } from 'lucide-react';
+import { Clock, Code } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
 import { parseErrorType, getErrorBadgeStyle, formatThaiTime } from '../StudentErrorReportDetailPage';
 
@@ -15,17 +14,8 @@ export function ExerciseErrorActivityItem({
   runNumber,
   onInspect,
 }: ExerciseErrorActivityItemProps) {
-  const [copied, setCopied] = useState<boolean>(false);
-
   const errType = parseErrorType(activity.exceptionMessage);
   const style = getErrorBadgeStyle(errType);
-
-  const handleCopyCode = () => {
-    if (!activity.answer) return;
-    navigator.clipboard.writeText(activity.answer);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <Paper
@@ -55,41 +45,23 @@ export function ExerciseErrorActivityItem({
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            size="small"
-            startIcon={copied ? <Check size={13} color="#10b981" /> : <Copy size={13} />}
-            onClick={handleCopyCode}
-            sx={{
-              fontSize: '11.5px',
-              textTransform: 'none',
-              bgcolor: '#ffffff',
-              border: '1px solid #e2e8f0',
-              color: '#475569',
-              borderRadius: '6px',
-              py: 0.2,
-            }}
-          >
-            {copied ? 'คัดลอกแล้ว' : 'คัดลอกโค้ด'}
-          </Button>
-          <Button
-            size="small"
-            startIcon={<Code size={13} />}
-            onClick={() => onInspect(activity)}
-            sx={{
-              fontSize: '11.5px',
-              textTransform: 'none',
-              bgcolor: '#eff6ff',
-              border: '1px solid #bfdbfe',
-              color: '#2563eb',
-              fontWeight: 700,
-              borderRadius: '6px',
-              py: 0.2,
-            }}
-          >
-            ตรวจโค้ดเต็มจอ
-          </Button>
-        </Box>
+        <Button
+          size="small"
+          startIcon={<Code size={13} />}
+          onClick={() => onInspect(activity)}
+          sx={{
+            fontSize: '11.5px',
+            textTransform: 'none',
+            bgcolor: '#eff6ff',
+            border: '1px solid #bfdbfe',
+            color: '#2563eb',
+            fontWeight: 700,
+            borderRadius: '6px',
+            py: 0.2,
+          }}
+        >
+          ตรวจโค้ดเต็มจอ
+        </Button>
       </Box>
 
       {/* กล่องโค้ดภาษา Python คู่กับข้อความ Error Traceback */}
