@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
-import { ProfileForm } from './components/ProfileForm';
-import { ProfileStats } from './components/ProfileStats';
-import { ProfileProgress } from './components/ProfileProgress';
+import { ProfileForm } from './components/student/ProfileForm';
+import { ProfileStats } from './components/student/ProfileStats';
+import { ProfileProgress } from './components/student/ProfileProgress';
 
 interface Education {
   university: string;
