@@ -29,11 +29,6 @@ interface AdminProfileDetails {
   education: Education;
 }
 
-/**
- * คอมโพเนนต์หน้า AdminProfile (หน้าโปรไฟล์สำหรับผู้ดูแลระบบ)
- * ทำหน้าที่ดึงข้อมูลบัญชีและสังกัดหน่วยงานจาก API เบื้องหลัง (/profile/details)
- * และจัดการสถานะ Loading / Error พร้อมแสดงผลในรูปแบบการ์ดที่กระชับและตรงตามบทบาท
- */
 export function AdminProfile() {
   const [loading, setLoading] = useState<boolean>(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -44,10 +39,6 @@ export function AdminProfile() {
     fetchProfileDetails();
   }, []);
 
-  /**
-   * เรียก API เพื่อดึงข้อมูลโปรไฟล์ของผู้ดูแลระบบ
-   * โดยยิงเฉพาะ /profile/details เพียงตัวเดียวเพื่อประหยัดทรัพยากร
-   */
   const fetchProfileDetails = async () => {
     try {
       setLoading(true);

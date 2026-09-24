@@ -1,10 +1,6 @@
 import { Box, Card, Avatar, Typography, Grid } from '@mui/material';
 import { User, Mail, Calendar, School, BookOpen, GraduationCap } from 'lucide-react';
 
-/**
- * กำหนดประเภทของข้อมูล Props สำหรับแสดงผลการ์ดโปรไฟล์ของผู้ดูแลระบบ (Admin)
- * สอดคล้องกับฟิลด์ข้อมูลในฐานข้อมูล user_profile และ education
- */
 export interface AdminProfileCardProps {
   username: string;
   firstName: string;
@@ -20,11 +16,6 @@ export interface AdminProfileCardProps {
   roleName?: string;
 }
 
-/**
- * คอมโพเนนต์แสดงผลการ์ดข้อมูลผู้ดูแลระบบ (AdminProfileCard)
- * ออกแบบเพื่อแสดงข้อมูลประจำตัวและสังกัดหน่วยงานในรูปแบบมินิมอลตามดีไซน์หลักของระบบ
- * โดยตัดสถิติการเรียน (Stats & Progress) ที่ไม่เกี่ยวข้องกับบทบาทผู้ดูแลระบบออก
- */
 export function AdminProfileCard({
   username,
   firstName,

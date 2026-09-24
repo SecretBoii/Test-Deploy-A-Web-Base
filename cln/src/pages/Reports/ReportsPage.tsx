@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Users, BookOpen, AlertTriangle } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
-import { ReportFilters } from './components/ReportFilters';
 import { StudentPerformanceReport } from './components/StudentPerformanceReport';
 import { ExerciseAnalyticsReport } from './components/ExerciseAnalyticsReport';
 import { ErrorAnalyticsReport } from './components/ErrorAnalyticsReport';
@@ -11,7 +10,6 @@ import {
   getStudentPerformanceReport, 
   getExerciseAnalyticsReport, 
   getErrorAnalyticsReport,
-  type ReportFilterParams,
   type StudentReportData,
   type ExerciseAnalyticsData,
   type ErrorReportResponse
@@ -29,40 +27,45 @@ export default function ReportsPage() {
     return 0;
   }, [tabParam]);
 
-  const [filters, setFilters] = useState<ReportFilterParams>({});
   const [loading, setLoading] = useState(false);
 
   const [studentData, setStudentData] = useState<StudentReportData[]>([]);
   const [exerciseData, setExerciseData] = useState<ExerciseAnalyticsData[]>([]);
   const [errorData, setErrorData] = useState<ErrorReportResponse | null>(null);
 
-  // ดึงข้อมูลรายงานจาก Backend API ตาม Tab ที่เปิดอยู่และ Filter ที่ระบุ
+  // ดึงข้อมูลรายงานจาก Backend API ตาม Tab ที่เปิดอยู่ (ดึงรอบเดียวตอนสลับแท็บ)
+  // ใช้ ignore flag เพื่อป้องกัน race condition ในกรณีที่ unmount หรือ remount ใน React StrictMode
   useEffect(() => {
+    let ignore = false;
+
     const fetchReport = async () => {
       setLoading(true);
       try {
         if (activeTab === 0) {
-          const res = await getStudentPerformanceReport(filters);
-          setStudentData(res || []);
+          const res = await getStudentPerformanceReport();
+          if (!ignore) setStudentData(res || []);
         } else if (activeTab === 1) {
-          const res = await getExerciseAnalyticsReport(filters);
-          setExerciseData(res || []);
+          const res = await getExerciseAnalyticsReport();
+          if (!ignore) setExerciseData(res || []);
         } else if (activeTab === 2) {
-          // ดึงรายงานภาพรวมข้อผิดพลาดทั้งระบบ โดยไม่ส่ง filters ตกค้างจากแท็บอื่น เพื่อความโปร่งใส
           const res = await getErrorAnalyticsReport();
-          setErrorData(res || null);
+          if (!ignore) setErrorData(res || null);
         }
       } catch (err) {
-        console.error('ไม่สามารถเรียกรายงานความคืบหน้าได้:', err);
+        if (!ignore) console.error('ไม่สามารถเรียกรายงานความคืบหน้าได้:', err);
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     fetchReport();
-  }, [activeTab, filters]);
 
-  // เมื่อเปลี่ยน Tab ให้อัปเดต URL Query Params ทันที และเคลียร์ search เก่า
+    return () => {
+      ignore = true;
+    };
+  }, [activeTab]);
+
+  // เมื่อเปลี่ยน Tab ให้อัปเดต URL Query Params ทันที
   const handleTabChange = (_: React.SyntheticEvent, newTab: number) => {
     const tabName = newTab === 1 ? 'exercises' : newTab === 2 ? 'errors' : 'students';
     setSearchParams((prev) => {
@@ -74,11 +77,6 @@ export default function ReportsPage() {
       }
       return next;
     }, { replace: true });
-    setFilters({});
-  };
-
-  const handleFilterChange = (newFilters: ReportFilterParams) => {
-    setFilters(newFilters);
   };
 
   return (
@@ -121,11 +119,6 @@ export default function ReportsPage() {
               <Tab icon={<AlertTriangle size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="สรุปข้อผิดพลาด & Exceptions" />
             </Tabs>
           </Box>
-
-          {/* Component ตัวกรองข้อมูลส่วนกลาง (แสดงเฉพาะแท็บ 0 รายงานผู้เรียนรายบุคคล) */}
-          {activeTab === 0 && (
-            <ReportFilters activeTab={activeTab} onFilterChange={handleFilterChange} />
-          )}
 
           {/* Tab Panel Display */}
           <Box>
