@@ -8,12 +8,9 @@ import { CodeInspectionDialog } from '../StudentReportDetail/components/CodeInsp
 import { StudentErrorProfileCard } from './components/StudentErrorProfileCard';
 import { StudentErrorKpiCards } from './components/StudentErrorKpiCards';
 import { StudentErrorFilters } from './components/StudentErrorFilters';
-import { ExerciseErrorAccordionCard, type GroupedExerciseItem } from './components/ExerciseErrorAccordionCard';
+import { StudentErrorExerciseTable } from './components/StudentErrorExerciseTable';
+import { ExerciseErrorHistoryDialog } from './components/ExerciseErrorHistoryDialog';
 
-/**
- * ฟังก์ชันจำแนกชื่อประเภท Exception ภาษา Python จากข้อความหรือ Traceback
- * เหตุผลที่คงไว้ที่นี่: เป็น pure logic สั้น ๆ (~20 บรรทัด) ไม่จำเป็นต้องสร้างโฟลเดอร์ utils เพิ่มเติม
- */
 export const parseErrorType = (msg?: string | null): string => {
   if (!msg) return 'RuntimeError';
   if (msg.includes('TimeLimitExceeded')) return 'TimeLimitExceeded';
@@ -32,9 +29,6 @@ export const parseErrorType = (msg?: string | null): string => {
   return 'RuntimeError';
 };
 
-/**
- * ฟังก์ชันกำหนดชุดสี Badge ตามประเภทของ Exception เพื่อให้โทนสีสอดคล้องกันทั่วทั้งระบบ
- */
 export const getErrorBadgeStyle = (errorType: string) => {
   if (errorType.includes('Syntax') || errorType.includes('Indentation')) {
     return { bg: '#fffbe6', color: '#b45309', border: '#fde68a' };
@@ -47,6 +41,15 @@ export const getErrorBadgeStyle = (errorType: string) => {
   }
   return { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' };
 };
+
+export interface GroupedExerciseItem {
+  exerciseId: number;
+  title: string;
+  topic: string;
+  difficultyLevel: number;
+  activities: StudentActivityItem[];
+  errorTypeCounts: Record<string, number>;
+}
 
 export const formatThaiTime = (dateStr?: string): string => {
   if (!dateStr) return '-';
@@ -65,8 +68,8 @@ export default function StudentErrorReportDetailPage() {
   const [selectedErrorType, setSelectedErrorType] = useState<string>('ALL');
   const [selectedActivity, setSelectedActivity] = useState<StudentActivityItem | null>(null);
 
-  // สถานะเปิด-ปิดของแต่ละแบบฝึกหัด (Default: ปิดไว้ทุกข้อ เพื่อให้หน้าจอกระชับ)
-  const [expandedExercises, setExpandedExercises] = useState<Record<number, boolean>>({});
+  // แบบฝึกหัดที่เลือกสำหรับเปิดดูประวัติข้อผิดพลาดใน Modal
+  const [selectedExerciseForHistory, setSelectedExerciseForHistory] = useState<GroupedExerciseItem | null>(null);
 
   // ดึงประวัติกิจกรรมทั้งหมดของผู้เรียนคนนี้จาก API
   useEffect(() => {
@@ -160,27 +163,7 @@ export default function StudentErrorReportDetailPage() {
     return list;
   }, [errorActivities, searchQuery, selectedErrorType]);
 
-  // สลับสถานะเปิด-ปิดข้อที่คลิก
-  const toggleExercise = (exerciseId: number) => {
-    setExpandedExercises((prev) => ({
-      ...prev,
-      [exerciseId]: !prev[exerciseId],
-    }));
-  };
 
-  // ปุ่มลัด: ขยายดูทุกข้อพร้อมกัน
-  const handleExpandAll = () => {
-    const all: Record<number, boolean> = {};
-    groupedExercises.forEach((ex) => {
-      all[ex.exerciseId] = true;
-    });
-    setExpandedExercises(all);
-  };
-
-  // ปุ่มลัด: ยุบเก็บทุกข้อ
-  const handleCollapseAll = () => {
-    setExpandedExercises({});
-  };
 
   return (
     <MainLayout activeItem="Reports">
@@ -236,53 +219,29 @@ export default function StudentErrorReportDetailPage() {
               onSearchChange={setSearchQuery}
             />
 
-            {/* 5. ส่วนหัวรายการโจทย์ + ปุ่มทางลัด ขยาย/ยุบทั้งหมด */}
+            {/* 5. ส่วนหัวรายการโจทย์ */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 0.5 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
                 <BookOpen size={18} color="#2563eb" />
                 แบบฝึกหัดที่พบข้อผิดพลาด ({groupedExercises.length} ข้อ)
               </Typography>
-              {groupedExercises.length > 0 && (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button
-                    size="small"
-                    onClick={handleExpandAll}
-                    sx={{ fontSize: '12px', fontWeight: 700, textTransform: 'none', color: '#2563eb' }}
-                  >
-                    ขยายดูทุกข้อ
-                  </Button>
-                  <Typography sx={{ color: '#cbd5e1', alignSelf: 'center' }}>|</Typography>
-                  <Button
-                    size="small"
-                    onClick={handleCollapseAll}
-                    sx={{ fontSize: '12px', fontWeight: 600, textTransform: 'none', color: '#64748b' }}
-                  >
-                    ยุบเก็บทุกข้อ
-                  </Button>
-                </Box>
-              )}
             </Box>
 
-            {/* 6. รายการการ์ดแบบฝึกหัดแบบ Accordion */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {groupedExercises.length === 0 ? (
-                <Card sx={{ p: 6, textAlign: 'center', borderRadius: '16px', border: '1px dashed #cbd5e1', bgcolor: '#ffffff' }}>
-                  <Typography sx={{ color: '#64748b', fontWeight: 600 }}>ไม่พบข้อผิดพลาดที่ตรงกับเงื่อนไขการค้นหา</Typography>
-                </Card>
-              ) : (
-                groupedExercises.map((ex) => (
-                  <ExerciseErrorAccordionCard
-                    key={ex.exerciseId}
-                    exercise={ex}
-                    isExpanded={!!expandedExercises[ex.exerciseId]}
-                    onToggle={toggleExercise}
-                    onInspectActivity={setSelectedActivity}
-                  />
-                ))
-              )}
-            </Box>
+            {/* 6. ตารางสรุปแบบฝึกหัดมาตรฐาน (Clean Table View) */}
+            <StudentErrorExerciseTable
+              exercises={groupedExercises}
+              onInspectExercise={(ex) => setSelectedExerciseForHistory(ex)}
+            />
           </>
         )}
+
+        {/* Modal สำหรับตรวจประวัติโค้ดและ Error ทั้งหมดของแบบฝึกหัดที่เลือก */}
+        <ExerciseErrorHistoryDialog
+          open={!!selectedExerciseForHistory}
+          onClose={() => setSelectedExerciseForHistory(null)}
+          exercise={selectedExerciseForHistory}
+          onInspectSingleActivity={setSelectedActivity}
+        />
 
         {/* Modal สำหรับตรวจโค้ดแบบ Split Screen เต็มจอ */}
         <CodeInspectionDialog

@@ -1,10 +1,9 @@
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Box, Typography, Button, Grid, Paper, Chip, IconButton, Tooltip
+  Box, Typography, Button, Grid, Paper, Chip, IconButton
 } from '@mui/material';
-import { useState } from 'react';
 import {
-  X, Code, Terminal, Sparkles, Copy, Check,
+  X, Code, Terminal, Sparkles,
   CheckCircle, XCircle, Award
 } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
@@ -17,8 +16,6 @@ interface CodeInspectionDialogProps {
 }
 
 export function CodeInspectionDialog({ open, onClose, activity }: CodeInspectionDialogProps) {
-  const [copied, setCopied] = useState<boolean>(false);
-
   if (!activity) return null;
 
   const isPassed = activity.score >= 80;
@@ -30,14 +27,6 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return '-';
     return `${d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' })} ${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
-  };
-
-  // คัดลอกโค้ดลง Clipboard พร้อม Feedback แจ้งเตือน 2 วินาที
-  const handleCopyCode = () => {
-    if (!activity.answer) return;
-    navigator.clipboard.writeText(activity.answer);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -154,38 +143,11 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
         <Grid container spacing={2.5}>
           {/* ฝั่งซ้าย: ซอร์สโค้ดภาษา Python */}
           <Grid size={{ xs: 12, md: 7 }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Code size={18} color="#2563eb" />
-                <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
-                  ซอร์สโค้ดภาษา Python ที่นักศึกษาเขียน:
-                </Typography>
-              </Box>
-              <Tooltip title={!activity.answer ? 'ไม่มีโค้ดให้คัดลอก' : copied ? 'คัดลอกแล้ว!' : 'คัดลอกโค้ด'}>
-                <span>
-                  <Button
-                    size="small"
-                    disabled={!activity.answer}
-                    startIcon={copied ? <Check size={14} color="#10b981" /> : <Copy size={14} />}
-                    onClick={handleCopyCode}
-                    sx={{
-                      fontSize: '12px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      color: copied ? '#10b981' : '#64748b',
-                      bgcolor: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      px: 1.2,
-                      py: 0.3,
-                      '&:hover': { bgcolor: '#f1f5f9' },
-                      '&.Mui-disabled': { bgcolor: '#f8fafc', color: '#cbd5e1', borderColor: '#f1f5f9' },
-                    }}
-                  >
-                    {copied ? 'คัดลอกแล้ว' : 'คัดลอก'}
-                  </Button>
-                </span>
-              </Tooltip>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <Code size={18} color="#2563eb" />
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
+                ซอร์สโค้ดภาษา Python ที่นักศึกษาเขียน:
+              </Typography>
             </Box>
             <Box
               sx={{
