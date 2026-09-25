@@ -43,12 +43,17 @@ export function ExerciseStudentFilters({
                 </InputAdornment>
               ),
               sx: {
-                borderRadius: '12px',
-                bgcolor: '#f8fafc',
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
                 border: '1px solid #e2e8f0',
-                height: '46px',
+                height: '44px',
                 fontSize: '13px',
+                fontWeight: 500,
+                color: '#0f172a',
                 '& fieldset': { border: 'none' },
+                '&:hover': { borderColor: '#94a3b8' },
+                '&.Mui-focused': { borderColor: '#0f172a' },
+                transition: 'all 0.15s ease',
               },
             },
           }}
@@ -56,21 +61,29 @@ export function ExerciseStudentFilters({
         />
 
         <FormControl size="small" sx={{ width: { xs: '100%', sm: 180 }, flexShrink: 0 }}>
-          <InputLabel sx={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>สถานะการทำ</InputLabel>
+          <InputLabel sx={{ fontSize: '13px', fontWeight: 600, color: '#64748b', '&.Mui-focused': { color: '#0f172a' } }}>
+            สถานะการทำ
+          </InputLabel>
           <Select
             value={statusFilter}
             onChange={(e) => onStatusFilterChange(e.target.value)}
             label="สถานะการทำ"
             sx={{
-              borderRadius: '12px',
-              bgcolor: '#f8fafc',
-              height: '46px',
+              borderRadius: '10px',
+              bgcolor: '#ffffff',
+              height: '44px',
               fontSize: '13px',
               fontWeight: 600,
-              color: '#334155',
+              color: '#0f172a',
               '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #e2e8f0' },
-              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb', borderWidth: '1.5px' },
+              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#0f172a', borderWidth: '1.5px' },
+              '& .MuiSelect-select': {
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                pr: '32px !important',
+              },
             }}
           >
             <MenuItem value="">ทั้งหมด</MenuItem>
@@ -86,23 +99,25 @@ export function ExerciseStudentFilters({
           disabled={!isFiltered}
           startIcon={<RotateCcw size={15} />}
           sx={{
-            height: '46px',
-            borderRadius: '12px',
+            height: '44px',
+            borderRadius: '10px',
             px: 2,
-            borderColor: isFiltered ? '#cbd5e1' : '#e2e8f0',
-            color: isFiltered ? '#475569' : '#94a3b8',
-            bgcolor: isFiltered ? '#f8fafc' : 'transparent',
+            borderColor: isFiltered ? '#0f172a' : '#e2e8f0',
+            color: isFiltered ? '#0f172a' : '#94a3b8',
+            bgcolor: '#ffffff',
             textTransform: 'none',
             fontWeight: 600,
-            fontSize: '0.875rem',
+            fontSize: '0.85rem',
+            boxShadow: 'none',
             '&:hover': {
-              bgcolor: '#f1f5f9',
-              borderColor: '#94a3b8',
+              bgcolor: '#f8fafc',
+              borderColor: '#0f172a',
               color: '#0f172a',
+              boxShadow: 'none',
             },
             '&.Mui-disabled': {
-              bgcolor: 'transparent',
-              borderColor: '#e2e8f0',
+              bgcolor: '#ffffff',
+              borderColor: '#f1f5f9',
               color: '#cbd5e1',
             },
             transition: 'all 0.15s ease',

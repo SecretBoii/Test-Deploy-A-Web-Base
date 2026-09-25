@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, Eye, RotateCcw, Search } from 'lucide-react';
+import { HelpCircle, RotateCcw, Search } from 'lucide-react';
 import type { ExerciseAnalyticsData } from '../../../../api/reports';
 import { DIFFICULTY_LEVELS } from '../../../../constants/difficulty';
 
@@ -140,17 +140,17 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
     return `${timeStr} / ${expectedMinutes} นาที`;
   };
 
-  // สไตล์ช่องตัวกรองแบบขอบมน 12px สไตล์เดียวกับ UsersPage พร้อมตัดคำไม่ให้กรอบขยาย
+  // สไตล์ช่องตัวกรองแบบ Clean Modern SaaS (พื้นขาวขอบเทาคมชัด สไตล์ KOKISO)
   const selectSx = {
-    borderRadius: '12px',
-    bgcolor: '#f8fafc',
-    height: '46px',
+    borderRadius: '10px',
+    bgcolor: '#ffffff',
+    height: '44px',
     fontSize: '13px',
     fontWeight: 600,
-    color: '#334155',
+    color: '#0f172a',
     '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #e2e8f0' },
-    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2563eb', borderWidth: '1.5px' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#0f172a', borderWidth: '1.5px' },
     '& .MuiSelect-select': {
       overflow: 'hidden',
       textOverflow: 'ellipsis',
@@ -163,6 +163,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
     fontSize: '13px',
     fontWeight: 600,
     color: '#64748b',
+    '&.Mui-focused': { color: '#0f172a' },
   };
 
   return (
@@ -174,7 +175,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
         </Typography>
       </Box>
 
-      {/* แถบตัวกรองแถวเดียวสมบูรณ์ (Single Unified Toolbar) - ขอบมน 12px */}
+      {/* แถบตัวกรองแถวเดียวสมบูรณ์ (Single Unified Toolbar) - พื้นหลังขาวคมชัด ขอบมน 10px */}
       <Box sx={{ display: 'flex', gap: 1.5, mb: 2.5, flexWrap: 'wrap', alignItems: 'center' }}>
         {/* 0. ช่องค้นหาชื่อโจทย์ หรือ หัวข้อบทเรียน */}
         <TextField
@@ -193,18 +194,21 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                 </InputAdornment>
               ),
               sx: {
-                borderRadius: '12px',
-                bgcolor: '#f8fafc',
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
                 border: '1px solid #e2e8f0',
-                height: '46px',
+                height: '44px',
                 fontSize: '13px',
+                fontWeight: 500,
+                color: '#0f172a',
                 '& fieldset': { border: 'none' },
-                '&:hover': { bgcolor: '#f1f5f9' },
+                '&:hover': { borderColor: '#94a3b8' },
+                '&.Mui-focused': { borderColor: '#0f172a' },
                 transition: 'all 0.15s ease',
               },
             },
           }}
-          sx={{ width: { xs: '100%', sm: 220 } }}
+          sx={{ width: { xs: '100%', sm: 240 } }}
         />
 
         {/* 1. กรองระดับความยาก - กว้าง 180px */}
@@ -292,23 +296,25 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
           disabled={!isFiltered}
           startIcon={<RotateCcw size={15} />}
           sx={{
-            height: '46px',
-            borderRadius: '12px',
+            height: '44px',
+            borderRadius: '10px',
             px: 2,
-            borderColor: isFiltered ? '#cbd5e1' : '#e2e8f0',
-            color: isFiltered ? '#475569' : '#94a3b8',
-            bgcolor: isFiltered ? '#f8fafc' : 'transparent',
+            borderColor: isFiltered ? '#0f172a' : '#e2e8f0',
+            color: isFiltered ? '#0f172a' : '#94a3b8',
+            bgcolor: '#ffffff',
             textTransform: 'none',
             fontWeight: 600,
-            fontSize: '0.875rem',
+            fontSize: '0.85rem',
+            boxShadow: 'none',
             '&:hover': {
-              bgcolor: '#f1f5f9',
-              borderColor: '#94a3b8',
+              bgcolor: '#f8fafc',
+              borderColor: '#0f172a',
               color: '#0f172a',
+              boxShadow: 'none',
             },
             '&.Mui-disabled': {
-              bgcolor: 'transparent',
-              borderColor: '#e2e8f0',
+              bgcolor: '#ffffff',
+              borderColor: '#f1f5f9',
               color: '#cbd5e1',
             },
             transition: 'all 0.15s ease',
@@ -363,9 +369,17 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                 const avgSub = exercise.avgSubmits ?? 0;
 
                 return (
-                  <TableRow key={exercise.exerciseId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                  <TableRow 
+                    key={exercise.exerciseId} 
+                    hover 
+                    sx={{ 
+                      '& td': { borderBottom: '1px solid #f1f5f9', py: 1.6 },
+                      transition: 'background-color 0.15s ease',
+                      '&:hover': { bgcolor: '#f8fafc' },
+                    }}
+                  >
                     <TableCell>
-                      <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{exercise.title}</Typography>
+                      <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>{exercise.title}</Typography>
                       <Typography variant="caption" sx={{ color: '#64748b' }}>หัวข้อ: {exercise.topic}</Typography>
                     </TableCell>
                     
@@ -374,7 +388,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                     
                     {/* ผู้เข้าทำ */}
                     <TableCell align="center">
-                      <Typography sx={{ fontWeight: 700, fontSize: '13px', color: attempted === 0 ? '#94a3b8' : '#0f172a' }}>
+                      <Typography sx={{ fontWeight: 500, fontSize: '13px', color: attempted === 0 ? '#94a3b8' : '#0f172a' }}>
                         {attempted} {total > 0 ? `/ ${total}` : ''} คน
                       </Typography>
                     </TableCell>
@@ -382,14 +396,19 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                     {/* อัตราการผ่าน - จัดกึ่งกลาง และแสดงข้อความเรียบง่ายเมื่อยังไม่มีคนทำ */}
                     <TableCell align="center">
                       {attempted === 0 ? (
-                        <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '13px' }}>
+                        <Typography sx={{ color: '#94a3b8', fontWeight: 500, fontSize: '13px' }}>
                           ยังไม่มีคนทำ
                         </Typography>
                       ) : (
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, maxWidth: 150, mx: 'auto' }}>
-                          <Typography variant="caption" sx={{ fontWeight: 700, color: passRate > 70 ? '#10b981' : passRate > 40 ? '#d97706' : '#ef4444', textAlign: 'center' }}>
-                            {passRate.toFixed(0)}% ผ่าน
-                          </Typography>
+                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, maxWidth: 140, mx: 'auto' }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Typography variant="caption" sx={{ color: '#64748b', fontSize: '11px' }}>
+                              ผ่าน {passed}/{attempted} คน
+                            </Typography>
+                            <Typography variant="caption" sx={{ color: '#0f172a', fontSize: '12px', fontWeight: 600 }}>
+                              {passRate.toFixed(0)}%
+                            </Typography>
+                          </Box>
                           <LinearProgress 
                             variant="determinate" 
                             value={passRate} 
@@ -397,71 +416,61 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                               height: 6, 
                               borderRadius: 3, 
                               bgcolor: '#f1f5f9', 
-                              '& .MuiLinearProgress-bar': { 
-                                bgcolor: passRate > 70 ? '#10b981' : passRate > 40 ? '#f59e0b' : '#ef4444' 
-                              } 
+                              '& .MuiLinearProgress-bar': { bgcolor: '#0f172a', borderRadius: 3 } 
                             }}
                           />
-                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '11px', textAlign: 'center', fontWeight: 600 }}>
-                            (ผ่าน {passed}/{attempted} คน)
-                          </Typography>
                         </Box>
                       )}
                     </TableCell>
                     
                     {/* Run เฉลี่ย */}
                     <TableCell align="center">
-                      {attempted === 0 ? (
-                        <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '13px' }}>-</Typography>
-                      ) : (
-                        <Typography sx={{ fontWeight: 700, fontSize: '13px', color: '#334155' }}>
-                          {avgRun.toFixed(1)} ครั้ง
-                        </Typography>
-                      )}
+                      <Typography sx={{ fontWeight: 500, fontSize: '13px', color: attempted === 0 ? '#94a3b8' : '#0f172a' }}>
+                        {attempted === 0 ? '-' : `${avgRun.toFixed(1)} ครั้ง`}
+                      </Typography>
                     </TableCell>
 
                     {/* Submit เฉลี่ย */}
                     <TableCell align="center">
-                      {attempted === 0 ? (
-                        <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '13px' }}>-</Typography>
-                      ) : (
-                        <Typography sx={{ fontWeight: 700, fontSize: '13px', color: '#334155' }}>
-                          {avgSub.toFixed(1)} ครั้ง
-                        </Typography>
-                      )}
+                      <Typography sx={{ fontWeight: 500, fontSize: '13px', color: attempted === 0 ? '#94a3b8' : '#0f172a' }}>
+                        {attempted === 0 ? '-' : `${avgSub.toFixed(1)} ครั้ง`}
+                      </Typography>
                     </TableCell>
                     
                     {/* เวลาใช้จริง / ตั้งไว้ */}
                     <TableCell align="center">
                       {attempted === 0 || !exercise.avgTimeSpentMinutes || exercise.avgTimeSpentMinutes <= 0 ? (
-                        <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#94a3b8' }}>
+                        <Typography sx={{ fontSize: '13px', fontWeight: 500, color: '#94a3b8' }}>
                           - / {exercise.expectedTimeMinutes} นาที
                         </Typography>
                       ) : (
-                        <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>
+                        <Typography sx={{ fontSize: '13px', fontWeight: 500, color: '#475569' }}>
                           {formatTimeSpent(exercise.avgTimeSpentMinutes, exercise.expectedTimeMinutes)}
                         </Typography>
                       )}
                     </TableCell>
 
-                    {/* ปุ่มดูรายบุคคล */}
+                    {/* ปุ่มดูรายละเอียด: Solid Dark-Navy คมชัด หนักแน่น ไม่ใช้สีอ่อน */}
                     <TableCell align="center">
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
-                        startIcon={<Eye size={15} />}
                         onClick={() => navigate(`/reports/exercises/${exercise.exerciseId}`)}
                         sx={{
                           borderRadius: '8px',
-                          borderColor: '#cbd5e1',
-                          color: '#2563eb',
-                          fontWeight: 700,
+                          bgcolor: '#0f172a',
+                          color: '#ffffff',
+                          fontWeight: 600,
                           fontSize: '12px',
                           textTransform: 'none',
-                          py: 0.5,
-                          px: 1.5,
+                          boxShadow: 'none',
+                          py: 0.6,
+                          px: 1.6,
                           whiteSpace: 'nowrap',
-                          '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' }
+                          '&:hover': {
+                            bgcolor: '#1e293b',
+                            boxShadow: 'none',
+                          }
                         }}
                       >
                         รายละเอียด
