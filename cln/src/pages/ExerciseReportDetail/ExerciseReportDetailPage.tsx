@@ -43,21 +43,34 @@ export default function ExerciseReportDetailPage() {
     setPage(0);
   };
 
-  // ดึงข้อมูลสถิติของโจทย์และผลงานนักศึกษารายคนจาก Backend
+  // ดึงข้อมูลสถิติของโจทย์และผลงานนักศึกษารายคนจาก Backend พร้อมระบบป้องกัน Race Condition & ตรวจสอบ ID
   useEffect(() => {
-    if (!exerciseId) return;
+    const id = Number(exerciseId);
+    if (!exerciseId || isNaN(id)) return;
+    let ignore = false;
+
     const fetchBreakdown = async () => {
       setLoading(true);
       try {
-        const res = await getExerciseStudentBreakdown(Number(exerciseId));
-        setData(res);
+        const res = await getExerciseStudentBreakdown(id);
+        if (!ignore) {
+          setData(res);
+        }
       } catch (err) {
-        console.error('ไม่สามารถดึงข้อมูลนักศึกษารายข้อได้:', err);
+        if (!ignore) {
+          console.error('ไม่สามารถดึงข้อมูลนักศึกษารายข้อได้:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
     fetchBreakdown();
+
+    return () => {
+      ignore = true;
+    };
   }, [exerciseId]);
 
   const exercise = data?.exercise;
@@ -75,6 +88,10 @@ export default function ExerciseReportDetailPage() {
       return true;
     });
   }, [data?.students, search, statusFilter]);
+
+  // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
+  const totalPages = Math.ceil(filteredStudents.length / rowsPerPage);
+  const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
 
   const isFiltered = Boolean(search.trim() || statusFilter);
 
@@ -114,23 +131,24 @@ export default function ExerciseReportDetailPage() {
     <MainLayout activeItem="Reports">
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', maxWidth: '1440px', margin: '0 auto', pb: 6 }}>
         
-        {/* ปุ่มย้อนกลับไปหน้ารายงานหลัก */}
+        {/* ปุ่มย้อนกลับไปหน้ารายงานหลัก สไตล์ Modern Dark-Navy SaaS */}
         <Box>
           <Button
-            variant="text"
+            variant="contained"
             startIcon={<ArrowLeft size={18} />}
             onClick={() => navigate('/reports?tab=exercises')}
             sx={{
               color: '#475569',
               fontWeight: 700,
-              fontSize: '14px',
+              fontSize: '13px',
               textTransform: 'none',
-              px: 1.5,
-              py: 0.8,
-              borderRadius: '10px',
+              px: 2,
+              py: 0.9,
+              borderRadius: '8px',
               bgcolor: '#ffffff',
               border: '1px solid #e2e8f0',
-              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a' },
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a', boxShadow: 'none' },
             }}
           >
             ย้อนกลับไปหน้ารายงาน
@@ -166,7 +184,7 @@ export default function ExerciseReportDetailPage() {
 
               <ExerciseStudentTable
                 students={filteredStudents}
-                page={page}
+                page={safePage}
                 rowsPerPage={rowsPerPage}
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}

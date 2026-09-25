@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, Card, CircularProgress } from '@mui/material';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { getStudentActivities, type StudentActivitiesResponse, type StudentActivityItem } from '../../api/reports';
 import { CodeInspectionDialog } from '../StudentReportDetail/components/CodeInspectionDialog';
@@ -71,40 +71,56 @@ export default function StudentErrorReportDetailPage() {
   // แบบฝึกหัดที่เลือกสำหรับเปิดดูประวัติข้อผิดพลาดใน Modal
   const [selectedExerciseForHistory, setSelectedExerciseForHistory] = useState<GroupedExerciseItem | null>(null);
 
-  // ดึงประวัติกิจกรรมทั้งหมดของผู้เรียนคนนี้จาก API
+  // ดึงประวัติกิจกรรมทั้งหมดของผู้เรียนคนนี้จาก API พร้อมการป้องกัน Race Condition & Invalid ID
   useEffect(() => {
-    if (!userId) return;
+    const id = Number(userId);
+    if (!userId || isNaN(id)) return;
+    let ignore = false;
+
     const fetchActivities = async () => {
       setLoading(true);
       try {
-        const res = await getStudentActivities(Number(userId));
-        setData(res);
+        const res = await getStudentActivities(id);
+        if (!ignore) {
+          setData(res);
+        }
       } catch (err) {
-        console.error('ไม่สามารถเรียกข้อมูลกิจกรรมของผู้เรียนได้:', err);
+        if (!ignore) {
+          console.error('ไม่สามารถเรียกข้อมูลกิจกรรมของผู้เรียนได้:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
+
     fetchActivities();
+    return () => {
+      ignore = true;
+    };
   }, [userId]);
 
   const student = data?.student || null;
 
-  // กรองเฉพาะประวัติกิจกรรมที่เกิดข้อผิดพลาดจริง (exceptionMessage มีค่า)
+  // กรองเฉพาะประวัติกิจกรรมที่เกิดข้อผิดพลาดจริง และ parse ประเภท Error เพียงครั้งเดียว (Single-Pass Normalization)
   const errorActivities = useMemo(() => {
-    return (data?.activities || []).filter(
-      (act) => act.exceptionMessage && act.exceptionMessage.trim() !== ''
-    );
+    return (data?.activities || [])
+      .filter((act) => act.exceptionMessage && act.exceptionMessage.trim() !== '')
+      .map((act) => ({
+        ...act,
+        parsedErrorType: parseErrorType(act.exceptionMessage),
+      }));
   }, [data?.activities]);
 
-  // คำนวณภาพรวมสถิติ Error ของคนนี้
+  // คำนวณภาพรวมสถิติ Error ของคนนี้ โดยใช้ parsedErrorType ได้ทันทีโดยไม่ต้องรัน Regex ซ้ำ
   const stats = useMemo(() => {
     const total = errorActivities.length;
     const typeCountMap: Record<string, number> = {};
     const exerciseIdSet = new Set<number>();
 
     errorActivities.forEach((act) => {
-      const type = parseErrorType(act.exceptionMessage);
+      const type = act.parsedErrorType;
       typeCountMap[type] = (typeCountMap[type] || 0) + 1;
       exerciseIdSet.add(act.exerciseId);
     });
@@ -119,8 +135,8 @@ export default function StudentErrorReportDetailPage() {
     };
   }, [errorActivities]);
 
-  // จัดกลุ่มข้อผิดพลาดตามแบบฝึกหัด (Exercise)
-  const groupedExercises = useMemo<GroupedExerciseItem[]>(() => {
+  // จัดกลุ่มข้อผิดพลาดตามแบบฝึกหัด (Exercise) เฉพาะเมื่อ errorActivities มีการเปลี่ยนแปลง
+  const allGroupedExercises = useMemo<GroupedExerciseItem[]>(() => {
     const map = new Map<number, GroupedExerciseItem>();
 
     errorActivities.forEach((act) => {
@@ -138,13 +154,18 @@ export default function StudentErrorReportDetailPage() {
 
       const item = map.get(exId)!;
       item.activities.push(act);
-      const errType = parseErrorType(act.exceptionMessage);
+      const errType = act.parsedErrorType;
       item.errorTypeCounts[errType] = (item.errorTypeCounts[errType] || 0) + 1;
     });
 
-    let list = Array.from(map.values()).sort(
+    return Array.from(map.values()).sort(
       (a, b) => b.activities.length - a.activities.length
     );
+  }, [errorActivities]);
+
+  // กรองผลลัพธ์แบบฝึกหัดตามคำค้นหาและประเภท Error ที่เลือก (รวดเร็ว ไม่ต้อง re-group Map ใหม่ทุก keystroke)
+  const groupedExercises = useMemo<GroupedExerciseItem[]>(() => {
+    let list = allGroupedExercises;
 
     // กรองตามคำค้นหาชื่อโจทย์ หรือหัวข้อ
     if (searchQuery.trim()) {
@@ -161,7 +182,7 @@ export default function StudentErrorReportDetailPage() {
     }
 
     return list;
-  }, [errorActivities, searchQuery, selectedErrorType]);
+  }, [allGroupedExercises, searchQuery, selectedErrorType]);
 
 
 
@@ -171,20 +192,21 @@ export default function StudentErrorReportDetailPage() {
         {/* 1. ปุ่มย้อนกลับไปหน้ารายงานสรุปภาพรวม */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button
-            variant="text"
-            startIcon={<ArrowLeft size={18} />}
+            variant="contained"
+            startIcon={<ArrowLeft size={16} />}
             onClick={() => navigate('/reports?tab=errors')}
             sx={{
               color: '#475569',
-              fontWeight: 700,
-              fontSize: '14px',
+              fontWeight: 600,
+              fontSize: '13px',
               textTransform: 'none',
-              px: 1.5,
+              px: 1.8,
               py: 0.8,
-              borderRadius: '10px',
+              borderRadius: '8px',
               bgcolor: '#ffffff',
               border: '1px solid #e2e8f0',
-              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a' },
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a', boxShadow: 'none' },
             }}
           >
             ย้อนกลับไปหน้ารายงานสรุป
@@ -210,7 +232,14 @@ export default function StudentErrorReportDetailPage() {
               topErrorType={stats.topErrorType}
             />
 
-            {/* 4. แถบตัวกรองประเภท Error และช่องค้นหา */}
+            {/* 4. ส่วนหัวรายการโจทย์ */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 0.5, mt: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1 }}>
+                แบบฝึกหัดที่พบข้อผิดพลาด ({groupedExercises.length} ข้อ)
+              </Typography>
+            </Box>
+
+            {/* 5. แถบตัวกรองแถวเดียวสมบูรณ์ (Single Unified Toolbar) */}
             <StudentErrorFilters
               selectedErrorType={selectedErrorType}
               onSelectErrorType={setSelectedErrorType}
@@ -218,14 +247,6 @@ export default function StudentErrorReportDetailPage() {
               searchQuery={searchQuery}
               onSearchChange={setSearchQuery}
             />
-
-            {/* 5. ส่วนหัวรายการโจทย์ */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 0.5 }}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: 1 }}>
-                <BookOpen size={18} color="#2563eb" />
-                แบบฝึกหัดที่พบข้อผิดพลาด ({groupedExercises.length} ข้อ)
-              </Typography>
-            </Box>
 
             {/* 6. ตารางสรุปแบบฝึกหัดมาตรฐาน (Clean Table View) */}
             <StudentErrorExerciseTable
