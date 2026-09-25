@@ -101,10 +101,10 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                       label={diffMeta.label}
                       size="small"
                       sx={{
-                        bgcolor: '#f8fafc',
-                        color: '#334155',
-                        border: '1px solid #e2e8f0',
-                        fontWeight: 600,
+                        bgcolor: diffMeta.bg,
+                        color: diffMeta.color,
+                        border: `1px solid ${diffMeta.border}`,
+                        fontWeight: 700,
                         fontSize: '12px',
                         borderRadius: '8px',
                         px: 0.5

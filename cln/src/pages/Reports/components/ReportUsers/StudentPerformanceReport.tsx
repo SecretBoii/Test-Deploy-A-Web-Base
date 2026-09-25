@@ -6,7 +6,7 @@ import {
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Search, RotateCcw } from 'lucide-react';
-import type { StudentReportData } from '../../../api/reports';
+import type { StudentReportData } from '../../../../api/reports';
 
 interface StudentPerformanceReportProps {
   data: StudentReportData[];
@@ -345,119 +345,119 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
               </TableCell>
             </TableRow>
           </TableHead>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                    <Box sx={{ width: '100%', maxWidth: 300, mx: 'auto' }}>
-                      <LinearProgress sx={{ borderRadius: 3, height: 6 }} />
-                      <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดรายงานความคืบหน้า...</Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ) : filteredData.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
-                    <Users size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
-                    <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>
-                      {isFiltered ? 'ไม่พบข้อมูลรายชื่อผู้เรียนที่ตรงกับเงื่อนไข' : 'ไม่พบข้อมูลรายชื่อผู้เรียน'}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedData.map((student) => {
-                  const totalEx = student.totalExercises || student.totalSessions || 25;
-                  const passedEx = student.passedExercises ?? student.completedSessions ?? 0;
-                  const percentage = totalEx > 0 ? (passedEx / totalEx) * 100 : 0;
-                  return (
-                    <TableRow key={student.userId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 34, height: 34, bgcolor: '#f1f5f9', color: '#0f172a', fontSize: '13px', fontWeight: 700, border: '1px solid #e2e8f0' }}>
-                            {student.fullName ? student.fullName.charAt(0) : 'S'}
-                          </Avatar>
-                          <Box>
-                            <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{student.fullName}</Typography>
-                            <Typography variant="caption" sx={{ color: '#64748b' }}>@{student.username}</Typography>
-                          </Box>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <Box sx={{ width: '100%', maxWidth: 300, mx: 'auto' }}>
+                    <LinearProgress sx={{ borderRadius: 3, height: 6 }} />
+                    <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดรายงานความคืบหน้า...</Typography>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                  <Users size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
+                  <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>
+                    {isFiltered ? 'ไม่พบข้อมูลรายชื่อผู้เรียนที่ตรงกับเงื่อนไข' : 'ไม่พบข้อมูลรายชื่อผู้เรียน'}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedData.map((student) => {
+                const totalEx = student.totalExercises || student.totalSessions || 25;
+                const passedEx = student.passedExercises ?? student.completedSessions ?? 0;
+                const percentage = totalEx > 0 ? (passedEx / totalEx) * 100 : 0;
+                return (
+                  <TableRow key={student.userId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar sx={{ width: 34, height: 34, bgcolor: '#f1f5f9', color: '#0f172a', fontSize: '13px', fontWeight: 700, border: '1px solid #e2e8f0' }}>
+                          {student.fullName ? student.fullName.charAt(0) : 'S'}
+                        </Avatar>
+                        <Box>
+                          <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>{student.fullName}</Typography>
+                          <Typography variant="caption" sx={{ color: '#64748b' }}>@{student.username}</Typography>
                         </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{student.university || '-'}</Typography>
-                        <Typography variant="caption" sx={{ color: '#64748b' }}>{student.faculty || '-'}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12px' }}>
-                              ผ่าน {passedEx} / {totalEx} ข้อ
-                            </Typography>
-                            <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>
-                              {percentage.toFixed(0)}%
-                            </Typography>
-                          </Box>
-                          <LinearProgress 
-                            variant="determinate" 
-                            value={percentage} 
-                            sx={{ 
-                              height: 6, 
-                              borderRadius: 3, 
-                              bgcolor: '#f1f5f9', 
-                              '& .MuiLinearProgress-bar': { bgcolor: '#0f172a', borderRadius: 3 } 
-                            }}
-                          />
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{student.university || '-'}</Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b' }}>{student.faculty || '-'}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12px' }}>
+                            ผ่าน {passedEx} / {totalEx} ข้อ
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}>
+                            {percentage.toFixed(0)}%
+                          </Typography>
                         </Box>
-                      </TableCell>
-                      {/* คะแนนเฉลี่ย: ขนาดปกติ สีเดียวกันทุกแถว */}
-                      <TableCell align="center">
-                        <Typography sx={{ 
-                          fontSize: '13px', 
-                          fontWeight: 500, 
-                          color: '#0f172a' 
-                        }}>
-                          {student.averageScore.toFixed(1)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="center">
-                        <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
-                          {student.averageAttempts.toFixed(1)} ครั้ง
-                        </Typography>
-                      </TableCell>
-                      <TableCell sx={{ fontSize: '13px', color: '#64748b' }}>
-                        {student.lastActiveAt ? new Date(student.lastActiveAt).toLocaleDateString('th-TH') : '-'}
-                      </TableCell>
-                      {/* ปุ่มจัดการ: Solid Dark-Navy คมชัด หนักแน่น ไม่ใช้สีอ่อน */}
-                      <TableCell align="center">
-                        <Button
-                          variant="contained"
-                          size="small"
-                          onClick={() => navigate(`/reports/students/${student.userId}`)}
-                          sx={{
-                            borderRadius: '8px',
-                            bgcolor: '#0f172a',
-                            color: '#ffffff',
-                            fontWeight: 600,
-                            fontSize: '12px',
-                            textTransform: 'none',
-                            boxShadow: 'none',
-                            py: 0.6,
-                            px: 1.6,
-                            whiteSpace: 'nowrap',
-                            '&:hover': {
-                              bgcolor: '#1e293b',
-                              boxShadow: 'none',
-                            }
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={percentage} 
+                          sx={{ 
+                            height: 6, 
+                            borderRadius: 3, 
+                            bgcolor: '#f1f5f9', 
+                            '& .MuiLinearProgress-bar': { bgcolor: '#0f172a', borderRadius: 3 } 
                           }}
-                        >
-                          ดูประวัติการทำ
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
+                        />
+                      </Box>
+                    </TableCell>
+                    {/* คะแนนเฉลี่ย: ขนาดปกติ สีเดียวกันทุกแถว */}
+                    <TableCell align="center">
+                      <Typography sx={{ 
+                        fontSize: '13px', 
+                        fontWeight: 500, 
+                        color: '#0f172a' 
+                      }}>
+                        {student.averageScore.toFixed(1)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
+                        {student.averageAttempts.toFixed(1)} ครั้ง
+                      </Typography>
+                    </TableCell>
+                    <TableCell sx={{ fontSize: '13px', color: '#64748b' }}>
+                      {student.lastActiveAt ? new Date(student.lastActiveAt).toLocaleDateString('th-TH') : '-'}
+                    </TableCell>
+                    {/* ปุ่มจัดการ: Solid Dark-Navy คมชัด หนักแน่น ไม่ใช้สีอ่อน */}
+                    <TableCell align="center">
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => navigate(`/reports/students/${student.userId}`)}
+                        sx={{
+                          borderRadius: '8px',
+                          bgcolor: '#0f172a',
+                          color: '#ffffff',
+                          fontWeight: 600,
+                          fontSize: '12px',
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          py: 0.6,
+                          px: 1.6,
+                          whiteSpace: 'nowrap',
+                          '&:hover': {
+                            bgcolor: '#1e293b',
+                            boxShadow: 'none',
+                          }
+                        }}
+                      >
+                        ดูประวัติการทำ
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
 
         {/* ระบบเปลี่ยนหน้า Pagination */}
         <TablePagination
