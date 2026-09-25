@@ -1,5 +1,4 @@
-import { Card, Box, Avatar, Typography, Chip } from '@mui/material';
-import { AlertTriangle } from 'lucide-react';
+import { Card, Box, Avatar, Typography } from '@mui/material';
 import type { StudentActivitiesResponse } from '../../../api/reports';
 
 interface StudentErrorProfileCardProps {
@@ -7,26 +6,34 @@ interface StudentErrorProfileCardProps {
   totalExceptions: number;
 }
 
-export function StudentErrorProfileCard({ student, totalExceptions }: StudentErrorProfileCardProps) {
+// การ์ดข้อมูลโปรไฟล์ผู้เรียนในหน้ารายละเอียดข้อผิดพลาด ออกแบบสไตล์ Modern Dark-Navy SaaS
+export function StudentErrorProfileCard({ student }: StudentErrorProfileCardProps) {
   return (
-    <Card sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', bgcolor: '#ffffff' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-        <Avatar sx={{ width: 52, height: 52, bgcolor: '#fee2e2', color: '#dc2626', fontWeight: 800, fontSize: '20px' }}>
-          {student?.fullName ? student.fullName.charAt(0) : 'U'}
-        </Avatar>
-        <Box sx={{ flexGrow: 1 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a' }}>
-            {student?.fullName || 'ไม่ระบุชื่อ'}
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
-            @{student?.username} • {student?.university || '-'} • {student?.faculty || '-'}
-          </Typography>
+    <Card sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', bgcolor: '#ffffff' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Avatar
+            sx={{
+              width: 50,
+              height: 50,
+              bgcolor: '#f1f5f9',
+              color: '#0f172a',
+              fontWeight: 800,
+              fontSize: '18px',
+              border: '1px solid #e2e8f0',
+            }}
+          >
+            {student?.fullName ? student.fullName.charAt(0) : 'U'}
+          </Avatar>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>
+              {student?.fullName || 'ไม่ระบุชื่อ'}
+            </Typography>
+            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, mt: 0.3 }}>
+              @{student?.username || 'user'} • {student?.university || '-'} • {student?.faculty || '-'}
+            </Typography>
+          </Box>
         </Box>
-        <Chip
-          icon={<AlertTriangle size={15} color="#dc2626" />}
-          label={`พบทั้งหมด ${totalExceptions} Exceptions`}
-          sx={{ bgcolor: '#fff1f2', color: '#dc2626', fontWeight: 800, border: '1px solid #fecdd3', borderRadius: '8px' }}
-        />
       </Box>
     </Card>
   );

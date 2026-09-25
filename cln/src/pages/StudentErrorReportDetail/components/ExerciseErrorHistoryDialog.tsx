@@ -2,7 +2,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, IconButton, Chip
 } from '@mui/material';
-import { X, Code, BookOpen } from 'lucide-react';
+import { X } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
 import type { GroupedExerciseItem } from '../StudentErrorReportDetailPage';
 import { ExerciseErrorActivityItem } from './ExerciseErrorActivityItem';
@@ -42,9 +42,6 @@ export function ExerciseErrorHistoryDialog({
       <DialogTitle sx={{ px: 3, py: 2.2, bgcolor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box sx={{ p: 1, bgcolor: '#eff6ff', color: '#2563eb', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-              <Code size={20} />
-            </Box>
             <Box>
               <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.3, fontSize: '1.1rem' }}>
                 {exercise.title}
@@ -52,7 +49,7 @@ export function ExerciseErrorHistoryDialog({
               <Typography variant="caption" sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 1, mt: 0.2 }}>
                 <span>บทเรียน: <strong>{exercise.topic || 'ทั่วไป'}</strong></span>
                 <span>•</span>
-                <span>พบข้อผิดพลาดทั้งหมด <strong style={{ color: '#dc2626' }}>{exercise.activities.length} ครั้ง</strong></span>
+                <span>พบข้อผิดพลาดทั้งหมด <strong>{exercise.activities.length} ครั้ง</strong></span>
               </Typography>
             </Box>
           </Box>
@@ -64,16 +61,25 @@ export function ExerciseErrorHistoryDialog({
       </DialogTitle>
 
       {/* 2. เนื้อหาข้างใน: รายการประวัติการรัน/ส่งโค้ดทั้งหมดของข้อนี้ */}
-      <DialogContent sx={{ p: 3, bgcolor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#334155', display: 'flex', alignItems: 'center', gap: 1 }}>
-            <BookOpen size={16} color="#2563eb" />
+      <DialogContent
+        sx={{
+          px: 3,
+          pb: 3,
+          pt: '24px !important', // แก้ปัญหา MUI default ที่ตัด paddingTop ออกเมื่อตามหลัง DialogTitle
+          bgcolor: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: 1, fontSize: '13.5px' }}>
             ประวัติการรันและส่งโค้ดที่เกิด Error (เรียงจากล่าสุดไปเก่าสุด)
           </Typography>
           <Chip
             label={`${exercise.activities.length} รายการ`}
             size="small"
-            sx={{ bgcolor: '#e2e8f0', color: '#334155', fontWeight: 700, fontSize: '11.5px' }}
+            sx={{ bgcolor: '#ffffff', color: '#0f172a', border: '1px solid #e2e8f0', fontWeight: 700, fontSize: '11.5px' }}
           />
         </Box>
 
@@ -94,15 +100,18 @@ export function ExerciseErrorHistoryDialog({
       <DialogActions sx={{ px: 3, py: 1.8, bgcolor: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
         <Button
           onClick={onClose}
-          variant="outlined"
+          variant="contained"
           sx={{
-            color: '#475569',
-            borderColor: '#cbd5e1',
+            bgcolor: '#0f172a',
+            color: '#ffffff',
             borderRadius: '8px',
             textTransform: 'none',
-            fontWeight: 700,
+            fontWeight: 600,
+            fontSize: '13px',
+            boxShadow: 'none',
             px: 2.5,
-            '&:hover': { bgcolor: '#f8fafc', borderColor: '#94a3b8' },
+            py: 0.7,
+            '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
           }}
         >
           ปิดหน้าต่าง

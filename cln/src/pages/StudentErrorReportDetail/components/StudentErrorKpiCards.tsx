@@ -1,5 +1,4 @@
 import { Grid, Paper, Box, Typography } from '@mui/material';
-import { Activity, BookOpen, Bug } from 'lucide-react';
 
 interface StudentErrorKpiCardsProps {
   totalExceptions: number;
@@ -7,121 +6,99 @@ interface StudentErrorKpiCardsProps {
   topErrorType: string;
 }
 
+// การ์ดสรุป KPI 3 ใบของนักศึกษารายคน ปรับความสูงเท่ากันเป๊ะ สไตล์ Modern Dark-Navy SaaS
 export function StudentErrorKpiCards({
   totalExceptions,
   totalExercisesWithErrors,
   topErrorType,
 }: StudentErrorKpiCardsProps) {
   return (
-    <Grid container spacing={2}>
+    <Grid container spacing={2.5} sx={{ alignItems: 'stretch' }}>
       {/* 1. จำนวน Exception รวม */}
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
         <Paper
           sx={{
             p: 2.5,
-            borderRadius: '14px',
+            borderRadius: '16px',
             border: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
             boxShadow: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: 2,
+            flex: 1,
+            height: '100%',
           }}
         >
-          <Box
-            sx={{
-              p: 1.2,
-              bgcolor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              color: '#475569',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Activity size={22} />
-          </Box>
           <Box>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>
+            <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
               Exception รวมของคนนี้
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>
-              {totalExceptions} ครั้ง
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8, mt: 0.3 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                {totalExceptions}
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                ครั้ง
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Grid>
 
       {/* 2. แบบฝึกหัดที่ติดปัญหา */}
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
         <Paper
           sx={{
             p: 2.5,
-            borderRadius: '14px',
+            borderRadius: '16px',
             border: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
             boxShadow: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: 2,
+            flex: 1,
+            height: '100%',
           }}
         >
-          <Box
-            sx={{
-              p: 1.2,
-              bgcolor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              color: '#475569',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <BookOpen size={22} />
-          </Box>
           <Box>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>
+            <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
               แบบฝึกหัดที่ติดปัญหา
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>
-              {totalExercisesWithErrors} ข้อ
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8, mt: 0.3 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                {totalExercisesWithErrors}
+              </Typography>
+              <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                ข้อ
+              </Typography>
+            </Box>
           </Box>
         </Paper>
       </Grid>
 
       {/* 3. Exception ที่เจอบ่อยสุด */}
-      <Grid size={{ xs: 12, sm: 4 }}>
+      <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
         <Paper
           sx={{
             p: 2.5,
-            borderRadius: '14px',
+            borderRadius: '16px',
             border: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
             boxShadow: 'none',
             display: 'flex',
             alignItems: 'center',
             gap: 2,
+            flex: 1,
+            height: '100%',
           }}
         >
-          <Box
-            sx={{
-              p: 1.2,
-              bgcolor: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              color: '#475569',
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Bug size={22} />
-          </Box>
           <Box>
-            <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>
+            <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
               Exception ที่เจอบ่อยสุด
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3, lineHeight: 1.2 }}>
               {topErrorType}
             </Typography>
           </Box>

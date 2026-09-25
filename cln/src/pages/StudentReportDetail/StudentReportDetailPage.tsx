@@ -21,21 +21,34 @@ export default function StudentReportDetailPage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedActivity, setSelectedActivity] = useState<StudentActivityItem | null>(null);
 
-  // ดึงข้อมูลผู้เรียนและประวัติกิจกรรมทั้งหมดจาก API
+  // ดึงข้อมูลผู้เรียนและประวัติกิจกรรมทั้งหมดจาก API พร้อมระบบป้องกัน Race Condition & ตรวจสอบ ID
   useEffect(() => {
-    if (!userId) return;
+    const id = Number(userId);
+    if (!userId || isNaN(id)) return;
+    let ignore = false;
+
     const fetchData = async () => {
       setLoading(true);
       try {
-        const res = await getStudentActivities(Number(userId));
-        setData(res);
+        const res = await getStudentActivities(id);
+        if (!ignore) {
+          setData(res);
+        }
       } catch (err) {
-        console.error('เกิดข้อผิดพลาดในการดึงประวัติผู้เรียน:', err);
+        if (!ignore) {
+          console.error('เกิดข้อผิดพลาดในการดึงประวัติผู้เรียน:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!ignore) {
+          setLoading(false);
+        }
       }
     };
     fetchData();
+
+    return () => {
+      ignore = true;
+    };
   }, [userId]);
 
   const student = data?.student || null;
@@ -52,15 +65,15 @@ export default function StudentReportDetailPage() {
     runCount: 0,
   };
 
-  // คำนวณจำนวนกิจกรรมในแต่ละแท็บแบบไดนามิก สัมพันธ์กับตัวกรองสถานะ (ผ่าน/ไม่ผ่าน) และคำค้นหา
-  const tabCounts = useMemo(() => {
-    const base = activities.filter((act) => {
+  // กรองข้อมูลกิจกรรมชั้นต้นตามสถานะ (Passed/Failed) และคำค้นหา เพียงรอบเดียว
+  const baseFilteredActivities = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return activities.filter((act) => {
       const isPassed = act.score >= 80;
       if (statusFilter === 'passed' && !isPassed) return false;
       if (statusFilter === 'failed' && isPassed) return false;
 
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
+      if (query) {
         const exTitle = act.exercise?.title?.toLowerCase() || '';
         const sessionName = act.session?.sessionName?.toLowerCase() || '';
         const topic = act.exercise?.topic?.toLowerCase() || '';
@@ -70,62 +83,51 @@ export default function StudentReportDetailPage() {
       }
       return true;
     });
-
-    return {
-      all: base.length,
-      submit: base.filter((a) => a.eventType === 'submit').length,
-      run: base.filter((a) => a.eventType === 'run').length,
-    };
   }, [activities, statusFilter, searchQuery]);
 
-  // กรองรายการกิจกรรมตามตัวกรองที่เลือก (Tab, สถานะ Passed/Failed, คำค้นหา)
+  // คำนวณจำนวนกิจกรรมในแต่ละแท็บจากข้อมูลที่ผ่านการกรองชั้นต้นแบบ O(N) ไม่ต้องคำนวณซ้ำซ้อน
+  const tabCounts = useMemo(() => {
+    let submit = 0;
+    let run = 0;
+    for (const a of baseFilteredActivities) {
+      if (a.eventType === 'submit') submit++;
+      else if (a.eventType === 'run') run++;
+    }
+    return {
+      all: baseFilteredActivities.length,
+      submit,
+      run,
+    };
+  }, [baseFilteredActivities]);
+
+  // กรองรายการกิจกรรมตามแท็บที่เลือก (all, submit, run)
   const filteredActivities = useMemo(() => {
-    return activities.filter((act) => {
-      // กรองตาม Event Type Tab
-      if (activeTab === 'submit' && act.eventType !== 'submit') return false;
-      if (activeTab === 'run' && act.eventType !== 'run') return false;
-
-      // กรองตามสถานะ ผ่าน / ไม่ผ่าน
-      const isPassed = act.score >= 80;
-      if (statusFilter === 'passed' && !isPassed) return false;
-      if (statusFilter === 'failed' && isPassed) return false;
-
-      // ค้นหาตามชื่อโจทย์ หรือ บทเรียน
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const exTitle = act.exercise?.title?.toLowerCase() || '';
-        const sessionName = act.session?.sessionName?.toLowerCase() || '';
-        const topic = act.exercise?.topic?.toLowerCase() || '';
-        if (!exTitle.includes(query) && !sessionName.includes(query) && !topic.includes(query)) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-  }, [activities, activeTab, statusFilter, searchQuery]);
+    if (activeTab === 'all') return baseFilteredActivities;
+    return baseFilteredActivities.filter((act) => act.eventType === activeTab);
+  }, [baseFilteredActivities, activeTab]);
 
   return (
     <MainLayout activeItem="Reports">
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', maxWidth: '1440px', margin: '0 auto', pb: 6 }}>
         
-        {/* ปุ่มย้อนกลับด้านบน */}
+        {/* ปุ่มย้อนกลับด้านบน สไตล์ Modern Dark-Navy SaaS */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button
-            variant="text"
+            variant="contained"
             startIcon={<ArrowLeft size={18} />}
             onClick={() => navigate('/reports?tab=students')}
             sx={{
               color: '#475569',
               fontWeight: 700,
-              fontSize: '14px',
+              fontSize: '13px',
               textTransform: 'none',
-              px: 1.5,
-              py: 0.8,
-              borderRadius: '10px',
+              px: 2,
+              py: 0.9,
+              borderRadius: '8px',
               bgcolor: '#ffffff',
               border: '1px solid #e2e8f0',
-              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a' },
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#f8fafc', color: '#0f172a', boxShadow: 'none' },
             }}
           >
             ย้อนกลับไปหน้ารายงาน

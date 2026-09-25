@@ -121,7 +121,7 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
               }}
             >
               <Typography sx={{ fontSize: '13px', fontWeight: 800 }}>
-                {activity.score} / 100
+                {activity.score ?? 0} / 100
               </Typography>
             </Box>
 
@@ -134,7 +134,17 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
       </DialogTitle>
 
       {/* เนื้อหา Dialog: Split 2 คอลัมน์ (โค้ดฝั่งซ้าย, ผลลัพธ์ฝั่งขวา) และ AI Feedback ด้านล่าง */}
-      <DialogContent sx={{ p: 3, bgcolor: '#f8fafc', display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      <DialogContent
+        sx={{
+          px: 3,
+          pb: 3,
+          pt: '24px !important', // ป้องกัน MUI default ที่ตัด paddingTop เป็น 0 เมื่อตามหลัง DialogTitle
+          bgcolor: '#f8fafc',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.5,
+        }}
+      >
         <Grid container spacing={2.5}>
           {/* ฝั่งซ้าย: ซอร์สโค้ดภาษา Python */}
           <Grid size={{ xs: 12, md: 7 }}>

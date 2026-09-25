@@ -1,8 +1,8 @@
+import { useState, useMemo, useEffect } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Paper, Box, Typography, Chip, Button
+  Paper, Box, Typography, Chip, Button, TablePagination
 } from '@mui/material';
-import { Code, Clock, CheckCircle } from 'lucide-react';
 import { getErrorBadgeStyle, formatThaiTime, type GroupedExerciseItem } from '../StudentErrorReportDetailPage';
 
 interface StudentErrorExerciseTableProps {
@@ -10,14 +10,40 @@ interface StudentErrorExerciseTableProps {
   onInspectExercise: (exercise: GroupedExerciseItem) => void;
 }
 
+// ตารางแสดงแบบฝึกหัดที่เกิดข้อผิดพลาดของผู้เรียน สไตล์ Modern Dark-Navy SaaS พร้อมระบบ Pagination
 export function StudentErrorExerciseTable({
   exercises,
   onInspectExercise,
 }: StudentErrorExerciseTableProps) {
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+
+  // เมื่อผลการค้นหาหรือรายการเปลี่ยน ให้รีเซ็ตกลับไปหน้า 1 เสมอ
+  useEffect(() => {
+    setPage(0);
+  }, [exercises]);
+
+  const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
+  const totalPages = Math.ceil(exercises.length / rowsPerPage);
+  const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
+
+  // แบ่งหน้าข้อมูลแบบฝึกหัด
+  const paginatedExercises = useMemo(() => {
+    return exercises.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
+  }, [exercises, safePage, rowsPerPage]);
+
   if (exercises.length === 0) {
     return (
-      <Paper sx={{ p: 6, textAlign: 'center', borderRadius: '14px', border: '1px dashed #cbd5e1', bgcolor: '#ffffff', boxShadow: 'none' }}>
-        <CheckCircle size={36} color="#10b981" style={{ marginBottom: 8 }} />
+      <Paper sx={{ p: 6, textAlign: 'center', borderRadius: '16px', border: '1px dashed #cbd5e1', bgcolor: '#ffffff', boxShadow: 'none' }}>
         <Typography sx={{ color: '#64748b', fontWeight: 700, fontSize: '14px' }}>
           ไม่พบข้อผิดพลาดที่ตรงกับเงื่อนไขการค้นหา
         </Typography>
@@ -29,7 +55,7 @@ export function StudentErrorExerciseTable({
     <TableContainer
       component={Paper}
       sx={{
-        borderRadius: '14px',
+        borderRadius: '16px',
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
         boxShadow: 'none',
@@ -48,13 +74,17 @@ export function StudentErrorExerciseTable({
           </TableRow>
         </TableHead>
         <TableBody>
-          {exercises.map((ex) => {
+          {paginatedExercises.map((ex) => {
             const latestActivity = ex.activities[0];
             return (
               <TableRow
                 key={ex.exerciseId}
                 hover
-                sx={{ '& td': { borderBottom: '1px solid #f1f5f9', py: 1.8 } }}
+                sx={{
+                  '& td': { borderBottom: '1px solid #f1f5f9', py: 1.6 },
+                  transition: 'background-color 0.15s ease',
+                  '&:hover': { bgcolor: '#f8fafc' },
+                }}
               >
                 {/* 1. ชื่อโจทย์ */}
                 <TableCell>
@@ -73,10 +103,11 @@ export function StudentErrorExerciseTable({
                     size="small"
                     sx={{
                       bgcolor: '#f1f5f9',
-                      color: '#334155',
+                      color: '#475569',
                       fontWeight: 600,
                       fontSize: '12px',
                       borderRadius: '6px',
+                      border: '1px solid #e2e8f0',
                     }}
                   />
                 </TableCell>
@@ -106,53 +137,44 @@ export function StudentErrorExerciseTable({
                   </Box>
                 </TableCell>
 
-                {/* 4. จำนวน Error รวม */}
+                {/* 4. จำนวน Error รวม (แสดงตัวเลขคมชัดตามระบบ ไม่ใช้สีแดงจัด) */}
                 <TableCell align="center">
-                  <Chip
-                    label={`${ex.activities.length} ครั้ง`}
-                    size="small"
-                    sx={{
-                      bgcolor: '#fff1f2',
-                      color: '#dc2626',
-                      border: '1px solid #fecdd3',
-                      fontWeight: 800,
-                      fontSize: '12.5px',
-                      borderRadius: '8px',
-                      px: 0.5,
-                    }}
-                  />
+                  <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
+                    {ex.activities.length} ครั้ง
+                  </Typography>
                 </TableCell>
 
                 {/* 5. เวลาที่พบล่าสุด */}
                 <TableCell>
                   <Typography
                     variant="caption"
-                    sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.6, fontSize: '12.5px' }}
+                    sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.6, fontSize: '12.5px', fontWeight: 500 }}
                   >
-                    <Clock size={13} color="#94a3b8" />
                     {latestActivity ? formatThaiTime(latestActivity.submittedAt) : '-'}
                   </Typography>
                 </TableCell>
 
-                {/* 6. ปุ่มตรวจประวัติโค้ด */}
+                {/* 6. ปุ่มตรวจประวัติโค้ด (Solid Dark-Navy) */}
                 <TableCell align="center">
                   <Button
-                    variant="outlined"
+                    variant="contained"
                     size="small"
-                    startIcon={<Code size={14} />}
                     onClick={() => onInspectExercise(ex)}
                     sx={{
                       borderRadius: '8px',
-                      borderColor: '#cbd5e1',
-                      color: '#2563eb',
-                      fontWeight: 700,
+                      bgcolor: '#0f172a',
+                      color: '#ffffff',
+                      fontWeight: 600,
                       fontSize: '12px',
                       textTransform: 'none',
+                      boxShadow: 'none',
                       py: 0.6,
-                      px: 1.8,
+                      px: 1.6,
                       whiteSpace: 'nowrap',
-                      bgcolor: '#ffffff',
-                      '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' },
+                      '&:hover': {
+                        bgcolor: '#1e293b',
+                        boxShadow: 'none',
+                      },
                     }}
                   >
                     ตรวจประวัติโค้ด
@@ -163,6 +185,27 @@ export function StudentErrorExerciseTable({
           })}
         </TableBody>
       </Table>
+
+      {/* ส่วนเปลี่ยนหน้า (Pagination) ใต้ตารางตามมาตรฐาน SaaS */}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={exercises.length}
+        rowsPerPage={rowsPerPage}
+        page={safePage}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        labelRowsPerPage="แสดงแถวต่อหน้า:"
+        labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+        sx={{
+          borderTop: '1px solid #e2e8f0',
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+            fontSize: '13px',
+            color: '#64748b',
+            fontWeight: 500,
+          },
+        }}
+      />
     </TableContainer>
   );
 }

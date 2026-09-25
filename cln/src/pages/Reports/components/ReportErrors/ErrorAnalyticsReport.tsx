@@ -7,7 +7,7 @@ import {
   TextField, InputAdornment, IconButton
 } from '@mui/material';
 import {
-  CheckCircle, Bug, Activity, Users, Eye, Search, X
+  CheckCircle, Search, X
 } from 'lucide-react';
 import type { ErrorReportResponse } from '../../../../api/reports';
 
@@ -59,64 +59,122 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
         </Typography>
       </Box>
 
-      {/* 2. Top KPI Cards สรุปตัวเลขทั้งระบบ (การ์ดขาว คลีน มินิมอล) */}
+      {/* 2. Top KPI Cards สรุปตัวเลขทั้งระบบ (สไตล์ Modern Dark-Navy คลีนมินิมอล) */}
       {!isLoading && data && (
-        <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-                <Activity size={22} />
-              </Box>
+        <Grid container spacing={2.5} sx={{ mb: 3, alignItems: 'stretch' }}>
+          <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
+            <Paper
+              sx={{
+                p: 2.5,
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flex: 1,
+                height: '100%',
+              }}
+            >
+
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>จำนวน Exception รวมทั้งระบบ</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.totalSystemExceptions} ครั้ง</Typography>
+                <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
+                  จำนวน Exception รวมทั้งระบบ
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8, mt: 0.3 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                    {data.totalSystemExceptions}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    ครั้ง
+                  </Typography>
+                </Box>
               </Box>
             </Paper>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-                <Users size={22} />
-              </Box>
+
+          <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
+            <Paper
+              sx={{
+                p: 2.5,
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flex: 1,
+                height: '100%',
+              }}
+            >
+
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>ผู้เรียนที่พบข้อผิดพลาด</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.totalAffectedStudents} คน</Typography>
+                <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
+                  ผู้เรียนที่พบข้อผิดพลาด
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 0.8, mt: 0.3 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1.1 }}>
+                    {data.totalAffectedStudents}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+                    คน
+                  </Typography>
+                </Box>
               </Box>
             </Paper>
           </Grid>
-          <Grid size={{ xs: 12, sm: 4 }}>
-            <Paper sx={{ p: 2.5, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none', display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1.2, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', color: '#475569', borderRadius: '10px', display: 'flex', alignItems: 'center' }}>
-                <Bug size={22} />
-              </Box>
+
+          <Grid size={{ xs: 12, sm: 4 }} sx={{ display: 'flex' }}>
+            <Paper
+              sx={{
+                p: 2.5,
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flex: 1,
+                height: '100%',
+              }}
+            >
               <Box>
-                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13px' }}>พบบ่อยที่สุดในระบบ</Typography>
-                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3 }}>{data.topErrorType}</Typography>
+                <Typography variant="subtitle2" sx={{ color: '#475569', fontWeight: 700, fontSize: '13px' }}>
+                  พบบ่อยที่สุดในระบบ
+                </Typography>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mt: 0.3, lineHeight: 1.2 }}>
+                  {data.topErrorType}
+                </Typography>
               </Box>
             </Paper>
           </Grid>
         </Grid>
       )}
 
-      {/* 3. แถบสัดส่วนประเภท Exception ในระบบ (สีขาว เทา สบายตา) */}
+      {/* 3. แถบสัดส่วนประเภท Exception ในระบบ (การ์ดขาวขอบมน สไตล์ KOKISO) */}
       {!isLoading && data?.errorTypeDistribution && data.errorTypeDistribution.length > 0 && (
-        <Paper sx={{ p: 2.5, mb: 3, borderRadius: '14px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none' }}>
-          <Typography variant="caption" sx={{ fontWeight: 700, color: '#475569', mb: 1.2, display: 'block', fontSize: '13px' }}>
-            สัดส่วนหมวดหมู่ Exception ในระบบ:  รอทำchart
+        <Paper sx={{ p: 2.5, mb: 3, borderRadius: '16px', border: '1px solid #e2e8f0', bgcolor: '#ffffff', boxShadow: 'none' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#475569', mb: 1.5, fontSize: '13px' }}>
+            สัดส่วนหมวดหมู่ Exception ในระบบ
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
             {data.errorTypeDistribution.map((item) => (
               <Chip
                 key={item.errorType}
                 label={`${item.errorType}: ${item.occurrenceCount} ครั้ง (${item.percentage.toFixed(1)}%)`}
+                size="small"
                 sx={{
                   bgcolor: '#f8fafc',
-                  color: '#1e293b',
+                  color: '#0f172a',
                   border: '1px solid #e2e8f0',
                   fontWeight: 600,
                   fontSize: '12px',
                   borderRadius: '8px',
-                  py: 0.5,
+                  height: '28px',
+                  px: 0.5,
                 }}
               />
             ))}
@@ -164,8 +222,8 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
-                  <Search size={16} color="#64748b" />
+                <InputAdornment position="start" sx={{ color: '#94a3b8', mr: 1 }}>
+                  <Search size={18} />
                 </InputAdornment>
               ),
               endAdornment: userSearch ? (
@@ -180,24 +238,26 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
                   </IconButton>
                 </InputAdornment>
               ) : null,
-            }
+              sx: {
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                height: '44px',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: '#0f172a',
+                '& fieldset': { border: 'none' },
+                '&:hover': { borderColor: '#94a3b8' },
+                '&.Mui-focused': { borderColor: '#0f172a' },
+                transition: 'all 0.15s ease',
+              },
+            },
           }}
-          sx={{
-            width: { xs: '100%', sm: 280 },
-            bgcolor: '#ffffff',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '10px',
-              fontSize: '13px',
-              bgcolor: '#ffffff',
-              '& fieldset': { borderColor: '#e2e8f0' },
-              '&:hover fieldset': { borderColor: '#cbd5e1' },
-              '&.Mui-focused fieldset': { borderColor: '#2563eb' },
-            }
-          }}
+          sx={{ width: { xs: '100%', sm: 280 } }}
         />
       </Box>
 
-      {/* ตารางสรุปภาพรวมรายบุคคลแบบเหลี่ยม ชิดขอบ ไร้ขอบมน (Square / Seamless Table) เหมือนแท็บวิเคราะห์ประสิทธิภาพโจทย์ */}
+      {/* ตารางสรุปภาพรวมรายบุคคล */}
       <TableContainer sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: 900 }}>
           <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
@@ -232,14 +292,22 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
               </TableRow>
             ) : (
               paginatedStudents.map((st) => (
-                <TableRow key={st.userId} hover sx={{ '& td': { borderBottom: '1px solid #f1f5f9' } }}>
+                <TableRow 
+                  key={st.userId} 
+                  hover 
+                  sx={{ 
+                    '& td': { borderBottom: '1px solid #f1f5f9', py: 1.6 },
+                    transition: 'background-color 0.15s ease',
+                    '&:hover': { bgcolor: '#f8fafc' },
+                  }}
+                >
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar sx={{ width: 34, height: 34, bgcolor: '#fee2e2', color: '#dc2626', fontSize: '13px', fontWeight: 700 }}>
+                      <Avatar sx={{ width: 34, height: 34, bgcolor: '#f1f5f9', color: '#0f172a', fontSize: '13px', fontWeight: 700, border: '1px solid #e2e8f0' }}>
                         {st.fullName ? st.fullName.charAt(0) : 'U'}
                       </Avatar>
                       <Box>
-                        <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}>
+                        <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>
                           {st.fullName}
                         </Typography>
                         <Typography variant="caption" sx={{ color: '#64748b' }}>
@@ -257,44 +325,35 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Chip
-                      label={`${st.exercises.length} แบบฝึกหัด`}
-                      size="small"
-                      sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, borderRadius: '8px' }}
-                    />
+                    <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
+                      {st.exercises.length} แบบฝึกหัด
+                    </Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Chip
-                      label={`${st.totalExceptions} ครั้ง`}
-                      size="small"
-                      sx={{
-                        bgcolor: '#fff1f2',
-                        color: '#dc2626',
-                        border: '1px solid #fecdd3',
-                        fontWeight: 800,
-                        fontSize: '12.5px',
-                        borderRadius: '8px',
-                        px: 0.5,
-                      }}
-                    />
+                    <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
+                      {st.totalExceptions} ครั้ง
+                    </Typography>
                   </TableCell>
                   <TableCell align="center">
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       size="small"
-                      startIcon={<Eye size={14} />}
                       onClick={() => navigate(`/reports/students/${st.userId}/errors`)}
                       sx={{
                         borderRadius: '8px',
-                        borderColor: '#cbd5e1',
-                        color: '#2563eb',
-                        fontWeight: 700,
+                        bgcolor: '#0f172a',
+                        color: '#ffffff',
+                        fontWeight: 600,
                         fontSize: '12px',
                         textTransform: 'none',
-                        py: 0.5,
-                        px: 1.5,
+                        boxShadow: 'none',
+                        py: 0.6,
+                        px: 1.6,
                         whiteSpace: 'nowrap',
-                        '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' },
+                        '&:hover': {
+                          bgcolor: '#1e293b',
+                          boxShadow: 'none',
+                        },
                       }}
                     >
                       รายละเอียด

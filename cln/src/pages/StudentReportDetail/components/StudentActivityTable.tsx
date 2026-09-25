@@ -3,7 +3,7 @@ import {
   TableCell, TableContainer, TableHead, TableRow, Chip,
   TablePagination
 } from '@mui/material';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { BookOpen } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
@@ -16,6 +16,11 @@ interface StudentActivityTableProps {
 export function StudentActivityTable({ activities, onSelectActivity }: StudentActivityTableProps) {
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+
+  // เมื่อรายการกิจกรรมเปลี่ยน (เช่น เปลี่ยนแท็บ หรือค้นหา) ให้รีเซ็ตกลับหน้าแรกเสมอ ป้องกันกรณีหน้าค้าง
+  useEffect(() => {
+    setPage(0);
+  }, [activities]);
 
   // ฟังก์ชันจัดรูปแบบวันเวลาไทย
   const formatThaiDateTime = (dateStr?: string) => {
@@ -34,10 +39,14 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
     setPage(0);
   };
 
-  // แบ่งหน้าข้อมูลกิจกรรมตาม page และ rowsPerPage
+  // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
+  const totalPages = Math.ceil(activities.length / rowsPerPage);
+  const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
+
+  // แบ่งหน้าข้อมูลกิจกรรมตาม safePage และ rowsPerPage
   const paginatedActivities = useMemo(() => {
-    return activities.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [activities, page, rowsPerPage]);
+    return activities.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
+  }, [activities, safePage, rowsPerPage]);
 
   return (
     <TableContainer sx={{ border: '1px solid #e2e8f0', borderRadius: '12px', overflowX: 'auto' }}>
@@ -200,7 +209,7 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
         component="div"
         count={activities.length}
         rowsPerPage={rowsPerPage}
-        page={page}
+        page={safePage}
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage="แสดงแถวต่อหน้า:"
