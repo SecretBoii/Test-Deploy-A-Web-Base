@@ -1,9 +1,8 @@
 import { useMemo } from 'react';
 import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Typography, Button, TablePagination
+  Typography, Button, TablePagination, Box
 } from '@mui/material';
-import { Code } from 'lucide-react';
 import type { ExerciseStudentItem } from '../../../api/reports';
 
 interface ExerciseStudentTableProps {
@@ -32,8 +31,8 @@ export function ExerciseStudentTable({
     <>
       <TableContainer sx={{ overflowX: 'auto' }}>
         <Table sx={{ minWidth: 800 }}>
-          <TableHead sx={{ bgcolor: '#f8fafc' }}>
-            <TableRow sx={{ '& th': { py: 1.5, fontWeight: 700, color: '#475569', fontSize: '13px' } }}>
+          <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+            <TableRow sx={{ '& th': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', py: 1.8, fontWeight: 700, color: '#475569', fontSize: '13px' } }}>
               <TableCell>นักศึกษา</TableCell>
               <TableCell>มหาวิทยาลัย / คณะ</TableCell>
               <TableCell align="center">คะแนนสูงสุด</TableCell>
@@ -47,24 +46,34 @@ export function ExerciseStudentTable({
           <TableBody>
             {students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 5, color: '#94a3b8' }}>
-                  ไม่พบข้อมูลนักศึกษาตามเงื่อนไขที่เลือก
+                <TableCell colSpan={8} align="center" sx={{ py: 6, color: '#94a3b8' }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: '14px' }}>
+                    ไม่พบข้อมูลนักศึกษาตามเงื่อนไขที่เลือก
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               paginatedStudents.map((st) => (
-                <TableRow key={st.userId} hover>
+                <TableRow 
+                  key={st.userId} 
+                  hover
+                  sx={{
+                    '& td': { borderBottom: '1px solid #f1f5f9', py: 1.6 },
+                    transition: 'background-color 0.15s ease',
+                    '&:hover': { bgcolor: '#f8fafc' },
+                  }}
+                >
                   <TableCell>
-                    <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '13.5px' }}>{st.fullName}</Typography>
+                    <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>{st.fullName}</Typography>
                     <Typography variant="caption" sx={{ color: '#64748b' }}>@{st.username}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography sx={{ fontSize: '13px', color: '#334155' }}>{st.university}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748b' }}>{st.faculty}</Typography>
+                    <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{st.university || '-'}</Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>{st.faculty || '-'}</Typography>
                   </TableCell>
                   <TableCell align="center">
                     {st.bestScore !== null ? (
-                      <Typography sx={{ fontWeight: 800, color: st.bestScore >= 80 ? '#10b981' : '#d97706', fontSize: '14px' }}>
+                      <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
                         {st.bestScore} / 100
                       </Typography>
                     ) : (
@@ -73,44 +82,98 @@ export function ExerciseStudentTable({
                   </TableCell>
                   <TableCell align="center">
                     {st.status === 'PASSED' && (
-                      <Typography sx={{ color: '#059669', fontWeight: 700, fontSize: '13px' }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#ecfdf5',
+                          color: '#10b981',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          border: '1px solid #a7f3d0',
+                        }}
+                      >
                         ผ่าน
-                      </Typography>
+                      </Box>
                     )}
                     {st.status === 'FAILED' && (
-                      <Typography sx={{ color: '#e11d48', fontWeight: 700, fontSize: '13px' }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#fff1f2',
+                          color: '#ef4444',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          border: '1px solid #fecdd3',
+                        }}
+                      >
                         ไม่ผ่าน
-                      </Typography>
+                      </Box>
                     )}
                     {st.status === 'NOT_STARTED' && (
-                      <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '13px' }}>
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#f8fafc',
+                          color: '#94a3b8',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
                         ยังไม่ทำ
-                      </Typography>
+                      </Box>
                     )}
                   </TableCell>
                   <TableCell align="center">
-                    <Typography sx={{ fontWeight: 600, fontSize: '13px' }}>{st.runCount} ครั้ง</Typography>
+                    <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>{st.runCount} ครั้ง</Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Typography sx={{ fontWeight: 600, fontSize: '13px' }}>{st.submitCount} ครั้ง</Typography>
+                    <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>{st.submitCount} ครั้ง</Typography>
                   </TableCell>
                   <TableCell align="center">
-                    <Typography variant="caption" sx={{ color: '#64748b' }}>
+                    <Typography sx={{ fontSize: '13px', color: '#64748b' }}>
                       {st.lastSubmittedAt ? new Date(st.lastSubmittedAt).toLocaleDateString('th-TH') : '-'}
                     </Typography>
                   </TableCell>
                   <TableCell align="center">
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       size="small"
                       disabled={!st.latestActivity}
-                      startIcon={<Code size={14} />}
                       onClick={() => onInspectCode(st)}
                       sx={{
                         borderRadius: '8px',
-                        textTransform: 'none',
                         fontSize: '12px',
-                        fontWeight: 700,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        whiteSpace: 'nowrap',
+                        px: 1.6,
+                        py: 0.6,
+                        color: '#ffffff',
+                        bgcolor: '#0f172a',
+                        boxShadow: 'none',
+                        '&:hover': {
+                          bgcolor: '#1e293b',
+                          boxShadow: 'none',
+                        },
+                        '&.Mui-disabled': {
+                          bgcolor: '#f1f5f9',
+                          color: '#cbd5e1',
+                        }
                       }}
                     >
                       ตรวจโค้ด

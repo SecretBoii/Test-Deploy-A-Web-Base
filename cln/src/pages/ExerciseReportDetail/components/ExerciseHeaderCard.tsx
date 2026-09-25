@@ -21,8 +21,8 @@ export function ExerciseHeaderCard({ exercise }: ExerciseHeaderCardProps) {
           <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', mb: 0.5 }}>
             {exercise.title}
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
-            หัวข้อบทเรียน: <strong>{exercise.topic}</strong> • เวลาที่กำหนด: <strong>{exercise.expectedTime} นาที</strong>
+          <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500 }}>
+            หัวข้อบทเรียน: <span style={{ color: '#334155', fontWeight: 600 }}>{exercise.topic}</span> • เวลาที่กำหนด: <span style={{ color: '#334155', fontWeight: 600 }}>{exercise.expectedTime} นาที</span>
           </Typography>
           {exercise.objective && (
             <Typography variant="caption" sx={{ color: '#475569', display: 'block', mt: 1 }}>
