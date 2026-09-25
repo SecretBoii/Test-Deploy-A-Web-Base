@@ -9,7 +9,7 @@ import {
 import {
   CheckCircle, Bug, Activity, Users, Eye, Search, X
 } from 'lucide-react';
-import type { ErrorReportResponse } from '../../../api/reports';
+import type { ErrorReportResponse } from '../../../../api/reports';
 
 interface ErrorAnalyticsReportProps {
   data: ErrorReportResponse | null;
@@ -54,7 +54,6 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
     <Box>
       {/* 1. Header สรุปภาพรวม */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2, mb: 2.5 }}>
-
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
           สรุปข้อผิดพลาด & Exceptions
         </Typography>

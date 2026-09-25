@@ -2,9 +2,9 @@ import { Box, Tabs, Tab, Card } from '@mui/material';
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MainLayout } from '../../components/Layout/MainLayout';
-import { StudentPerformanceReport } from './components/StudentPerformanceReport';
-import { ExerciseAnalyticsReport } from './components/ExerciseAnalyticsReport';
-import { ErrorAnalyticsReport } from './components/ErrorAnalyticsReport';
+import { StudentPerformanceReport } from './components/ReportUsers/StudentPerformanceReport';
+import { ExerciseAnalyticsReport } from './components/ReportExercises/ExerciseAnalyticsReport';
+import { ErrorAnalyticsReport } from './components/ReportErrors/ErrorAnalyticsReport';
 import { 
   getStudentPerformanceReport, 
   getExerciseAnalyticsReport, 

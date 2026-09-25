@@ -6,8 +6,8 @@ import {
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { HelpCircle, Eye, RotateCcw, Search } from 'lucide-react';
-import type { ExerciseAnalyticsData } from '../../../api/reports';
-import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
+import type { ExerciseAnalyticsData } from '../../../../api/reports';
+import { DIFFICULTY_LEVELS } from '../../../../constants/difficulty';
 
 interface ExerciseAnalyticsReportProps {
   data: ExerciseAnalyticsData[];
