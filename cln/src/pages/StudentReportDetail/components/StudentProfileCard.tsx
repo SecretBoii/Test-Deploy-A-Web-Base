@@ -12,7 +12,7 @@ export function StudentProfileCard({ student, userId }: StudentProfileCardProps)
     <Card sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', bgcolor: '#ffffff' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-          <Avatar sx={{ width: 60, height: 60, bgcolor: '#eff6ff', color: '#2563eb', fontSize: '22px', fontWeight: 800, border: '2px solid #bfdbfe' }}>
+          <Avatar sx={{ width: 56, height: 56, bgcolor: '#f1f5f9', color: '#0f172a', fontSize: '20px', fontWeight: 800, border: '1px solid #e2e8f0' }}>
             {student?.fullName ? student.fullName.charAt(0) : 'S'}
           </Avatar>
           <Box>
@@ -23,7 +23,7 @@ export function StudentProfileCard({ student, userId }: StudentProfileCardProps)
               <Chip
                 label={`@${student?.username || 'user'} • ID: ${userId}`}
                 size="small"
-                sx={{ bgcolor: '#f1f5f9', color: '#475569', fontWeight: 700, fontSize: '12px', borderRadius: '6px' }}
+                sx={{ bgcolor: '#f8fafc', color: '#0f172a', fontWeight: 600, fontSize: '12px', borderRadius: '6px', border: '1px solid #e2e8f0' }}
               />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, mt: 0.8, flexWrap: 'wrap' }}>

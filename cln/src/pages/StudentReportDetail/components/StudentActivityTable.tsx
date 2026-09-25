@@ -4,7 +4,7 @@ import {
   TablePagination
 } from '@mui/material';
 import { useState, useMemo } from 'react';
-import { CheckCircle, XCircle, Code, BookOpen } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 
@@ -52,7 +52,7 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
             <TableCell align="center" sx={{ whiteSpace: 'nowrap', minWidth: '70px' }}>คะแนน</TableCell>
             <TableCell align="center" sx={{ whiteSpace: 'nowrap', minWidth: '120px' }}>จำนวนครั้งที่รัน</TableCell>
             <TableCell sx={{ whiteSpace: 'nowrap', minWidth: '140px' }}>วันและเวลาที่ทำ</TableCell>
-            <TableCell align="center" sx={{ whiteSpace: 'nowrap', minWidth: '110px' }}>ตรวจโค้ด</TableCell>
+            <TableCell align="center" sx={{ whiteSpace: 'nowrap', minWidth: '110px' }}>รายละเอียด</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -101,9 +101,10 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                       label={diffMeta.label}
                       size="small"
                       sx={{
-                        bgcolor: `${diffMeta.color}15`,
-                        color: diffMeta.color,
-                        fontWeight: 700,
+                        bgcolor: '#f8fafc',
+                        color: '#334155',
+                        border: '1px solid #e2e8f0',
+                        fontWeight: 600,
                         fontSize: '12px',
                         borderRadius: '8px',
                         px: 0.5
@@ -115,14 +116,14 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                       sx={{
                         display: 'inline-block',
                         px: 1.2,
-                        py: 0.4,
+                        py: 0.3,
                         borderRadius: '6px',
                         fontSize: '12px',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         whiteSpace: 'nowrap',
-                        bgcolor: act.eventType === 'submit' ? '#eff6ff' : '#f1f5f9',
-                        color: act.eventType === 'submit' ? '#2563eb' : '#64748b',
-                        border: act.eventType === 'submit' ? '1px solid #bfdbfe' : '1px solid #cbd5e1'
+                        bgcolor: act.eventType === 'submit' ? '#f1f5f9' : '#f8fafc',
+                        color: act.eventType === 'submit' ? '#0f172a' : '#64748b',
+                        border: '1px solid #e2e8f0'
                       }}
                     >
                       {act.eventType === 'submit' ? 'Submit' : 'Run Code'}
@@ -134,26 +135,25 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: 0.6,
-                        px: 1.5,
-                        py: 0.4,
-                        borderRadius: '20px',
-                        bgcolor: isPassed ? '#ecfdf5' : '#fff1f2',
-                        color: isPassed ? '#10b981' : '#ef4444',
+                        px: 1.2,
+                        py: 0.3,
+                        borderRadius: '6px',
+                        bgcolor: isPassed ? '#f0fdf4' : '#fef2f2',
+                        color: isPassed ? '#166534' : '#991b1b',
                         fontSize: '12px',
-                        fontWeight: 700,
-                        border: isPassed ? '1px solid #a7f3d0' : '1px solid #fecdd3'
+                        fontWeight: 600,
+                        border: isPassed ? '1px solid #bbf7d0' : '1px solid #fecaca'
                       }}
                     >
-                      {isPassed ? <CheckCircle size={14} /> : <XCircle size={14} />}
                       {isPassed ? 'Passed' : 'Failed'}
                     </Box>
                   </TableCell>
                   <TableCell align="center">
-                    <Typography sx={{ fontWeight: 800, color: isPassed ? '#10b981' : '#d97706', fontSize: '14px' }}>
+                    <Typography sx={{ fontWeight: 500, color: '#0f172a', fontSize: '13px' }}>
                       {act.score}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center" sx={{ fontWeight: 700, color: '#64748b', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                  <TableCell align="center" sx={{ fontWeight: 500, color: '#0f172a', fontSize: '13px', whiteSpace: 'nowrap' }}>
                     {act.runCount} ครั้ง
                   </TableCell>
                   <TableCell sx={{ color: '#64748b', fontSize: '13px', whiteSpace: 'nowrap' }}>
@@ -161,9 +161,8 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                   </TableCell>
                   <TableCell align="center" sx={{ whiteSpace: 'nowrap' }}>
                     <Button
-                      variant="outlined"
+                      variant="contained"
                       size="small"
-                      startIcon={<Code size={14} />}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectActivity(act);
@@ -171,16 +170,17 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                       sx={{
                         borderRadius: '8px',
                         fontSize: '12px',
-                        fontWeight: 700,
+                        fontWeight: 600,
                         textTransform: 'none',
                         whiteSpace: 'nowrap',
-                        px: 1.8,
-                        color: '#2563eb',
-                        borderColor: '#bfdbfe',
-                        bgcolor: '#eff6ff',
+                        px: 1.6,
+                        py: 0.6,
+                        bgcolor: '#0f172a',
+                        color: '#ffffff',
+                        boxShadow: 'none',
                         '&:hover': {
-                          bgcolor: '#dbeafe',
-                          borderColor: '#93c5fd',
+                          bgcolor: '#1e293b',
+                          boxShadow: 'none',
                         }
                       }}
                     >

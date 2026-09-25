@@ -2,10 +2,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Box, Typography, Button, Grid, Paper, Chip, IconButton
 } from '@mui/material';
-import {
-  X, Code, Terminal, Sparkles,
-  CheckCircle, XCircle, Award
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import type { StudentActivityItem } from '../../../api/reports';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 
@@ -106,7 +103,6 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
                 border: isPassed ? '1px solid #a7f3d0' : '1px solid #fecdd3',
               }}
             >
-              {isPassed ? <CheckCircle size={14} /> : <XCircle size={14} />}
               {isPassed ? 'Passed' : 'Failed'}
             </Box>
 
@@ -124,7 +120,6 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
                 border: '1px solid #bfdbfe',
               }}
             >
-              <Award size={14} />
               <Typography sx={{ fontSize: '13px', fontWeight: 800 }}>
                 {activity.score} / 100
               </Typography>
@@ -144,7 +139,6 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
           {/* ฝั่งซ้าย: ซอร์สโค้ดภาษา Python */}
           <Grid size={{ xs: 12, md: 7 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Code size={18} color="#2563eb" />
               <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
                 ซอร์สโค้ดภาษา Python ที่นักศึกษาเขียน:
               </Typography>
@@ -174,7 +168,6 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
           {/* ฝั่งขวา: ผลลัพธ์การรันหน้าจอ Terminal */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Terminal size={18} color="#d97706" />
               <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b' }}>
                 ผลลัพธ์การรัน (Console Output / Errors):
               </Typography>
@@ -203,37 +196,45 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
           </Grid>
         </Grid>
 
-        {/* แถวล่าง: กล่องคำแนะนำและการวิเคราะห์จากระบบ AI */}
+        {/* แถวล่าง: กล่องคำแนะนำและการประเมินจากระบบ AI (สไตล์การ์ดขาวคลีน Monochrome ไม่มีสีสัน) */}
         {activity.aiFeedback && (
           <Paper
+            elevation={0}
             sx={{
               p: 2.5,
-              bgcolor: '#faf5ff',
-              border: '1px solid #e9d5ff',
+              bgcolor: '#ffffff',
+              border: '1px solid #e2e8f0',
               borderRadius: '12px',
-              boxShadow: 'none',
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-              <Sparkles size={18} color="#7c3aed" />
-              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#6b21a8' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.25 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#1e293b', fontSize: '13.5px' }}>
                 คำแนะนำและการประเมินจากระบบ AI:
               </Typography>
             </Box>
-            <Typography variant="body2" sx={{ color: '#581c87', fontSize: '13.5px', lineHeight: 1.65 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: '#334155',
+                fontSize: '13.5px',
+                lineHeight: 1.65,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
               {activity.aiFeedback}
             </Typography>
           </Paper>
         )}
       </DialogContent>
 
-      {/* ส่วนท้าย Dialog: ปุ่มปิด */}
+      {/* ส่วนท้าย Dialog: ปุ่มปิดคุมธีม Dark-Navy */}
       <DialogActions sx={{ px: 3, py: 2, bgcolor: '#ffffff', borderTop: '1px solid #e2e8f0', justifyContent: 'flex-end' }}>
         <Button
           onClick={onClose}
           variant="contained"
           sx={{
-            bgcolor: '#2563eb',
+            bgcolor: '#0f172a',
             color: '#ffffff',
             fontWeight: 700,
             fontSize: '13px',
@@ -242,7 +243,7 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
             py: 0.8,
             textTransform: 'none',
             boxShadow: 'none',
-            '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' },
+            '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
           }}
         >
           ปิดหน้าต่าง
