@@ -1,7 +1,6 @@
 import { Box, Tabs, Tab, Card } from '@mui/material';
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Users, BookOpen, AlertTriangle } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { StudentPerformanceReport } from './components/StudentPerformanceReport';
 import { ExerciseAnalyticsReport } from './components/ExerciseAnalyticsReport';
@@ -86,38 +85,56 @@ export default function ReportsPage() {
         {/* Main Content Area wrapped in Card - ขอบมน 16px ตามมาตรฐาน Student Home */}
         <Card sx={{ p: 3, borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden', bgcolor: '#ffffff' }}>
           
-          {/* แถบนำทางเลือกประเภทรายงาน - Modern Underline Tabs */}
-          <Box sx={{ borderBottom: '1px solid #e2e8f0', mb: 3 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={handleTabChange} 
-              textColor="primary"
-              indicatorColor="primary"
+          {/* แถบนำทางเลือกประเภทรายงาน - Segmented Capsule Tabs สไตล์ KOKISO Modern SaaS */}
+          <Box sx={{ mb: 3 }}>
+            <Box 
               sx={{ 
-                minHeight: '48px',
-                '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: '#2563eb' },
-                '& .MuiTab-root': { 
-                  fontWeight: 600, 
-                  textTransform: 'none', 
-                  fontSize: '14.5px',
-                  minHeight: '48px',
-                  color: '#64748b',
-                  px: 2.5,
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    color: '#1e293b'
-                  },
-                  '&.Mui-selected': { 
-                    color: '#2563eb',
-                    fontWeight: 700
-                  } 
-                }
+                display: 'inline-flex', 
+                p: '4px', 
+                bgcolor: '#f1f5f9', 
+                borderRadius: '12px',
+                border: '1px solid #e2e8f0',
+                maxWidth: '100%',
+                overflowX: 'auto',
               }}
             >
-              <Tab icon={<Users size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="รายงานผู้เรียนรายบุคคล" />
-              <Tab icon={<BookOpen size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="วิเคราะห์ประสิทธิภาพโจทย์" />
-              <Tab icon={<AlertTriangle size={18} style={{ marginRight: 8 }} />} iconPosition="start" label="สรุปข้อผิดพลาด & Exceptions" />
-            </Tabs>
+              <Tabs 
+                value={activeTab} 
+                onChange={handleTabChange} 
+                sx={{ 
+                  minHeight: 'auto',
+                  '& .MuiTabs-indicator': { display: 'none' },
+                  '& .MuiTabs-flexContainer': {
+                    gap: '4px',
+                  },
+                  '& .MuiTab-root': { 
+                    fontWeight: 600, 
+                    textTransform: 'none', 
+                    fontSize: '13.5px',
+                    minHeight: '38px',
+                    color: '#64748b',
+                    px: 2,
+                    py: 0.8,
+                    borderRadius: '9px',
+                    transition: 'all 0.15s ease',
+                    '&:hover': {
+                      color: '#0f172a',
+                      bgcolor: 'rgba(255, 255, 255, 0.5)',
+                    },
+                    '&.Mui-selected': { 
+                      bgcolor: '#ffffff',
+                      color: '#0f172a',
+                      fontWeight: 700,
+                      boxShadow: '0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)',
+                    } 
+                  }
+                }}
+              >
+                <Tab label="รายงานผู้เรียนรายบุคคล" />
+                <Tab label="วิเคราะห์ประสิทธิภาพโจทย์" />
+                <Tab label="สรุปข้อผิดพลาด & Exceptions" />
+              </Tabs>
+            </Box>
           </Box>
 
           {/* Tab Panel Display */}
