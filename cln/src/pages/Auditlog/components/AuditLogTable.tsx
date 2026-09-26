@@ -9,12 +9,11 @@ import {
   Paper,
   Typography,
   Chip,
-  IconButton,
+  Button,
   CircularProgress,
   TablePagination,
 } from '@mui/material';
-import { Eye } from 'lucide-react';
-import { type AuditLogItem } from '../../../api/auditlogApi';
+import { type AuditLogItem, getActionStyle } from '../../../api/auditlogApi';
 
 interface AuditLogTableProps {
   logs: AuditLogItem[];
@@ -37,75 +36,14 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
   onRowsPerPageChange,
   onSelectLog,
 }) => {
+  // กำหนดสีของ Action Badge ในตารางให้ตรงกับชุดสีกลาง Solid Color (Single Source of Truth)
   const getActionChip = (action: string) => {
-    if (action.includes('DELETE') || action.includes('REMOVE')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#fef2f2', color: '#dc2626', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('UPDATE') || action.includes('MODIFY')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#fffbeb', color: '#b45309', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('CREATE')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#ecfdf5', color: '#047857', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('RUN')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#eef2ff', color: '#4338ca', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('SUBMIT')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 600, bgcolor: '#f5f3ff', color: '#7c3aed', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('LOGOUT')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#f1f5f9', color: '#475569', borderRadius: '6px', border: '1px solid #e2e8f0' }}
-        />
-      );
-    }
-    if (action.includes('LOGIN')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px', border: '1px solid #dbeafe' }}
-        />
-      );
-    }
+    const config = getActionStyle(action);
     return (
       <Chip
         label={action}
         size="small"
-        sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px' }}
+        sx={{ fontSize: '0.75rem', fontWeight: 700, bgcolor: config.chipBg, color: config.chipColor, borderRadius: '6px' }}
       />
     );
   };
@@ -162,8 +100,15 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                   <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                     #{log.id}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: '#64748b' }}>
-                    {new Date(log.createdAt).toLocaleString('th-TH')}
+                  <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 500, display: 'block', mt: 0.25 }}>
+                    {new Date(log.createdAt).toLocaleString('th-TH', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
                   </Typography>
                 </TableCell>
                 <TableCell sx={{ py: 1.5 }}>
@@ -202,14 +147,29 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                   />
                 </TableCell>
                 <TableCell align="center">
-                  <IconButton
+                  <Button
+                    variant="contained"
                     size="small"
                     onClick={() => onSelectLog(log)}
-                    sx={{ bgcolor: '#eff6ff', borderRadius: '8px', '&:hover': { bgcolor: '#dbeafe' } }}
-                    title="ดูรายละเอียด"
+                    sx={{
+                      borderRadius: '8px',
+                      bgcolor: '#0f172a',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '12px',
+                      textTransform: 'none',
+                      boxShadow: 'none',
+                      py: 0.5,
+                      px: 1.5,
+                      whiteSpace: 'nowrap',
+                      '&:hover': {
+                        bgcolor: '#1e293b',
+                        boxShadow: 'none',
+                      },
+                    }}
                   >
-                    <Eye size={18} color="#2563eb" />
-                  </IconButton>
+                    ดูประวัติการทำ
+                  </Button>
                 </TableCell>
               </TableRow>
             ))

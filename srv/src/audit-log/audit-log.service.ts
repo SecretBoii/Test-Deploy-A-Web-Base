@@ -56,30 +56,32 @@ export class AuditLogService {
     const { page = 1, limit = 10, search, action, startDate, endDate } = query;
     const skip = (page - 1) * limit;
 
-    // 1. เงื่อนไขช่วงเวลา (สำหรับนับสถิติภาพรวม KPI)
+    // 1. เงื่อนไขช่วงเวลา (สำหรับนับสถิติภาพรวม KPI พร้อมจัดการ Timezone ให้ครอบคลุมทั้งวันตั้งแต่ 00:00:00 ถึง 23:59:59)
     const dateWhere: Prisma.AuditLogWhereInput = {};
     if (startDate || endDate) {
       dateWhere.createdAt = {};
       if (startDate) {
-        dateWhere.createdAt.gte = new Date(startDate);
+        const start = new Date(`${startDate}T00:00:00`);
+        dateWhere.createdAt.gte = isNaN(start.getTime()) ? new Date(startDate) : start;
       }
       if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        dateWhere.createdAt.lte = end;
+        const end = new Date(`${endDate}T23:59:59.999`);
+        dateWhere.createdAt.lte = isNaN(end.getTime()) ? new Date(endDate) : end;
       }
     }
 
-    // 2. เงื่อนไขสำหรับตารางข้อมูล (รวม Search + Action)
+    // 2. เงื่อนไขสำหรับตารางข้อมูล (รวม Search + Action และค้นหาครอบคลุมทั้ง Username, ชื่อจริง, นามสกุลจริง)
     const where: Prisma.AuditLogWhereInput = { ...dateWhere };
 
     if (action) {
-      where.action = { contains: action, mode: 'insensitive' }
+      where.action = { contains: action, mode: 'insensitive' };
     }
 
     if (search) {
       where.OR = [
         { username: { contains: search, mode: 'insensitive' } },
+        { user: { firstName: { contains: search, mode: 'insensitive' } } },
+        { user: { lastName: { contains: search, mode: 'insensitive' } } },
         { entity: { contains: search, mode: 'insensitive' } },
         { action: { contains: search, mode: 'insensitive' } },
       ];

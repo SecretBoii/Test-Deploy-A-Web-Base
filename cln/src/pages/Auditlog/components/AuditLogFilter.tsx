@@ -47,6 +47,20 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
   onReset,
 }) => {
   const isFiltered = Boolean(search || actionFilter || startDate || endDate);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  // ดักจับคีย์ลัด Ctrl + F หรือ ⌘ + F เพื่อ auto-focus ที่ช่องค้นหาของหน้า Audit Log
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+        searchInputRef.current?.select();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const quickActions = [
     { label: 'ทั้งหมด', value: '', color: '#475569', bg: '#f8fafc' },
@@ -79,6 +93,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
             alignItems: { xs: 'stretch', lg: 'center' },
           }}
         >
+          {/* แถบตัวกรองและควบคุมข้อมูลด้านบน: สไตล์ Modern Slate (ขอบมน 10px, พื้นหลังขาวคมชัด, Focus สี #0f172a ตามรูปที่ 2) */}
           {/* Left Section: Inputs (Search, Date Pickers) */}
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
@@ -89,35 +104,39 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
               flex: 1,
             }}
           >
-            {/* 1. Search Box */}
+            {/* 1. Search Box (สไตล์รูปที่ 2: ขอบมน 10px, ขอบบาง #e2e8f0, โฟกัส #0f172a พร้อมรองรับคีย์ลัด) */}
             <TextField
+              inputRef={searchInputRef}
               size="small"
-              placeholder="ค้นหาชื่อผู้ใช้"
+              placeholder="ค้นหาชื่อผู้ใช้ หรือ Username..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               slotProps={{
                 input: {
                   startAdornment: (
-                    <InputAdornment position="start" sx={{ color: '#94a3b8', mr: 0.5 }}>
+                    <InputAdornment position="start" sx={{ color: '#94a3b8', mr: 1 }}>
                       <Search size={18} />
                     </InputAdornment>
                   ),
                   sx: {
-                    borderRadius: '12px',
-                    bgcolor: '#f8fafc',
+                    borderRadius: '10px',
+                    bgcolor: '#ffffff',
                     border: '1px solid #e2e8f0',
                     height: '44px',
-                    fontSize: '14px',
+                    fontSize: '13px',
+                    fontWeight: 500,
+                    color: '#0f172a',
                     '& fieldset': { border: 'none' },
-                    '&:hover': { bgcolor: '#f1f5f9' },
+                    '&:hover': { borderColor: '#94a3b8' },
+                    '&.Mui-focused': { borderColor: '#0f172a' },
                     transition: 'all 0.15s ease',
                   },
                 },
               }}
-              sx={{ minWidth: { xs: '100%', sm: 240 }, flex: { sm: 1 } }}
+              sx={{ minWidth: { xs: '100%', sm: 250 }, flex: { sm: 1 } }}
             />
 
-            {/* 2. Start Date Picker */}
+            {/* 2. Start Date Picker (สไตล์รูปที่ 2) */}
             {setStartDate && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -136,24 +155,26 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
                         </InputAdornment>
                       ),
                       sx: {
-                        borderRadius: '12px',
-                        bgcolor: '#f8fafc',
+                        borderRadius: '10px',
+                        bgcolor: '#ffffff',
                         border: '1px solid #e2e8f0',
                         height: '44px',
                         fontSize: '13px',
-                        color: '#334155',
+                        color: '#0f172a',
+                        fontWeight: 500,
                         '& fieldset': { border: 'none' },
-                        '&:hover': { bgcolor: '#f1f5f9' },
+                        '&:hover': { borderColor: '#94a3b8' },
+                        '&.Mui-focused': { borderColor: '#0f172a' },
                         transition: 'all 0.15s ease',
                       },
                     },
                   }}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: 155 }}
                 />
               </Box>
             )}
 
-            {/* 3. End Date Picker */}
+            {/* 3. End Date Picker (สไตล์รูปที่ 2) */}
             {setEndDate && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: { xs: '100%', sm: 'auto' } }}>
                 <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -172,19 +193,21 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
                         </InputAdornment>
                       ),
                       sx: {
-                        borderRadius: '12px',
-                        bgcolor: '#f8fafc',
+                        borderRadius: '10px',
+                        bgcolor: '#ffffff',
                         border: '1px solid #e2e8f0',
                         height: '44px',
                         fontSize: '13px',
-                        color: '#334155',
+                        color: '#0f172a',
+                        fontWeight: 500,
                         '& fieldset': { border: 'none' },
-                        '&:hover': { bgcolor: '#f1f5f9' },
+                        '&:hover': { borderColor: '#94a3b8' },
+                        '&.Mui-focused': { borderColor: '#0f172a' },
                         transition: 'all 0.15s ease',
                       },
                     },
                   }}
-                  sx={{ minWidth: 150 }}
+                  sx={{ minWidth: 155 }}
                 />
               </Box>
             )}
@@ -199,28 +222,31 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
               justifyContent: { xs: 'flex-end', lg: 'flex-end' },
             }}
           >
-            {/* ปุ่มล้างตัวกรอง (Reset Filters Button) */}
+            {/* ปุ่มล้างตัวกรอง (สไตล์รูปที่ 2 เป๊ะๆ: ขอบมน 10px, พื้นขาว, ไอคอน RotateCcw) */}
             {onReset && (
               <Button
-                size="small"
                 variant="outlined"
                 onClick={onReset}
                 disabled={!isFiltered}
                 startIcon={<RotateCcw size={15} />}
                 sx={{
                   height: '44px',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   px: 2,
-                  borderColor: isFiltered ? '#cbd5e1' : '#e2e8f0',
+                  borderColor: '#e2e8f0',
                   color: isFiltered ? '#475569' : '#94a3b8',
-                  bgcolor: isFiltered ? '#f8fafc' : 'transparent',
+                  bgcolor: '#ffffff',
                   textTransform: 'none',
                   fontWeight: 600,
-                  fontSize: '0.825rem',
+                  fontSize: '13px',
                   '&:hover': {
-                    bgcolor: '#f1f5f9',
+                    bgcolor: '#f8fafc',
                     borderColor: '#94a3b8',
                     color: '#0f172a',
+                  },
+                  '&.Mui-disabled': {
+                    borderColor: '#e2e8f0',
+                    color: '#cbd5e1',
                   },
                   transition: 'all 0.15s ease',
                 }}
@@ -229,7 +255,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
               </Button>
             )}
 
-            {/* View Mode Switcher */}
+            {/* View Mode Switcher (Modern Slate Toggle: ขอบมน 10px, Active สี #0f172a) */}
             {onViewModeChange && (
               <ToggleButtonGroup
                 value={viewMode}
@@ -239,55 +265,55 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
                 }}
                 size="small"
                 sx={{
-                  bgcolor: '#f1f5f9',
-                  p: '3px',
-                  borderRadius: '12px',
+                  bgcolor: '#f8fafc',
+                  p: '4px',
+                  borderRadius: '10px',
                   border: '1px solid #e2e8f0',
+                  height: '44px',
                   '& .MuiToggleButton-root': {
                     border: 'none',
-                    borderRadius: '9px',
+                    borderRadius: '8px',
                     px: 1.8,
-                    py: 0.7,
                     fontWeight: 600,
-                    fontSize: '0.8rem',
+                    fontSize: '13px',
                     color: '#64748b',
                     textTransform: 'none',
                     transition: 'all 0.15s ease-in-out',
                     '&.Mui-selected': {
-                      bgcolor: '#ffffff',
-                      color: '#2563eb',
-                      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
-                      fontWeight: 700,
-                      '&:hover': { bgcolor: '#ffffff' },
+                      bgcolor: '#0f172a',
+                      color: '#ffffff',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.08)',
+                      fontWeight: 600,
+                      '&:hover': { bgcolor: '#1e293b' },
                     },
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.5)' },
+                    '&:hover': { bgcolor: '#f1f5f9' },
                   },
                 }}
               >
                 <ToggleButton value="timeline">
-                  <Activity size={16} style={{ marginRight: 6 }} /> Timeline Stream
+                  <Activity size={15} style={{ marginRight: 6 }} /> Timeline Stream
                 </ToggleButton>
                 <ToggleButton value="table">
-                  <LayoutList size={16} style={{ marginRight: 6 }} /> Table Grid
+                  <LayoutList size={15} style={{ marginRight: 6 }} /> Table Grid
                 </ToggleButton>
               </ToggleButtonGroup>
             )}
 
-            {/* Refresh Button */}
+            {/* Refresh Button (ขอบมน 10px สูง 44px เข้าเซ็ต) */}
             <Tooltip title="รีเฟรชข้อมูล Log">
               <IconButton
                 onClick={onRefresh}
                 sx={{
                   border: '1px solid #e2e8f0',
-                  borderRadius: '12px',
+                  borderRadius: '10px',
                   height: '44px',
                   width: '44px',
-                  bgcolor: '#f8fafc',
-                  '&:hover': { bgcolor: '#f1f5f9', borderColor: '#cbd5e1' },
+                  bgcolor: '#ffffff',
+                  '&:hover': { bgcolor: '#f8fafc', borderColor: '#94a3b8' },
                   transition: 'all 0.15s ease',
                 }}
               >
-                <RefreshCw size={18} color="#475569" />
+                <RefreshCw size={17} color="#475569" />
               </IconButton>
             </Tooltip>
           </Stack>

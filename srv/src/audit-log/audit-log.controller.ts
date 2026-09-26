@@ -14,7 +14,7 @@ export class AuditLogController {
         @CurrentUser() user: any,
         @Query() query: AuditLogDto){
             if (user?.roleId !== 3) {
-                throw new ForbiddenException('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถตรวจสอบ Audit Logs ได');
+                throw new ForbiddenException('เฉพาะผู้ดูแลระบบ (Admin) เท่านั้นที่สามารถตรวจสอบ Audit Logs ได้');
             }
         return this.auditLogService.findAll(query);
     }
