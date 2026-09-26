@@ -4,7 +4,6 @@ import { Box, Typography, Button, Card, CircularProgress } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
 import { MainLayout } from '../../components/Layout/MainLayout';
 import { getStudentActivities, type StudentActivitiesResponse, type StudentActivityItem } from '../../api/reports';
-import { CodeInspectionDialog } from '../StudentReportDetail/components/CodeInspectionDialog';
 import { StudentErrorProfileCard } from './components/StudentErrorProfileCard';
 import { StudentErrorKpiCards } from './components/StudentErrorKpiCards';
 import { StudentErrorFilters } from './components/StudentErrorFilters';
@@ -66,7 +65,6 @@ export default function StudentErrorReportDetailPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedErrorType, setSelectedErrorType] = useState<string>('ALL');
-  const [selectedActivity, setSelectedActivity] = useState<StudentActivityItem | null>(null);
 
   // แบบฝึกหัดที่เลือกสำหรับเปิดดูประวัติข้อผิดพลาดใน Modal
   const [selectedExerciseForHistory, setSelectedExerciseForHistory] = useState<GroupedExerciseItem | null>(null);
@@ -256,19 +254,11 @@ export default function StudentErrorReportDetailPage() {
           </>
         )}
 
-        {/* Modal สำหรับตรวจประวัติโค้ดและ Error ทั้งหมดของแบบฝึกหัดที่เลือก */}
+        {/* Modal สำหรับตรวจประวัติโค้ดและ Error ทั้งหมดของแบบฝึกหัดที่เลือก (รองรับการสลับมุมมองตรวจโค้ดในตัว ไม่ซ้อน Dialog) */}
         <ExerciseErrorHistoryDialog
           open={!!selectedExerciseForHistory}
           onClose={() => setSelectedExerciseForHistory(null)}
           exercise={selectedExerciseForHistory}
-          onInspectSingleActivity={setSelectedActivity}
-        />
-
-        {/* Modal สำหรับตรวจโค้ดแบบ Split Screen เต็มจอ */}
-        <CodeInspectionDialog
-          open={!!selectedActivity}
-          onClose={() => setSelectedActivity(null)}
-          activity={selectedActivity}
         />
       </Box>
     </MainLayout>

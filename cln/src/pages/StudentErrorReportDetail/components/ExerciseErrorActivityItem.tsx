@@ -62,7 +62,7 @@ export function ExerciseErrorActivityItem({
             '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
           }}
         >
-          ตรวจโค้ดเต็มจอ
+          ตรวจโค้ดละเอียด
         </Button>
       </Box>
 
