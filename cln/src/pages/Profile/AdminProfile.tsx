@@ -4,18 +4,12 @@ import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
 import { AdminProfileCard } from './components/admin/AdminProfileCard';
 
-/**
- * โครงสร้างข้อมูลประวัติการศึกษา/สังกัดหน่วยงาน
- */
 interface Education {
   university: string;
   faculty: string;
   major: string;
 }
 
-/**
- * โครงสร้างข้อมูลรายละเอียดโปรไฟล์ของผู้ใช้ที่ตอบกลับจาก API /profile/details
- */
 interface AdminProfileDetails {
   userId: number;
   username: string;
@@ -34,7 +28,7 @@ export function AdminProfile() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [profile, setProfile] = useState<AdminProfileDetails | null>(null);
 
-  // ดึงข้อมูลโปรไฟล์เมื่อโหลดคอมโพเนนต์
+  // ดึงข้อมูลโปรไฟล์เมื่อคอมโพเนนต์เริ่มทำงาน
   useEffect(() => {
     fetchProfileDetails();
   }, []);
@@ -54,7 +48,7 @@ export function AdminProfile() {
   };
 
   /**
-   * จัดรูปแบบวันที่ให้อยู่ในฟอร์แมต วว/ดด/ปป (เช่น 06/08/26) ให้ตรงกับระบบเดิม
+   * แปลงรูปแบบวันที่เป็น วว/ดด/ปป (เช่น 06/08/26)
    */
   const formatDate = (dateString?: string) => {
     if (!dateString) return '-';
@@ -66,12 +60,12 @@ export function AdminProfile() {
     return `${day}/${month}/${yearShort}`;
   };
 
-  // แสดงตัวโหลด (Spinner) ขณะดึงข้อมูลจากเซิร์ฟเวอร์
+  // แสดงตัวโหลดหมุน (Spinner) ขณะดึงข้อมูล
   if (loading) {
     return (
       <MainLayout activeItem="Profile">
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <CircularProgress />
+          <CircularProgress sx={{ color: '#0F4A38' }} />
         </Box>
       </MainLayout>
     );
@@ -85,17 +79,18 @@ export function AdminProfile() {
           flexDirection: 'column',
           gap: 3.5,
           color: '#0f172a',
-          maxWidth: '1000px',
+          maxWidth: '1440px',
           margin: '0 auto',
           width: '100%',
+          pb: 4,
         }}
       >
-        {/* ส่วนหัวแสดงชื่อหน้าและคำอธิบายบริบทการใช้งาน */}
+        {/* ส่วนหัวหน้าโปรไฟล์ แสดงข้อความและบริบทการใช้งาน */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a' }}>
+          <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.5px' }}>
             บัญชีผู้ใช้งาน
           </Typography>
-          <Typography variant="body2" sx={{ color: '#64748b' }}>
+          <Typography variant="body2" sx={{ color: '#64748b', fontSize: '14.5px' }}>
             ข้อมูลโปรไฟล์ประจำตัวและสังกัดหน่วยงานของผู้ดูแลระบบ
           </Typography>
         </Box>
@@ -114,7 +109,7 @@ export function AdminProfile() {
           </Alert>
         )}
 
-        {/* การ์ดแสดงผลข้อมูลส่วนตัวและการศึกษาของผู้ดูแลระบบ */}
+        {/* การ์ดแสดงผลข้อมูลส่วนตัวและการศึกษาของผู้ดูแลระบบ สไตล์ KOKISO SaaS เดี่ยว คลีน และตรงจุด */}
         {profile && (
           <AdminProfileCard
             username={profile.username}
