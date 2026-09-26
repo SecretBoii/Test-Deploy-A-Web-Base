@@ -14,10 +14,9 @@ import {
 } from '@mui/material';
 import {
   Clock,
-  Eye,
   Info,
 } from 'lucide-react';
-import { type AuditLogItem } from '../../../api/auditlogApi';
+import { type AuditLogItem, getActionStyle } from '../../../api/auditlogApi';
 
 interface AuditLogTimelineFeedProps {
   logs: AuditLogItem[];
@@ -40,48 +39,6 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
   onRowsPerPageChange,
   onSelectLog,
 }) => {
-  const getActionConfig = (action: string) => {
-    if (action.includes('DELETE') || action.includes('REMOVE') || action.includes('SECURITY')) {
-      return {
-        chipBg: '#fef2f2',
-        chipColor: '#dc2626',
-      };
-    }
-    if (action.includes('UPDATE') || action.includes('MODIFY')) {
-      return {
-        chipBg: '#fffbeb',
-        chipColor: '#b45309',
-      };
-    }
-    if (action.includes('CREATE') || action.includes('ADD')) {
-      return {
-        chipBg: '#ecfdf5',
-        chipColor: '#047857',
-      };
-    }
-    if (action.includes('RUN')) {
-      return {
-        chipBg: '#eef2ff',
-        chipColor: '#4338ca',
-      };
-    }
-    if (action.includes('SUBMIT')) {
-      return {
-        chipBg: '#f5f3ff',
-        chipColor: '#7c3aed',
-      };
-    }
-    if (action.includes('LOGOUT')) {
-      return {
-        chipBg: '#f1f5f9',
-        chipColor: '#64748b',
-      };
-    }
-    return {
-      chipBg: '#eff6ff',
-      chipColor: '#1d4ed8',
-    };
-  };
 
   if (loading) {
     return (
@@ -138,7 +95,7 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
       >
         <Stack divider={<Divider sx={{ borderColor: '#f1f5f9' }} />}>
           {logs.map((log) => {
-            const config = getActionConfig(log.action);
+            const config = getActionStyle(log.action);
             const userInitial = (log.fullName || log.username || 'S')[0].toUpperCase();
 
             return (
@@ -241,26 +198,30 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
                     </Box>
                   </Stack>
 
-                  {/* Right Section: View Details Modal Action */}
+                  {/* Right Section: ปุ่มดูประวัติการทำ สไตล์ Solid Dark-Navy ตามรูปที่ 1 */}
                   <Button
+                    variant="contained"
                     size="small"
-                    startIcon={<Eye size={16} />}
                     onClick={() => onSelectLog(log)}
                     sx={{
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      color: '#2563eb',
-                      bgcolor: '#eff6ff',
                       borderRadius: '8px',
-                      px: 1.75,
-                      py: 0.6,
+                      bgcolor: '#0f172a',
+                      color: '#ffffff',
+                      fontWeight: 600,
+                      fontSize: '12px',
                       textTransform: 'none',
+                      boxShadow: 'none',
+                      py: 0.6,
+                      px: 1.6,
                       whiteSpace: 'nowrap',
                       alignSelf: { xs: 'flex-start', sm: 'center' },
-                      '&:hover': { bgcolor: '#dbeafe' },
+                      '&:hover': {
+                        bgcolor: '#1e293b',
+                        boxShadow: 'none',
+                      },
                     }}
                   >
-                    ดูรายละเอียด
+                    ดูประวัติการทำ
                   </Button>
                 </Stack>
               </Box>

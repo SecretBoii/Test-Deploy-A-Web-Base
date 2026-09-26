@@ -44,3 +44,39 @@ export const fetchAuditLogs = async (params: GetAuditLogParams): Promise<AuditLo
   const response = await apiClient.get('/admin/audit-logs', { params });
   return response.data;
 };
+
+/**
+ * โครงสร้างข้อมูลสีของ Action Badge
+ */
+export interface ActionColorConfig {
+  chipBg: string;
+  chipColor: string;
+}
+
+/**
+ * ฟังก์ชันกลางสำหรับกำหนดสีของ Action Badge ในทุกคอมโพเนนต์ (Single Source of Truth)
+ * ใช้ชุดสี Solid Color พร้อมตัวหนังสือสีขาว #ffffff สอดคล้องกับปุ่มตัวกรองด่วน
+ */
+export const getActionStyle = (action: string): ActionColorConfig => {
+  const upper = (action || '').toUpperCase();
+  if (upper.includes('DELETE') || upper.includes('REMOVE') || upper.includes('SECURITY')) {
+    return { chipBg: '#dc2626', chipColor: '#ffffff' };
+  }
+  if (upper.includes('UPDATE') || upper.includes('MODIFY')) {
+    return { chipBg: '#b45309', chipColor: '#ffffff' };
+  }
+  if (upper.includes('CREATE') || upper.includes('ADD') || upper.includes('REGISTER')) {
+    return { chipBg: '#047857', chipColor: '#ffffff' };
+  }
+  if (upper.includes('RUN')) {
+    return { chipBg: '#4338ca', chipColor: '#ffffff' };
+  }
+  if (upper.includes('SUBMIT')) {
+    return { chipBg: '#7c3aed', chipColor: '#ffffff' };
+  }
+  if (upper.includes('LOGOUT')) {
+    return { chipBg: '#64748b', chipColor: '#ffffff' };
+  }
+  // LOGIN และกรณีทั่วไป
+  return { chipBg: '#1d4ed8', chipColor: '#ffffff' };
+};

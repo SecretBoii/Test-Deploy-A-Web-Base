@@ -12,54 +12,30 @@ import {
   IconButton,
 } from '@mui/material';
 import { X } from 'lucide-react';
-import { type AuditLogItem } from '../../../api/auditlogApi';
+import { type AuditLogItem, getActionStyle } from '../../../api/auditlogApi';
 
 interface AuditLogDetailDialogProps {
   selectedLog: AuditLogItem | null;
   onClose: () => void;
 }
 
-/**
- * คอมโพเนนต์หน้าต่างแสดงรายละเอียดประวัติกิจกรรม (Audit Log Details)
- * แปลงข้อมูลการกระทำและ Payload ให้เป็นภาษาไทยทั้งหมด เพื่อให้อ่านเข้าใจง่าย ไม่มีโค้ดหรือ JSON ดิบ
- */
 export const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({ selectedLog, onClose }) => {
   if (!selectedLog) return null;
 
-  // กำหนดสี Action Chip ให้สอดคล้องกับธีมของระบบ
+  // กำหนดสี Action Chip จากฟังก์ชันกลาง เพื่อให้เป็น Solid Color สีเดียวกับปุ่มและรายการด้านนอก
   const getActionChip = (action: string) => {
-    if (action.includes('DELETE') || action.includes('REMOVE') || action.includes('SECURITY')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontWeight: 700, fontSize: '0.75rem', bgcolor: '#fef2f2', color: '#dc2626', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('UPDATE') || action.includes('MODIFY')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontWeight: 700, fontSize: '0.75rem', bgcolor: '#fffbeb', color: '#b45309', borderRadius: '6px' }}
-        />
-      );
-    }
-    if (action.includes('CREATE') || action.includes('ADD')) {
-      return (
-        <Chip
-          label={action}
-          size="small"
-          sx={{ fontWeight: 700, fontSize: '0.75rem', bgcolor: '#ecfdf5', color: '#047857', borderRadius: '6px' }}
-        />
-      );
-    }
+    const config = getActionStyle(action);
     return (
       <Chip
         label={action}
         size="small"
-        sx={{ fontWeight: 700, fontSize: '0.75rem', bgcolor: '#eff6ff', color: '#1d4ed8', borderRadius: '6px' }}
+        sx={{
+          fontWeight: 700,
+          fontSize: '0.75rem',
+          bgcolor: config.chipBg,
+          color: config.chipColor,
+          borderRadius: '6px',
+        }}
       />
     );
   };
@@ -99,6 +75,8 @@ export const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({ sele
         };
       case 'createdUsername':
         return { label: 'ชื่อบัญชีที่สร้าง:', text: String(value) };
+      case 'targetUsername':
+        return { label: 'ชื่อบัญชีเป้าหมาย:', text: String(value) };
       case 'deletedUserId':
         return { label: 'รหัสผู้ใช้ที่ถูกลบ:', text: `#${value}` };
       case 'deletedExerciseId':
