@@ -1,5 +1,12 @@
-import { Box, Card, Avatar, Typography, Grid } from '@mui/material';
-import { User, Mail, Calendar, School, BookOpen, GraduationCap } from 'lucide-react';
+import { Box, Card, Avatar, Typography, Grid, Divider } from '@mui/material';
+import {
+  User,
+  Mail,
+  Calendar,
+  School,
+  BookOpen,
+  GraduationCap,
+} from 'lucide-react';
 
 export interface AdminProfileCardProps {
   username: string;
@@ -30,146 +37,179 @@ export function AdminProfileCard({
   formatDate,
   roleName = 'Administrator',
 }: AdminProfileCardProps) {
-  // จัดการแปลงค่าเพศให้แสดงผลมาตรฐานภาษาอังกฤษหรือคงค่าเดิมกรณีระบุภาษาไทย
+
   const displayGender = () => {
     if (!gender) return '-';
     const lower = gender.toLowerCase();
-    if (lower === 'male') return 'Male';
-    if (lower === 'female') return 'Female';
-    if (lower === 'other') return 'Other';
+    if (lower === 'male') return 'ชาย (Male)';
+    if (lower === 'female') return 'หญิง (Female)';
+    if (lower === 'other') return 'อื่นๆ (Other)';
     return gender;
   };
 
-  // ดึงตัวอักษรแรกเพื่อแสดงใน Avatar หากไม่มีชื่อจะใช้ตัวแรกของ Username
+  // ดึงตัวอักษรแรกสำหรับแสดงผลใน Avatar วงกลม
   const avatarLetter = (firstName?.trim() || username || 'A').charAt(0).toUpperCase();
+  const fullName = firstName || lastName ? `${firstName} ${lastName}`.trim() : username;
 
   return (
     <Card
       sx={{
+        p: { xs: 3, md: 4 },
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
-        p: { xs: 3, md: 4 },
-        boxShadow: 'none',
         bgcolor: '#ffffff',
+        boxShadow: 'none',
         width: '100%',
       }}
     >
-      {/* ส่วนหัวของการ์ด: แสดง Avatar ขนาดใหญ่, ชื่อ-นามสกุล, Username, Role และวันที่สมัคร */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
+      {/* 1. ส่วนหัวโปรไฟล์: แสดง Avatar สีม่วงของโปรเจกต์ (#4f46e5), ป้ายชื่อ, Username, Badge และวันที่สมัคร */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 3.5 }}>
         <Avatar
           sx={{
-            width: 80,
-            height: 80,
-            bgcolor: '#ffe4e6',
-            color: '#e11d48',
-            fontSize: '2.25rem',
+            width: { xs: 72, sm: 84 },
+            height: { xs: 72, sm: 84 },
+            bgcolor: '#4f46e5',
+            color: '#ffffff',
+            fontSize: { xs: '1.85rem', sm: '2.25rem' },
             fontWeight: 800,
-            border: '2px solid #fecdd3',
+            border: '4px solid #e0e7ff',
+            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.2)',
+            flexShrink: 0,
           }}
         >
           {avatarLetter}
         </Avatar>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a' }}>
-            {firstName || lastName ? `${firstName} ${lastName}`.trim() : username}
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, overflow: 'hidden' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <Typography variant="h5" sx={{ fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
+              {fullName}
+            </Typography>
+            
+          </Box>
+
+          <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+            @{username} • <span style={{ color: '#0F4A38', fontWeight: 700 }}>{roleName}</span>
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{ color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.75 }}
-          >
-            @{username} • <span style={{ color: '#e11d48', fontWeight: 700 }}>{roleName}</span>
-          </Typography>
-          <Typography variant="caption" sx={{ color: '#94a3b8' }}>
-            เป็นสมาชิกตั้งแต่: {formatDate(registerTimestamp)}
-          </Typography>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 0.5 }}>
+            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 500 }}>
+              เป็นสมาชิกตั้งแต่: {formatDate(registerTimestamp)}
+            </Typography>
+          </Box>
         </Box>
       </Box>
 
-      {/* กริด 2 คอลัมน์: ข้อมูลส่วนตัว (ซ้าย) และ ข้อมูลการศึกษา/สังกัด (ขวา) */}
+      {/* เส้นแบ่งคั่นส่วนหัวกับเนื้อหาข้อมูล */}
+      <Divider sx={{ mb: 3.5, borderColor: '#f1f5f9' }} />
+
+      {/* 2. กริด 2 คอลัมน์: ข้อมูลส่วนตัว (ซ้าย) และ ข้อมูลการศึกษา/สังกัดหน่วยงาน (ขวา) */}
       <Grid container spacing={4}>
         {/* คอลัมน์ที่ 1: ข้อมูลส่วนตัว */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography
               variant="subtitle2"
-              sx={{ color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}
+              sx={{
+                fontWeight: 800,
+                color: '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                mb: 0.5,
+              }}
             >
-              ข้อมูลส่วนตัว
-            </Typography>
-
-            {/* อีเมล */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <Box
                 sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
+                  p: 0.65,
+                  borderRadius: '8px',
+                  bgcolor: '#ECFDF5',
+                  color: '#0F4A38',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Mail size={20} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-                  อีเมล
+              ข้อมูลส่วนตัว
+            </Typography>
+
+            {/* อีเมล */}
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <Mail size={18} />
+              </Box>
+              <Box sx={{ overflow: 'hidden' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
+                  อีเมลติดต่อ
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600, wordBreak: 'break-all' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', wordBreak: 'break-all' }}>
                   {email || '-'}
                 </Typography>
               </Box>
             </Box>
 
             {/* เพศ */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <User size={20} />
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <User size={18} />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   เพศ
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                   {displayGender()}
                 </Typography>
               </Box>
             </Box>
 
             {/* วันเกิด */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Calendar size={20} />
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <Calendar size={18} />
               </Box>
               <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   วันเกิด
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                   {formatDate(dateOfBirth)}
                 </Typography>
               </Box>
@@ -177,89 +217,111 @@ export function AdminProfileCard({
           </Box>
         </Grid>
 
-        {/* คอลัมน์ที่ 2: ข้อมูลการศึกษา / หน่วยงาน */}
+        {/* คอลัมน์ที่ 2: ข้อมูลการศึกษาและสังกัดหน่วยงาน */}
         <Grid size={{ xs: 12, md: 6 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Typography
               variant="subtitle2"
-              sx={{ color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}
+              sx={{
+                fontWeight: 800,
+                color: '#0f172a',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.25,
+                mb: 0.5,
+              }}
             >
-              ข้อมูลการศึกษา
-            </Typography>
-
-            {/* สถาบันการศึกษา */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
               <Box
                 sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
+                  p: 0.65,
+                  borderRadius: '8px',
+                  bgcolor: '#ECFDF5',
+                  color: '#0F4A38',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <School size={20} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+              ข้อมูลการศึกษาและสังกัด
+            </Typography>
+
+            {/* สถาบันการศึกษา */}
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <School size={18} />
+              </Box>
+              <Box sx={{ overflow: 'hidden' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   สถาบันการศึกษา
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                   {university || '-'}
                 </Typography>
               </Box>
             </Box>
 
             {/* คณะ / ส่วนงาน */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <BookOpen size={20} />
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <BookOpen size={18} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+              <Box sx={{ overflow: 'hidden' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   คณะ / ส่วนงาน
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                   {faculty || '-'}
                 </Typography>
               </Box>
             </Box>
 
             {/* สาขาวิชา */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-              <Box
-                sx={{
-                  p: 1,
-                  borderRadius: '10px',
-                  bgcolor: '#f8fafc',
-                  color: '#64748b',
-                  border: '1px solid #f1f5f9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <GraduationCap size={20} />
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: '12px',
+                bgcolor: '#F8FAFC',
+                border: '1px solid #F1F5F9',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                transition: 'background-color 0.2s',
+                '&:hover': { bgcolor: '#F1F5F9' },
+              }}
+            >
+              <Box sx={{ color: '#0F4A38', display: 'flex', alignItems: 'center' }}>
+                <GraduationCap size={18} />
               </Box>
-              <Box>
-                <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
+              <Box sx={{ overflow: 'hidden' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   สาขาวิชา
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600 }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a' }}>
                   {major || '-'}
                 </Typography>
               </Box>
