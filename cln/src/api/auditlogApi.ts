@@ -9,7 +9,7 @@ export interface AuditLogItem {
   action: string;
   entity: string;
   entityId?: number;
-  details?: any;
+  details?: Record<string, unknown>;
   createdAt: string;
 }
 
