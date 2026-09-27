@@ -11,7 +11,6 @@ interface AdminRecentAuditLogsProps {
   isLoading: boolean
 }
 
-
 export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs, isLoading }) => {
   return (
     <Card
@@ -20,13 +19,13 @@ export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
         height: '100%',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <HistoryToggleOffIcon sx={{ color: '#2563eb' }} />
-        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>
+        <HistoryToggleOffIcon sx={{ color: '#4f46e5' }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e1b4b' }}>
           ประวัติกิจกรรมล่าสุด (Recent Audit Logs)
         </Typography>
       </Box>
@@ -34,10 +33,10 @@ export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs
       <TableContainer>
         <Table size="small">
           <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>ผู้ใช้งาน</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>การกระทำ</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#64748b' }}>เวลา</TableCell>
+            <TableRow sx={{ bgcolor: '#faf5ff' }}>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', py: 1, borderTopLeftRadius: '8px', borderBottomLeftRadius: '8px' }}>ผู้ใช้งาน</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', py: 1 }}>การกระทำ</TableCell>
+              <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', py: 1, borderTopRightRadius: '8px', borderBottomRightRadius: '8px' }}>เวลา</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -84,7 +83,7 @@ export const AdminRecentAuditLogs: React.FC<AdminRecentAuditLogsProps> = ({ logs
                           sx={{
                             fontSize: '0.75rem',
                             fontWeight: 700,
-                            borderRadius: '6px',
+                            borderRadius: '8px',
                             bgcolor: style.chipBg,
                             color: style.chipColor,
                           }}

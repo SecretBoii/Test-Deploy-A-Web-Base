@@ -6,35 +6,21 @@ import CodeIcon from '@mui/icons-material/Code'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
 
 import type { DashboardStats } from '../AdminDashboard'
+import { getTodayStr, formatDisplayDate } from '../../../../utils/dateUtils'
 
 interface AdminStatCardsProps {
   stats: DashboardStats | null
   isLoading: boolean
+  isOverviewLoading?: boolean
   selectedDate?: string
 }
 
 export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
   stats,
   isLoading,
+  isOverviewLoading,
   selectedDate,
 }) => {
-  const getTodayStr = () => {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
-
-  const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return ''
-    const parts = dateStr.split('-')
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`
-    }
-    return dateStr
-  }
-
   const todayStr = getTodayStr()
   const isToday = !selectedDate || selectedDate === todayStr
 
@@ -47,8 +33,9 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
       title: 'ผู้ใช้งานทั้งหมด',
       value: stats?.totalUsers ?? 0,
       unit: 'คน',
-      icon: <PeopleIcon sx={{ color: '#2563eb' }} />,
-      bgColor: '#eff6ff',
+      icon: <PeopleIcon sx={{ color: '#4f46e5' }} />,
+      bgColor: '#eef2ff',
+      isOverview: true,
     },
     {
       title: 'แบบฝึกหัดทั้งหมด',
@@ -56,6 +43,7 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
       unit: 'ข้อ',
       icon: <MenuBookIcon sx={{ color: '#059669' }} />,
       bgColor: '#ecfdf5',
+      isOverview: true,
     },
     {
       title: submissionTitle,
@@ -63,6 +51,7 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
       unit: 'ครั้ง',
       icon: <CodeIcon sx={{ color: '#d97706' }} />,
       bgColor: '#fffbeb',
+      isOverview: false,
     },
     {
       title: 'อัตราตรวจผ่านสำเร็จ',
@@ -70,6 +59,7 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
       unit: '',
       icon: <CheckCircleIcon sx={{ color: '#7c3aed' }} />,
       bgColor: '#f5f3ff',
+      isOverview: false,
     },
   ]
 
@@ -89,16 +79,22 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
             borderRadius: '16px',
             border: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
             display: 'flex',
             alignItems: 'center',
             gap: 2,
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 16px 0 rgba(79, 70, 229, 0.06)',
+              borderColor: '#ddd6fe',
+            },
           }}
         >
           <Box
             sx={{
-              width: 52,
-              height: 52,
+              width: 50,
+              height: 50,
               borderRadius: '14px',
               bgcolor: item.bgColor,
               display: 'flex',
@@ -111,14 +107,14 @@ export const AdminStatCards: React.FC<AdminStatCardsProps> = ({
           </Box>
 
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, mb: 0.5 }}>
+            <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 500, fontSize: '0.85rem', mb: 0.5 }}>
               {item.title}
             </Typography>
-            {isLoading ? (
+            {(item.isOverview ? (isOverviewLoading ?? isLoading) : isLoading) ? (
               <Skeleton width={80} height={32} animation="wave" />
             ) : (
-              <Typography variant="h5" sx={{ fontWeight: 700, color: '#0f172a' }}>
-                {item.value} <Typography component="span" variant="caption" sx={{ color: '#94a3b8' }}>{item.unit}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: '#1e1b4b', letterSpacing: '-0.02em' }}>
+                {item.value} <Typography component="span" variant="caption" sx={{ color: '#94a3b8', fontWeight: 500, fontSize: '0.8rem' }}>{item.unit}</Typography>
               </Typography>
             )}
           </Box>

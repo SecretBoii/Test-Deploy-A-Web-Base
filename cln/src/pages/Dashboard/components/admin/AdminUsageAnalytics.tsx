@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react'
 import { Card, Typography, Box, Skeleton, LinearProgress, Chip } from '@mui/material'
+import { getTodayStr, formatDisplayDate } from '../../../../utils/dateUtils'
 
 export interface UsageTrendItem {
   periodLabel: string
@@ -17,23 +18,6 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
   isLoading,
   data,
 }) => {
-  const formatDisplayDate = (dateStr: string) => {
-    if (!dateStr) return ''
-    const parts = dateStr.split('-')
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`
-    }
-    return dateStr
-  }
-
-  const getTodayStr = () => {
-    const d = new Date()
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-  }
-
   const todayStr = getTodayStr()
   const isToday = !selectedDate || selectedDate === todayStr
 
@@ -72,7 +56,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
         minHeight: 285,
       }}
     >
@@ -101,9 +85,23 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                 <Skeleton key={i} variant="rectangular" width="100%" height={`${(i + 1) * 15 + 20}%`} sx={{ borderRadius: '8px 8px 0 0' }} />
               ))}
             </Box>
-          ) : chartData.length === 0 ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 160 }}>
-              <Typography variant="body2" color="text.secondary">
+          ) : totalCount === 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 160,
+                bgcolor: '#faf5ff',
+                borderRadius: '12px',
+                border: '1px dashed #e0e7ff',
+                p: 2,
+                textAlign: 'center',
+                gap: 0.5,
+              }}
+            >
+              <Typography variant="body2" sx={{ color: '#6366f1', fontWeight: 600 }}>
                 ยังไม่มีข้อมูลการเข้าสู่ระบบในช่วงเวลานี้
               </Typography>
             </Box>
@@ -142,7 +140,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                           left: '50%',
                           transform: 'translateX(-50%)',
                           fontWeight: item.userCount > 0 ? 700 : 500,
-                          color: item.userCount > 0 ? (isPeak ? '#1d4ed8' : '#334155') : '#94a3b8',
+                          color: item.userCount > 0 ? (isPeak ? '#4f46e5' : '#334155') : '#94a3b8',
                           fontSize: '0.75rem',
                           lineHeight: 1,
                           whiteSpace: 'nowrap',
@@ -163,12 +161,12 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                             width: '100%',
                             maxWidth: 32,
                             height: `${barHeightPx}px`,
-                            bgcolor: isPeak ? '#2563eb' : '#93c5fd',
+                            bgcolor: isPeak ? '#4f46e5' : '#c7d2fe',
                             borderRadius: '6px 6px 0 0',
                             transition: 'height 0.25s ease-in-out, background-color 0.25s ease-in-out',
                             cursor: 'pointer',
                             '&:hover': {
-                              bgcolor: isPeak ? '#1d4ed8' : '#3b82f6',
+                              bgcolor: isPeak ? '#4338ca' : '#a5b4fc',
                               transform: 'translateX(-50%) translateY(-2px)',
                             },
                           }}
@@ -200,7 +198,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                       variant="caption"
                       sx={{
                         flex: 1,
-                        color: isPeak ? '#1d4ed8' : '#64748b',
+                        color: isPeak ? '#4f46e5' : '#64748b',
                         fontSize: '0.725rem',
                         fontWeight: isPeak ? 700 : 500,
                         textAlign: 'center',
@@ -235,8 +233,9 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
               label={`รวม ${totalCount} ครั้ง`}
               size="small"
               sx={{
-                bgcolor: '#f1f5f9',
-                color: '#334155',
+                bgcolor: '#f5f3ff',
+                color: '#4f46e5',
+                border: '1px solid #ede9fe',
                 fontWeight: 700,
                 fontSize: '0.75rem',
                 height: 24,
@@ -250,10 +249,21 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                 <Skeleton key={i} variant="rectangular" height={32} sx={{ borderRadius: '8px' }} />
               ))}
             </Box>
-          ) : chartData.length === 0 ? (
-            <Typography variant="caption" color="text.secondary">
-              ยังไม่มีข้อมูลการเข้าสู่ระบบในช่วงเวลานี้
-            </Typography>
+          ) : totalCount === 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: 160,
+                textAlign: 'center',
+                p: 2,
+              }}
+            >
+              <Typography variant="caption" sx={{ color: '#94a3b8' }}>
+                ยังไม่มีข้อมูลการเข้าสู่ระบบ ({rangeDescription})
+              </Typography>
+            </Box>
           ) : (
             <Box
               sx={{
@@ -281,7 +291,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                       bgcolor: 'transparent',
                       transition: 'all 0.15s ease-in-out',
                       '&:hover': {
-                        bgcolor: '#f8fafc',
+                        bgcolor: '#faf5ff',
                       },
                     }}
                   >
@@ -290,7 +300,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                         variant="caption"
                         sx={{
                           fontWeight: isPeak ? 700 : 600,
-                          color: isPeak ? '#1d4ed8' : '#334155',
+                          color: isPeak ? '#4f46e5' : '#334155',
                           fontSize: '0.75rem',
                         }}
                       >
@@ -300,7 +310,7 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                         variant="caption"
                         sx={{
                           fontWeight: 700,
-                          color: item.userCount > 0 ? (isPeak ? '#1d4ed8' : '#2563eb') : '#94a3b8',
+                          color: item.userCount > 0 ? (isPeak ? '#4f46e5' : '#6366f1') : '#94a3b8',
                           fontSize: '0.75rem',
                         }}
                       >
@@ -311,11 +321,11 @@ export const AdminUsageAnalytics: React.FC<AdminUsageAnalyticsProps> = ({
                       variant="determinate"
                       value={percent}
                       sx={{
-                        height: 4,
+                        height: 5,
                         borderRadius: 2,
                         bgcolor: '#f1f5f9',
                         '& .MuiLinearProgress-bar': {
-                          bgcolor: isPeak ? '#2563eb' : '#60a5fa',
+                          bgcolor: isPeak ? '#4f46e5' : '#c7d2fe',
                           borderRadius: 2,
                         },
                       }}

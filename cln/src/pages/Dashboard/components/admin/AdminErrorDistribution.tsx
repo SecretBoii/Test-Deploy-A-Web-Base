@@ -18,13 +18,13 @@ export const AdminErrorDistribution: React.FC<AdminErrorDistributionProps> = ({ 
         borderRadius: '16px',
         border: '1px solid #e2e8f0',
         bgcolor: '#ffffff',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
         height: '100%',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2.5 }}>
-        <BugReportIcon sx={{ color: '#ef4444' }} />
-        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>
+        <BugReportIcon sx={{ color: '#f43f5e' }} />
+        <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.05rem', color: '#1e1b4b' }}>
           ข้อผิดพลาด Python ที่พบบ่อย (Top Errors)
         </Typography>
       </Box>
@@ -47,7 +47,7 @@ export const AdminErrorDistribution: React.FC<AdminErrorDistributionProps> = ({ 
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155' }}>
                   {item.errorType}
                 </Typography>
-                <Typography variant="caption" sx={{ color: '#64748b' }}>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600 }}>
                   {item.count} ครั้ง ({item.percentage.toFixed(1)}%)
                 </Typography>
               </Box>
@@ -55,12 +55,12 @@ export const AdminErrorDistribution: React.FC<AdminErrorDistributionProps> = ({ 
                 variant="determinate"
                 value={item.percentage}
                 sx={{
-                  height: 8,
-                  borderRadius: 4,
+                  height: 6,
+                  borderRadius: 3,
                   bgcolor: '#f1f5f9',
                   '& .MuiLinearProgress-bar': {
-                    bgcolor: idx === 0 ? '#ef4444' : idx === 1 ? '#f97316' : '#eab308',
-                    borderRadius: 4,
+                    bgcolor: idx === 0 ? '#f43f5e' : idx === 1 ? '#f59e0b' : idx === 2 ? '#6366f1' : '#8b5cf6',
+                    borderRadius: 3,
                   },
                 }}
               />
