@@ -1,6 +1,7 @@
 import { useAuth } from '../../context/AuthContext';
 import { StudentProfile } from './StudentProfile';
 import { AdminProfile } from './AdminProfile';
+import { TeacherProfile } from './TeacherProfile';
 import { Box, Typography } from '@mui/material';
 import { MainLayout } from '../../components/Layout/MainLayout';
 
@@ -10,6 +11,11 @@ export function ProfilePage() {
   // หากเป็น Student (roleId === 1) ให้เปิดหน้า StudentProfile
   if (user?.roleId === 1) {
     return <StudentProfile />;
+  }
+
+  // หากเป็น Teacher (roleId === 2) ให้เปิดหน้า TeacherProfile
+  if (user?.roleId === 2) {
+    return <TeacherProfile />;
   }
 
   // หากเป็น Admin (roleId === 3) ให้เปิดหน้า AdminProfile
