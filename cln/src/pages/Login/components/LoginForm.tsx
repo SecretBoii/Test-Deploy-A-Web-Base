@@ -6,8 +6,6 @@ interface LoginFormProps {
   username: string
   password: string
   error: string
-  success?: string
-  loading?: boolean
   onChangeUsername: (val: string) => void
   onChangePassword: (val: string) => void
   onSubmit: (e: React.FormEvent) => void
@@ -17,8 +15,6 @@ export function LoginForm({
   username,
   password,
   error,
-  success,
-  loading = false,
   onChangeUsername,
   onChangePassword,
   onSubmit,
@@ -80,8 +76,6 @@ export function LoginForm({
           username={username}
           password={password}
           error={error}
-          success={success}
-          loading={loading}
           onChangeUsername={onChangeUsername}
           onChangePassword={onChangePassword}
           onSubmit={onSubmit}
