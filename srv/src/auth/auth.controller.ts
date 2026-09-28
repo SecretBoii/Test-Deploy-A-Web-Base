@@ -10,10 +10,6 @@ import { JwtService } from '@nestjs/jwt';
 
 @Controller()
 export class AuthController{
-    // บันทึกเวลา Login ล่าสุดของผู้ใช้ (In-memory Debounce)
-    // เหตุผล: เพื่อป้องกันกรณีผู้ใช้ส่ง Request มาพร้อมกันหลายครั้งในเสี้ยววินาที ไม่ให้บันทึก Audit Log การเข้าสู่ระบบซ้ำซ้อน
-    private readonly recentLoginMap = new Map<number, number>();
-
     constructor(
         private readonly authService: AuthService,
         private readonly auditLogService: AuditLogService,
@@ -39,20 +35,12 @@ export class AuthController{
             maxAge: 24 * 60 * 60 * 1000,
         });
 
-        // ตรวจสอบว่าผู้ใช้คนเดิมเพิ่งบันทึก Log LOGIN ไปภายใน 3 วินาทีหรือไม่ เพื่อหลีกเลี่ยงการสร้าง Duplicate Audit Log
-        const now = Date.now();
-        const lastLoginTime = this.recentLoginMap.get(user.userId) || 0;
-        if (now - lastLoginTime > 3000) {
-            this.recentLoginMap.set(user.userId, now);
-            setTimeout(() => this.recentLoginMap.delete(user.userId), 10000);
-
-            await this.auditLogService.logFromRequest(req, {
-                action: 'LOGIN',
-                entity: 'Auth',
-                customUser: { userId: user.userId, username: user.username },
-                details: { roleId: user.roleId, method: 'PASSWORD' },
-            });
-        }
+        await this.auditLogService.logFromRequest(req, {
+            action: 'LOGIN',
+            entity: 'Auth',
+            customUser: { userId: user.userId, username:user.username },
+            details: { roleId: user.roleId, method: 'PASSWORD' },
+        });
 
         return {
             userId: user.userId,
