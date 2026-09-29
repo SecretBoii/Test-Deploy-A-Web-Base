@@ -882,4 +882,60 @@ export class ReportsService {
       { periodLabel: '20:00 - 23:59', userCount: slots[5] },
     ];
   }
+
+  async getRecentSubmissions(filters: {
+    limit: number;
+    startDate?: string;
+    endDate?: string;
+    eventType?: string;
+  }) {
+    const dateRange = this.getTimeRangeDates(
+      undefined,
+      filters.startDate,
+      filters.endDate,
+    );
+
+    return await this.prisma.activity.findMany({
+      where: {
+        eventType:
+          filters.eventType && filters.eventType !== 'all'
+            ? filters.eventType
+            : undefined,
+        createdAt:
+          dateRange.start || dateRange.end
+            ? {
+                gte: dateRange.start,
+                lte: dateRange.end,
+              }
+            : undefined,
+      },
+      take: filters.limit,
+      orderBy: { submittedAt: 'desc' },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+        exercise: {
+          select: {
+            exerciseId: true,
+            title: true,
+            topic: true,
+            difficultyLevel: true,
+          },
+        },
+        session: {
+          select: {
+            sessionId: true,
+            sessionName: true,
+          },
+        },
+      },
+    });
+  }
 }
+

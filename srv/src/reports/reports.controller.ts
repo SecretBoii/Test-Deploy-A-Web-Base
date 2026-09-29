@@ -111,4 +111,23 @@ export class ReportsController {
     this.checkAdminOrTeacher(user);
     return this.reportsService.getStudentActivities(Number(userId));
   }
+
+  // ดึงรายการส่งตรวจและทดลองรันโค้ดล่าสุดของนักเรียนทุกคนสำหรับแสดงผลบน Dashboard ของครู/แอดมิน
+  @Get('recent-submissions')
+  async getRecentSubmissions(
+    @CurrentUser() user: any,
+    @Query('limit') limit?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('eventType') eventType?: string,
+  ) {
+    this.checkAdminOrTeacher(user);
+    return this.reportsService.getRecentSubmissions({
+      limit: limit ? Number(limit) : 50,
+      startDate,
+      endDate,
+      eventType,
+    });
+  }
 }
+
