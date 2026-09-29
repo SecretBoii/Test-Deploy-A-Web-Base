@@ -23,6 +23,8 @@ import ReportsPage from './pages/Reports/ReportsPage.tsx'
 import StudentReportDetailPage from './pages/StudentReportDetail/StudentReportDetailPage.tsx'
 import StudentErrorReportDetailPage from './pages/StudentErrorReportDetail/StudentErrorReportDetailPage.tsx'
 import ExerciseReportDetailPage from './pages/ExerciseReportDetail/ExerciseReportDetailPage.tsx'
+import ExerciseResultsPage from './pages/ExerciseResults/ExerciseResultsPage.tsx'
+import ExerciseResultDetailsPage from './pages/ExerciseResultDetails/ExerciseResultDetailsPage.tsx'
 import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
 const theme = createTheme({
@@ -65,23 +67,24 @@ createRoot(document.getElementById('root')!).render(
               {/* Teacher-only routes (roleId === 2) */}
               <Route element={<RoleProtectedRoute allowedRoles={[2]} />}>
                 <Route path="/exercises" element={<ExercisesPage />} />
+                <Route path="/exercise-results" element={<ExerciseResultsPage />} />
+                <Route path="/exercise-results/:exerciseId" element={<ExerciseResultDetailsPage />} />
               </Route>
 
-              {/* Teacher & Admin dashboard routes */}
-              {/* Teacher & Admin routes */}
+              {/* Teacher & Admin shared routes */}
               <Route element={<RoleProtectedRoute allowedRoles={[2, 3]} />}>
                 <Route path="/dashboard" element={<Dashboard />} />
+              </Route>
+
+              {/* Admin-only routes (roleId === 3) */}
+              <Route element={<RoleProtectedRoute allowedRoles={[3]} />}>
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/reports/students/:userId" element={<StudentReportDetailPage />} />
                 <Route path="/reports/students/:userId/errors" element={<StudentErrorReportDetailPage />} />
                 <Route path="/reports/exercises/:exerciseId" element={<ExerciseReportDetailPage />} />
-              </Route>
-
-               {/* Admin-only routes (roleId === 3) */}
-              <Route element={<RoleProtectedRoute allowedRoles={[3]} />}>
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/audit-logs" element={<AdminAuditLogPage />} />
-             </Route>
+              </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

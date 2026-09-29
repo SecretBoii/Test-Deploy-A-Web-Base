@@ -366,16 +366,19 @@ export class ReportsService {
       include: {
         activities: {
           where: {
-            user: filters.education
-              ? {
-                  education: {
-                    OR: [
-                      { university: { contains: filters.education, mode: 'insensitive' } },
-                      { faculty: { contains: filters.education, mode: 'insensitive' } },
-                    ],
-                  },
-                }
-              : undefined,
+            user: {
+              roleId: 1, // เฉพาะนักศึกษา เพื่อให้สอดคล้องกับ totalStudents และ getExerciseStudentBreakdown
+              ...(filters.education
+                ? {
+                    education: {
+                      OR: [
+                        { university: { contains: filters.education, mode: 'insensitive' } },
+                        { faculty: { contains: filters.education, mode: 'insensitive' } },
+                      ],
+                    },
+                  }
+                : {}),
+            },
             createdAt:
               dateRange.start || dateRange.end
                 ? {
@@ -427,6 +430,13 @@ export class ReportsService {
       // อัตราการผ่านคิดจากนักศึกษาทั้งหมดในระบบ (Overall Pass Rate)
       const passRateOverall = totalStudents > 0 ? (passedStudents / totalStudents) * 100 : 0;
 
+      // คะแนนเฉลี่ยของนักศึกษาที่เข้าทำโจทย์ข้อนี้ (คำนวณจากคะแนนที่ดีที่สุดของแต่ละคน)
+      let totalBestScoreSum = 0;
+      userBestScoreMap.forEach((score) => {
+        totalBestScoreSum += score;
+      });
+      const avgScore = attemptedStudents > 0 ? totalBestScoreSum / attemptedStudents : 0;
+
       // ค่าเฉลี่ยจำนวนครั้ง Run และ Submit ต่อคนที่เข้าทำ
       const totalRuns = runActivities.length;
       const totalSubmits = submitActivities.length;
@@ -460,6 +470,7 @@ export class ReportsService {
         attemptedStudents,
         totalStudents,
         passedStudents,
+        avgScore,
         successRate: passRateAttempted,
         passRateAttempted,
         passRateOverall,

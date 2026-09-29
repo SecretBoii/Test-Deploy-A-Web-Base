@@ -63,6 +63,7 @@ export interface ExerciseAnalyticsData {
   attemptedStudents?: number;
   totalStudents?: number;
   passedStudents?: number;
+  avgScore?: number;
   successRate: number;
   passRateAttempted?: number;
   passRateOverall?: number;

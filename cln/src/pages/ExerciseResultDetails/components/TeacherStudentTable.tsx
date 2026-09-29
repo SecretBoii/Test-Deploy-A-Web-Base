@@ -1,0 +1,458 @@
+import React, { useMemo, useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  Button,
+  TablePagination,
+  Box,
+  TextField,
+  InputAdornment,
+} from '@mui/material';
+import { Search, RotateCcw, Code2, Inbox, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import type { ExerciseStudentItem } from '../../../api/reports';
+
+interface TeacherStudentTableProps {
+  students: ExerciseStudentItem[];
+  onInspectCode: (student: ExerciseStudentItem) => void;
+}
+
+export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ students, onInspectCode }) => {
+  const [search, setSearch] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [page, setPage] = useState<number>(0);
+  const [rowsPerPage, setRowsPerPage] = useState<number>(10);
+
+  // กรองรายชื่อนักศึกษาตามคำค้นหาและสถานะ
+  const filteredStudents = useMemo(() => {
+    return students.filter((st) => {
+      if (statusFilter !== 'all' && st.status !== statusFilter) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase().trim();
+        const matchName = st.fullName.toLowerCase().includes(q);
+        const matchUser = st.username.toLowerCase().includes(q);
+        const matchUni = (st.university || '').toLowerCase().includes(q);
+        return matchName || matchUser || matchUni;
+      }
+      return true;
+    });
+  }, [students, search, statusFilter]);
+
+  // ป้องกัน Pagination ค้างหน้าว่างเมื่อผลการกรองลดลง
+  const totalPages = Math.ceil(filteredStudents.length / rowsPerPage);
+  const safePage = page >= totalPages && totalPages > 0 ? 0 : page;
+  const paginatedStudents = filteredStudents.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
+
+  const handleReset = () => {
+    setSearch('');
+    setStatusFilter('all');
+    setPage(0);
+  };
+
+  const isFiltered = search.trim() !== '' || statusFilter !== 'all';
+
+  // จัดรูปแบบวันเวลาภาษาไทย
+  const formatThaiDate = (dateStr: string | null) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '-';
+    return `${d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })} ${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
+  };
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+      {/* แถบตัวกรองและค้นหา (Search & Filters Toolbar) */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+          {/* ช่องค้นหาชื่อหรือรหัส */}
+          <TextField
+            size="small"
+            placeholder="ค้นหาชื่อ, รหัสนักศึกษา หรือมหาวิทยาลัย..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(0);
+            }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={18} color="#94a3b8" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              width: { xs: '100%', sm: 300 },
+              '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#f8fafc' },
+            }}
+          />
+
+          {/* แท็บ Capsule Pills กรองสถานะ สไตล์รูปที่ 1 */}
+          <Box
+            sx={{
+              display: 'inline-flex',
+              bgcolor: '#f1f5f9',
+              p: '3px',
+              borderRadius: '10px',
+              border: '1px solid #e2e8f0',
+              gap: 0.5,
+            }}
+          >
+            <Button
+              size="small"
+              onClick={() => {
+                setStatusFilter('all');
+                setPage(0);
+              }}
+              sx={{
+                bgcolor: statusFilter === 'all' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'all' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'all' ? 700 : 500,
+                fontSize: '12.5px',
+                borderRadius: '8px',
+                px: 1.5,
+                py: 0.4,
+                textTransform: 'none',
+                boxShadow: statusFilter === 'all' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                '&:hover': { bgcolor: statusFilter === 'all' ? '#ffffff' : '#e2e8f0' },
+              }}
+            >
+              ทั้งหมด
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                setStatusFilter('PASSED');
+                setPage(0);
+              }}
+              sx={{
+                bgcolor: statusFilter === 'PASSED' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'PASSED' ? '#107c41' : '#64748b',
+                fontWeight: statusFilter === 'PASSED' ? 700 : 500,
+                fontSize: '12.5px',
+                borderRadius: '8px',
+                px: 1.5,
+                py: 0.4,
+                textTransform: 'none',
+                boxShadow: statusFilter === 'PASSED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                '&:hover': { bgcolor: statusFilter === 'PASSED' ? '#ffffff' : '#e2e8f0' },
+              }}
+            >
+              เฉพาะที่ผ่าน (Passed)
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                setStatusFilter('FAILED');
+                setPage(0);
+              }}
+              sx={{
+                bgcolor: statusFilter === 'FAILED' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'FAILED' ? '#ef4444' : '#64748b',
+                fontWeight: statusFilter === 'FAILED' ? 700 : 500,
+                fontSize: '12.5px',
+                borderRadius: '8px',
+                px: 1.5,
+                py: 0.4,
+                textTransform: 'none',
+                boxShadow: statusFilter === 'FAILED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                '&:hover': { bgcolor: statusFilter === 'FAILED' ? '#ffffff' : '#e2e8f0' },
+              }}
+            >
+              เฉพาะที่ไม่ผ่าน (Failed)
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                setStatusFilter('NOT_STARTED');
+                setPage(0);
+              }}
+              sx={{
+                bgcolor: statusFilter === 'NOT_STARTED' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'NOT_STARTED' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'NOT_STARTED' ? 700 : 500,
+                fontSize: '12.5px',
+                borderRadius: '8px',
+                px: 1.5,
+                py: 0.4,
+                textTransform: 'none',
+                boxShadow: statusFilter === 'NOT_STARTED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                '&:hover': { bgcolor: statusFilter === 'NOT_STARTED' ? '#ffffff' : '#e2e8f0' },
+              }}
+            >
+              ยังไม่เริ่มทำ
+            </Button>
+          </Box>
+
+          {/* ปุ่มรีเซ็ตตัวกรอง */}
+          {isFiltered && (
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<RotateCcw size={15} />}
+              onClick={handleReset}
+              sx={{ textTransform: 'none', borderRadius: '8px', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}
+            >
+              รีเซ็ต
+            </Button>
+          )}
+        </Box>
+
+        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
+          แสดงนักศึกษา <b>{filteredStudents.length}</b> จาก {students.length} คน
+        </Typography>
+      </Box>
+
+      {/* ตารางแสดงผลรายชื่อนักศึกษา */}
+      {filteredStudents.length === 0 ? (
+        <Box
+          sx={{
+            py: 8,
+            px: 3,
+            textAlign: 'center',
+            bgcolor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px dashed #cbd5e1',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1.5,
+          }}
+        >
+          <Inbox size={44} color="#94a3b8" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#475569' }}>
+            ไม่พบข้อมูลนักศึกษาตามเงื่อนไขที่เลือก
+          </Typography>
+          <Typography variant="body2" sx={{ color: '#94a3b8' }}>
+            ลองเปลี่ยนคำค้นหา หรือรีเซ็ตตัวกรองสถานะ
+          </Typography>
+        </Box>
+      ) : (
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 950 }}>
+            <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <TableRow
+                sx={{
+                  '& th': {
+                    bgcolor: '#f8fafc',
+                    borderBottom: '1px solid #e2e8f0',
+                    py: 1.8,
+                    fontWeight: 700,
+                    color: '#475569',
+                    fontSize: '13px',
+                    whiteSpace: 'nowrap',
+                  },
+                }}
+              >
+                <TableCell>นักศึกษา</TableCell>
+                <TableCell>มหาวิทยาลัย / คณะ</TableCell>
+                <TableCell align="center">คะแนนสูงสุด</TableCell>
+                <TableCell align="center">สถานะ</TableCell>
+                <TableCell align="center">Run (ครั้ง)</TableCell>
+                <TableCell align="center">Submit (ครั้ง)</TableCell>
+                <TableCell align="center">ส่งตรวจล่าสุด</TableCell>
+                <TableCell align="center">ตรวจโค้ด</TableCell>
+              </TableRow>
+            </TableHead>
+
+            <TableBody>
+              {paginatedStudents.map((st) => (
+                <TableRow
+                  key={st.userId}
+                  hover
+                  sx={{
+                    '& td': { borderBottom: '1px solid #f1f5f9', py: 1.6 },
+                    transition: 'background-color 0.15s ease',
+                    '&:hover': { bgcolor: '#f8fafc' },
+                  }}
+                >
+                  {/* 1. นักศึกษา */}
+                  <TableCell>
+                    <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>
+                      {st.fullName}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>
+                      @{st.username}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 2. มหาวิทยาลัย / คณะ */}
+                  <TableCell>
+                    <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>
+                      {st.university || '-'}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b', display: 'block' }}>
+                      {st.faculty || '-'}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 3. คะแนนสูงสุด */}
+                  <TableCell align="center">
+                    {st.bestScore !== null ? (
+                      <Typography sx={{ fontWeight: 700, fontSize: '13.5px', color: '#0f172a' }}>
+                        {st.bestScore} / 100
+                      </Typography>
+                    ) : (
+                      <Typography sx={{ color: '#94a3b8', fontSize: '13px' }}>-</Typography>
+                    )}
+                  </TableCell>
+
+                  {/* 4. สถานะ */}
+                  <TableCell align="center">
+                    {st.status === 'PASSED' && (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#ecfdf5',
+                          color: '#10b981',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          border: '1px solid #a7f3d0',
+                        }}
+                      >
+                        <CheckCircle2 size={13} /> ผ่าน
+                      </Box>
+                    )}
+                    {st.status === 'FAILED' && (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#fff1f2',
+                          color: '#ef4444',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          border: '1px solid #fecdd3',
+                        }}
+                      >
+                        <XCircle size={13} /> ไม่ผ่าน
+                      </Box>
+                    )}
+                    {st.status === 'NOT_STARTED' && (
+                      <Box
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 0.6,
+                          px: 1.5,
+                          py: 0.4,
+                          borderRadius: '20px',
+                          bgcolor: '#f8fafc',
+                          color: '#94a3b8',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          border: '1px solid #e2e8f0',
+                        }}
+                      >
+                        <Clock size={13} /> ยังไม่เริ่ม
+                      </Box>
+                    )}
+                  </TableCell>
+
+                  {/* 5. Run */}
+                  <TableCell align="center">
+                    <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                      {st.runCount}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 6. Submit */}
+                  <TableCell align="center">
+                    <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
+                      {st.submitCount}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 7. ส่งตรวจล่าสุด */}
+                  <TableCell align="center">
+                    <Typography sx={{ fontSize: '12.5px', color: '#64748b' }}>
+                      {formatThaiDate(st.lastSubmittedAt)}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 8. ปุ่ม ตรวจโค้ด */}
+                  <TableCell align="center">
+                    {st.latestActivity ? (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<Code2 size={14} />}
+                        onClick={() => onInspectCode(st)}
+                        sx={{
+                          textTransform: 'none',
+                          borderRadius: '8px',
+                          fontWeight: 700,
+                          fontSize: '12px',
+                          color: '#4f46e5',
+                          borderColor: '#c7d2fe',
+                          bgcolor: '#f5f3ff',
+                          '&:hover': {
+                            bgcolor: '#ede9fe',
+                            borderColor: '#818cf8',
+                          },
+                        }}
+                      >
+                        ตรวจโค้ด
+                      </Button>
+                    ) : (
+                      <Typography variant="caption" sx={{ color: '#cbd5e1' }}>
+                        ไม่มีประวัติ
+                      </Typography>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* แถบ Pagination */}
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filteredStudents.length}
+        rowsPerPage={rowsPerPage}
+        page={safePage}
+        onPageChange={(_e, newPage) => setPage(newPage)}
+        onRowsPerPageChange={(e) => {
+          setRowsPerPage(parseInt(e.target.value, 10));
+          setPage(0);
+        }}
+        labelRowsPerPage="แถวต่อหน้า:"
+        labelDisplayedRows={({ from, to, count }) => `${from} - ${to} จาก ${count} คน`}
+        sx={{
+          borderTop: '1px solid #e2e8f0',
+          '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
+            fontSize: '13px',
+            color: '#64748b',
+            fontWeight: 600,
+          },
+        }}
+      />
+    </Box>
+  );
+};
