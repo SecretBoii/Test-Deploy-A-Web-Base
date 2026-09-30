@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Card, Typography, Chip, Button, Tooltip } from '@mui/material';
-import { ArrowLeft, Clock, Target, Lightbulb, Download } from 'lucide-react';
+import { Box, Card, Typography, Chip, Button } from '@mui/material';
+import { ArrowLeft, Clock, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
 import type { ExerciseStudentBreakdownResponse } from '../../../api/reports';
@@ -23,15 +23,18 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
 
   // ฟังก์ชันดาวน์โหลดรายงานคะแนนของนักศึกษาในโจทย์ข้อนี้เป็น CSV สำหรับอาจารย์
   const handleExportCsv = () => {
-    if (!students || students.length === 0) return;
+    const activeStudents = (students || []).filter(
+      (st) => (st.runCount > 0 || st.submitCount > 0 || st.isAttempted) && st.status !== 'NOT_STARTED',
+    );
+    if (activeStudents.length === 0) return;
 
-    const headers = ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'มหาวิทยาลัย', 'คณะ', 'สถานะ', 'คะแนนสูงสุด', 'จำนวน Run', 'จำนวน Submit', 'ส่งล่าสุด'];
-    const rows = students.map((st) => [
+    const headers = ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'มหาวิทยาลัย', 'คณะ', 'สถานะ', 'คะแนนสูงสุดที่ส่ง', 'จำนวน Run', 'จำนวน Submit', 'ส่งล่าสุด'];
+    const rows = activeStudents.map((st) => [
       st.username,
       `"${st.fullName}"`,
       `"${st.university || '-'}"`,
       `"${st.faculty || '-'}"`,
-      st.status === 'PASSED' ? 'ผ่าน' : st.status === 'FAILED' ? 'ไม่ผ่าน' : 'ยังไม่เริ่มทำ',
+      st.status === 'PASSED' ? 'ผ่าน' : 'ไม่ผ่าน',
       st.bestScore !== null ? st.bestScore : '-',
       st.runCount,
       st.submitCount,
@@ -115,19 +118,19 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
               <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '13px' }}>
                 รหัส #{exercise.exerciseId}
               </Typography>
-              <Tooltip title={diffMeta.description} arrow>
-                <Chip
-                  label={diffMeta.label}
-                  size="small"
-                  sx={{
-                    fontWeight: 700,
-                    fontSize: '12px',
-                    color: diffMeta.color,
-                    bgcolor: diffMeta.bg,
-                    border: `1px solid ${diffMeta.border}`,
-                  }}
-                />
-              </Tooltip>
+              <Chip
+                label={diffMeta.label}
+                size="small"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '12px',
+                  color: diffMeta.color,
+                  bgcolor: diffMeta.bg,
+                  border: `1px solid ${diffMeta.border}`,
+                  borderRadius: '8px',
+                  px: 0.5,
+                }}
+              />
             </Box>
 
             <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
@@ -160,33 +163,39 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
           </Box>
         </Box>
 
-        {/* วัตถุประสงค์การเรียนรู้ */}
-        {exercise.objective && (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2, mt: 2, p: 2, borderRadius: '10px', bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-            <Target size={18} color="#4f46e5" style={{ marginTop: '2px', flexShrink: 0 }} />
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#1e293b', fontSize: '13px' }}>
-                วัตถุประสงค์ของโจทย์:
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#475569', mt: 0.3, lineHeight: 1.6 }}>
-                {exercise.objective}
-              </Typography>
-            </Box>
-          </Box>
-        )}
+        {/* วัตถุประสงค์และคำใบ้ (สไตล์ Minimal List พร้อมเส้นแบ่งบางๆ สะอาดตา ไม่มีกล่องสี) */}
+        {(exercise.objective || exercise.hint) && (
+          <Box
+            sx={{
+              mt: 2.5,
+              pt: 2,
+              borderTop: '1px solid #f1f5f9',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 1.2,
+            }}
+          >
+            {exercise.objective && (
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'baseline' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#334155', minWidth: '85px', fontSize: '13.5px' }}>
+                  วัตถุประสงค์:
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#475569', fontSize: '13.5px', lineHeight: 1.6 }}>
+                  {exercise.objective}
+                </Typography>
+              </Box>
+            )}
 
-        {/* คำใบ้ (Hint) ถ้ามี */}
-        {exercise.hint && (
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2, mt: 1.5, p: 2, borderRadius: '10px', bgcolor: '#fffbeb', border: '1px solid #fef3c7' }}>
-            <Lightbulb size={18} color="#d97706" style={{ marginTop: '2px', flexShrink: 0 }} />
-            <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#92400e', fontSize: '13px' }}>
-                คำใบ้ที่นักเรียนสามารถขอเปิดดูได้:
-              </Typography>
-              <Typography variant="body2" sx={{ color: '#b45309', mt: 0.3, lineHeight: 1.6 }}>
-                {exercise.hint}
-              </Typography>
-            </Box>
+            {exercise.hint && (
+              <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'baseline' }}>
+                <Typography variant="body2" sx={{ fontWeight: 700, color: '#64748b', minWidth: '85px', fontSize: '13.5px' }}>
+                  คำใบ้โจทย์:
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '13.5px', lineHeight: 1.6 }}>
+                  {exercise.hint}
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
       </Card>

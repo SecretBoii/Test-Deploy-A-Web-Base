@@ -11,7 +11,6 @@ import {
   Box,
   Button,
   TablePagination,
-  Tooltip,
 } from '@mui/material';
 import { Inbox, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -194,21 +193,19 @@ export const ExerciseResultsTable: React.FC<ExerciseResultsTableProps> = ({
 
                   {/* 2. ระดับความยาก (สไตล์รูปที่ 1: กล่องมนสีฟ้า Remembering & Understanding) */}
                   <TableCell align="center">
-                    <Tooltip title={difficultyMeta.description || difficultyMeta.label} arrow>
-                      <Chip
-                        label={difficultyMeta.label}
-                        size="small"
-                        sx={{
-                          fontWeight: 600,
-                          fontSize: '12px',
-                          color: difficultyMeta.color,
-                          bgcolor: difficultyMeta.bg,
-                          border: `1px solid ${difficultyMeta.border}`,
-                          borderRadius: '8px',
-                          px: 0.5,
-                        }}
-                      />
-                    </Tooltip>
+                    <Chip
+                      label={difficultyMeta.label}
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                        fontSize: '12px',
+                        color: difficultyMeta.color,
+                        bgcolor: difficultyMeta.bg,
+                        border: `1px solid ${difficultyMeta.border}`,
+                        borderRadius: '8px',
+                        px: 0.5,
+                      }}
+                    />
                   </TableCell>
 
                   {/* 3. ผู้เข้าทำ (แสดงเฉพาะจำนวนคนเข้าทำจริงตามคำสั่ง) */}
