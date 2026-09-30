@@ -13,8 +13,9 @@ import {
   TextField,
   InputAdornment,
 } from '@mui/material';
-import { Search, RotateCcw, Code2, Inbox, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Search, RotateCcw, Inbox } from 'lucide-react';
 import type { ExerciseStudentItem } from '../../../api/reports';
+import { formatThaiDateTime } from '../../../utils/dateUtils';
 
 interface TeacherStudentTableProps {
   students: ExerciseStudentItem[];
@@ -27,9 +28,25 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
+  // นักศึกษาทั้งหมดได้รับการคัดกรองเฉพาะผู้ที่เข้าทำจริงมาจาก Backend แล้ว
+  // เสริม Defensive filter เพื่อรับประกันความถูกต้องว่าจะไม่มีสถานะ NOT_STARTED หลุดเข้ามา
+  const activeStudents = useMemo(() => {
+    return students.filter((st) => st.status !== 'NOT_STARTED');
+  }, [students]);
+
+  // จำนวนนักศึกษาแยกตามสถานะสำหรับแสดงตัวเลขในแท็บ
+  const passedCount = useMemo(
+    () => activeStudents.filter((s) => s.status === 'PASSED').length,
+    [activeStudents],
+  );
+  const failedCount = useMemo(
+    () => activeStudents.filter((s) => s.status === 'FAILED').length,
+    [activeStudents],
+  );
+
   // กรองรายชื่อนักศึกษาตามคำค้นหาและสถานะ
   const filteredStudents = useMemo(() => {
-    return students.filter((st) => {
+    return activeStudents.filter((st) => {
       if (statusFilter !== 'all' && st.status !== statusFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase().trim();
@@ -40,7 +57,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
       }
       return true;
     });
-  }, [students, search, statusFilter]);
+  }, [activeStudents, search, statusFilter]);
 
   // ป้องกัน Pagination ค้างหน้าว่างเมื่อผลการกรองลดลง
   const totalPages = Math.ceil(filteredStudents.length / rowsPerPage);
@@ -55,17 +72,17 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
 
   const isFiltered = search.trim() !== '' || statusFilter !== 'all';
 
-  // จัดรูปแบบวันเวลาภาษาไทย
-  const formatThaiDate = (dateStr: string | null) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '-';
-    return `${d.toLocaleDateString('th-TH', { day: '2-digit', month: 'short' })} ${d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.`;
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-      {/* แถบตัวกรองและค้นหา (Search & Filters Toolbar) */}
+      {/* ส่วนหัวของตาราง สไตล์รูปที่ 1 */}
+      <Box sx={{ mb: 0.5 }}>
+        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
+          รายชื่อนักศึกษาที่เข้าทำโจทย์ ({filteredStudents.length}{isFiltered ? ` / ${activeStudents.length}` : ''} คน)
+        </Typography>
+      </Box>
+
+      {/* แถบตัวกรองและค้นหา (Search & Filters Toolbar) สไตล์รูปที่ 1 & รูปที่ 2 */}
       <Box
         sx={{
           display: 'flex',
@@ -76,7 +93,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-          {/* ช่องค้นหาชื่อหรือรหัส */}
+          {/* ช่องค้นหาชื่อหรือรหัส สไตล์รูปที่ 1 */}
           <TextField
             size="small"
             placeholder="ค้นหาชื่อ, รหัสนักศึกษา หรือมหาวิทยาลัย..."
@@ -96,11 +113,17 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
             }}
             sx={{
               width: { xs: '100%', sm: 300 },
-              '& .MuiOutlinedInput-root': { borderRadius: '10px', bgcolor: '#f8fafc' },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
+                '& fieldset': { borderColor: '#e2e8f0' },
+                '&:hover fieldset': { borderColor: '#94a3b8' },
+                '&.Mui-focused fieldset': { borderColor: '#0f172a', borderWidth: '1.5px' },
+              },
             }}
           />
 
-          {/* แท็บ Capsule Pills กรองสถานะ สไตล์รูปที่ 1 */}
+          {/* แท็บ Capsule Pills กรองสถานะ สไตล์รูปที่ 2 */}
           <Box
             sx={{
               display: 'inline-flex',
@@ -123,14 +146,17 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                 fontWeight: statusFilter === 'all' ? 700 : 500,
                 fontSize: '12.5px',
                 borderRadius: '8px',
-                px: 1.5,
-                py: 0.4,
+                px: 1.8,
+                py: 0.5,
                 textTransform: 'none',
                 boxShadow: statusFilter === 'all' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                '&:hover': { bgcolor: statusFilter === 'all' ? '#ffffff' : '#e2e8f0' },
+                '&:hover': {
+                  bgcolor: statusFilter === 'all' ? '#ffffff' : '#e2e8f0',
+                  color: statusFilter === 'all' ? '#0f172a' : '#334155',
+                },
               }}
             >
-              ทั้งหมด
+              ทั้งหมด ({activeStudents.length})
             </Button>
             <Button
               size="small"
@@ -140,18 +166,21 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
               }}
               sx={{
                 bgcolor: statusFilter === 'PASSED' ? '#ffffff' : 'transparent',
-                color: statusFilter === 'PASSED' ? '#107c41' : '#64748b',
+                color: statusFilter === 'PASSED' ? '#0f172a' : '#64748b',
                 fontWeight: statusFilter === 'PASSED' ? 700 : 500,
                 fontSize: '12.5px',
                 borderRadius: '8px',
-                px: 1.5,
-                py: 0.4,
+                px: 1.8,
+                py: 0.5,
                 textTransform: 'none',
                 boxShadow: statusFilter === 'PASSED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                '&:hover': { bgcolor: statusFilter === 'PASSED' ? '#ffffff' : '#e2e8f0' },
+                '&:hover': {
+                  bgcolor: statusFilter === 'PASSED' ? '#ffffff' : '#e2e8f0',
+                  color: statusFilter === 'PASSED' ? '#0f172a' : '#334155',
+                },
               }}
             >
-              เฉพาะที่ผ่าน (Passed)
+              เฉพาะที่ผ่าน ({passedCount})
             </Button>
             <Button
               size="small"
@@ -161,59 +190,51 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
               }}
               sx={{
                 bgcolor: statusFilter === 'FAILED' ? '#ffffff' : 'transparent',
-                color: statusFilter === 'FAILED' ? '#ef4444' : '#64748b',
+                color: statusFilter === 'FAILED' ? '#0f172a' : '#64748b',
                 fontWeight: statusFilter === 'FAILED' ? 700 : 500,
                 fontSize: '12.5px',
                 borderRadius: '8px',
-                px: 1.5,
-                py: 0.4,
+                px: 1.8,
+                py: 0.5,
                 textTransform: 'none',
                 boxShadow: statusFilter === 'FAILED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                '&:hover': { bgcolor: statusFilter === 'FAILED' ? '#ffffff' : '#e2e8f0' },
+                '&:hover': {
+                  bgcolor: statusFilter === 'FAILED' ? '#ffffff' : '#e2e8f0',
+                  color: statusFilter === 'FAILED' ? '#0f172a' : '#334155',
+                },
               }}
             >
-              เฉพาะที่ไม่ผ่าน (Failed)
-            </Button>
-            <Button
-              size="small"
-              onClick={() => {
-                setStatusFilter('NOT_STARTED');
-                setPage(0);
-              }}
-              sx={{
-                bgcolor: statusFilter === 'NOT_STARTED' ? '#ffffff' : 'transparent',
-                color: statusFilter === 'NOT_STARTED' ? '#0f172a' : '#64748b',
-                fontWeight: statusFilter === 'NOT_STARTED' ? 700 : 500,
-                fontSize: '12.5px',
-                borderRadius: '8px',
-                px: 1.5,
-                py: 0.4,
-                textTransform: 'none',
-                boxShadow: statusFilter === 'NOT_STARTED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                '&:hover': { bgcolor: statusFilter === 'NOT_STARTED' ? '#ffffff' : '#e2e8f0' },
-              }}
-            >
-              ยังไม่เริ่มทำ
+              เฉพาะที่ไม่ผ่าน ({failedCount})
             </Button>
           </Box>
 
-          {/* ปุ่มรีเซ็ตตัวกรอง */}
-          {isFiltered && (
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<RotateCcw size={15} />}
-              onClick={handleReset}
-              sx={{ textTransform: 'none', borderRadius: '8px', fontWeight: 600, color: '#64748b', borderColor: '#cbd5e1' }}
-            >
-              รีเซ็ต
-            </Button>
-          )}
+          {/* ปุ่มล้างตัวกรอง - แสดงตลอดเวลา สไตล์รูปที่ 1 */}
+          <Button
+            size="small"
+            startIcon={<RotateCcw size={14} />}
+            onClick={handleReset}
+            disabled={!isFiltered}
+            sx={{
+              color: isFiltered ? '#475569' : '#94a3b8',
+              fontSize: '13px',
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: '8px',
+              px: 1.5,
+              py: 0.8,
+              '&:hover': {
+                color: isFiltered ? '#0f172a' : '#94a3b8',
+                bgcolor: isFiltered ? '#f1f5f9' : 'transparent',
+              },
+              '&.Mui-disabled': {
+                color: '#94a3b8',
+              },
+              transition: 'all 0.15s ease',
+            }}
+          >
+            ล้างตัวกรอง
+          </Button>
         </Box>
-
-        <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-          แสดงนักศึกษา <b>{filteredStudents.length}</b> จาก {students.length} คน
-        </Typography>
       </Box>
 
       {/* ตารางแสดงผลรายชื่อนักศึกษา */}
@@ -260,7 +281,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
               >
                 <TableCell>นักศึกษา</TableCell>
                 <TableCell>มหาวิทยาลัย / คณะ</TableCell>
-                <TableCell align="center">คะแนนสูงสุด</TableCell>
+                <TableCell align="center">คะแนนสูงสุดที่่ส่ง</TableCell>
                 <TableCell align="center">สถานะ</TableCell>
                 <TableCell align="center">Run (ครั้ง)</TableCell>
                 <TableCell align="center">Submit (ครั้ง)</TableCell>
@@ -318,18 +339,19 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 0.6,
-                          px: 1.5,
-                          py: 0.4,
-                          borderRadius: '20px',
-                          bgcolor: '#ecfdf5',
-                          color: '#10b981',
+                          justifyContent: 'center',
+                          minWidth: '58px',
+                          px: 1.4,
+                          py: 0.35,
+                          borderRadius: '6px',
+                          bgcolor: '#f0fdf4',
+                          color: '#15803d',
                           fontSize: '12px',
                           fontWeight: 700,
-                          border: '1px solid #a7f3d0',
+                          border: '1px solid #bbf7d0',
                         }}
                       >
-                        <CheckCircle2 size={13} /> ผ่าน
+                        Passed
                       </Box>
                     )}
                     {st.status === 'FAILED' && (
@@ -337,18 +359,19 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 0.6,
-                          px: 1.5,
-                          py: 0.4,
-                          borderRadius: '20px',
-                          bgcolor: '#fff1f2',
-                          color: '#ef4444',
+                          justifyContent: 'center',
+                          minWidth: '58px',
+                          px: 1.4,
+                          py: 0.35,
+                          borderRadius: '6px',
+                          bgcolor: '#fff5f5',
+                          color: '#b91c1c',
                           fontSize: '12px',
                           fontWeight: 700,
-                          border: '1px solid #fecdd3',
+                          border: '1px solid #fecaca',
                         }}
                       >
-                        <XCircle size={13} /> ไม่ผ่าน
+                        Failed
                       </Box>
                     )}
                     {st.status === 'NOT_STARTED' && (
@@ -356,18 +379,19 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                         sx={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: 0.6,
-                          px: 1.5,
-                          py: 0.4,
-                          borderRadius: '20px',
+                          justifyContent: 'center',
+                          minWidth: '58px',
+                          px: 1.4,
+                          py: 0.35,
+                          borderRadius: '6px',
                           bgcolor: '#f8fafc',
-                          color: '#94a3b8',
+                          color: '#64748b',
                           fontSize: '12px',
                           fontWeight: 600,
                           border: '1px solid #e2e8f0',
                         }}
                       >
-                        <Clock size={13} /> ยังไม่เริ่ม
+                        Not Started
                       </Box>
                     )}
                   </TableCell>
@@ -389,7 +413,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                   {/* 7. ส่งตรวจล่าสุด */}
                   <TableCell align="center">
                     <Typography sx={{ fontSize: '12.5px', color: '#64748b' }}>
-                      {formatThaiDate(st.lastSubmittedAt)}
+                      {formatThaiDateTime(st.lastSubmittedAt ?? undefined)}
                     </Typography>
                   </TableCell>
 
@@ -397,21 +421,22 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                   <TableCell align="center">
                     {st.latestActivity ? (
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         size="small"
-                        startIcon={<Code2 size={14} />}
                         onClick={() => onInspectCode(st)}
                         sx={{
-                          textTransform: 'none',
+                          bgcolor: '#0f172a',
+                          color: '#ffffff',
                           borderRadius: '8px',
+                          textTransform: 'none',
                           fontWeight: 700,
-                          fontSize: '12px',
-                          color: '#4f46e5',
-                          borderColor: '#c7d2fe',
-                          bgcolor: '#f5f3ff',
+                          fontSize: '12.5px',
+                          px: 2,
+                          py: 0.6,
+                          boxShadow: 'none',
                           '&:hover': {
-                            bgcolor: '#ede9fe',
-                            borderColor: '#818cf8',
+                            bgcolor: '#1e293b',
+                            boxShadow: 'none',
                           },
                         }}
                       >

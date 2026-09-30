@@ -114,7 +114,7 @@ export default function ExerciseResultDetailsPage() {
               open={Boolean(selectedStudent)}
               onClose={() => setSelectedStudent(null)}
               student={selectedStudent}
-              exerciseTitle={exercise.title}
+              exercise={exercise}
             />
           </>
         ) : (

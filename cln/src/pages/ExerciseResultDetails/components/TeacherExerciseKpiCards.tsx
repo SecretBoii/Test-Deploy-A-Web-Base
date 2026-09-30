@@ -38,11 +38,11 @@ export const TeacherExerciseKpiCards: React.FC<TeacherExerciseKpiCardsProps> = (
             {stats.attemptedCount}
           </Typography>
           <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-            / {stats.totalStudents} คน
+            คน
           </Typography>
         </Box>
         <Typography variant="caption" sx={{ color: '#94a3b8', mt: 0.8, fontWeight: 500 }}>
-          {isNoAttempt ? 'ยังไม่มีผู้เข้าทำ' : `คิดเป็น ${((stats.attemptedCount / Math.max(1, stats.totalStudents)) * 100).toFixed(0)}% ของห้อง`}
+          {isNoAttempt ? 'ยังไม่มีผู้เข้าทำ' : 'ผู้เรียนที่รันโค้ดหรือส่งตรวจจริง'}
         </Typography>
       </Card>
 
@@ -67,13 +67,7 @@ export const TeacherExerciseKpiCards: React.FC<TeacherExerciseKpiCardsProps> = (
             variant="h4"
             sx={{
               fontWeight: 800,
-              color: isNoAttempt
-                ? '#94a3b8'
-                : stats.passRateAttempted >= 70
-                ? '#10b981'
-                : stats.passRateAttempted >= 50
-                ? '#f59e0b'
-                : '#ef4444',
+              color: isNoAttempt ? '#94a3b8' : '#0f172a',
               lineHeight: 1.1,
             }}
           >

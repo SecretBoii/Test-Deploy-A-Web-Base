@@ -338,10 +338,15 @@ export class ReportsService {
       filters.endDate,
     );
 
-    // 1. นับจำนวนนักศึกษาทั้งหมดในระบบ (หรือตามตัวกรองสถาบัน) เพื่อใช้เป็นตัวหารของ Overall Pass Rate
+    // 1. นับจำนวนนักศึกษาที่มีการทำกิจกรรมจริงในระบบ (มี run หรือ submit) โดยไม่นับ account ว่างที่ไม่ได้เข้าทำ
     const totalStudents = await this.prisma.userProfile.count({
       where: {
         roleId: 1, // เฉพาะนักศึกษา
+        activities: {
+          some: {
+            eventType: { in: ['run', 'submit'] },
+          },
+        },
         education: filters.education
           ? {
               OR: [
@@ -496,10 +501,16 @@ export class ReportsService {
       throw new Error('ไม่พบข้อมูลแบบฝึกหัดที่ระบุ');
     }
 
-    // 2. ดึงนักศึกษาทั้งหมดในระบบ (หรือกรองตามสถาบัน)
+    // 2. ดึงเฉพาะนักศึกษาที่มีประวัติการทำโจทย์ข้อนี้จริง (มี run หรือ submit) โดยไม่ดึง account ว่างที่ไม่ได้เข้าทำ
     const students = await this.prisma.userProfile.findMany({
       where: {
         roleId: 1, // เฉพาะนักศึกษา
+        activities: {
+          some: {
+            exerciseId,
+            eventType: { in: ['run', 'submit'] },
+          },
+        },
         education: filters?.education
           ? {
               OR: [
@@ -512,14 +523,17 @@ export class ReportsService {
       include: {
         education: true,
         activities: {
-          where: { exerciseId },
+          where: {
+            exerciseId,
+            eventType: { in: ['run', 'submit'] },
+          },
           orderBy: { submittedAt: 'desc' },
         },
       },
       orderBy: { firstName: 'asc' },
     });
 
-    // 3. รวบรวมสถิติรายบุคคล
+    // 3. รวบรวมสถิติรายบุคคลเฉพาะผู้ที่เข้าทำจริง
     let totalRunsSum = 0;
     let totalSubmitsSum = 0;
     let passedCount = 0;
@@ -555,8 +569,8 @@ export class ReportsService {
         fullName: `${student.firstName} ${student.lastName}`.trim(),
         university: student.education?.university || '-',
         faculty: student.education?.faculty || '-',
-        isAttempted,
-        status: !isAttempted ? 'NOT_STARTED' : isPassed ? 'PASSED' : 'FAILED',
+        isAttempted: true,
+        status: isPassed ? 'PASSED' : 'FAILED',
         bestScore: hasSubmit ? bestScore : null,
         runCount: runs.length,
         submitCount: submits.length,
@@ -584,7 +598,6 @@ export class ReportsService {
       };
     });
 
-    const totalStudents = students.length;
     const avgScore = attemptedCount > 0 ? bestScoreSum / attemptedCount : 0;
 
     return {
@@ -598,11 +611,11 @@ export class ReportsService {
         hint: exercise.hint,
       },
       stats: {
-        totalStudents,
+        totalStudents: attemptedCount,
         attemptedCount,
         passedCount,
         passRateAttempted: attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
-        passRateOverall: totalStudents > 0 ? (passedCount / totalStudents) * 100 : 0,
+        passRateOverall: attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
         totalRuns: totalRunsSum,
         totalSubmits: totalSubmitsSum,
         avgRuns: attemptedCount > 0 ? totalRunsSum / attemptedCount : 0,
