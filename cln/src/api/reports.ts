@@ -14,12 +14,14 @@ export interface StudentReportData {
   fullName: string;
   university: string;
   faculty: string;
+  attemptedExercises?: number;
   passedExercises?: number;
   totalExercises?: number;
   completedSessions: number;
   totalSessions: number;
   averageScore: number;
   averageAttempts: number;
+  totalRuns?: number;
   totalSubmissions?: number;
   passedSubmissions?: number;
   lastActiveAt?: string;
