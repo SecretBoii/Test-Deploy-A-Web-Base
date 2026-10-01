@@ -366,7 +366,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
               </TableRow>
             ) : (
               paginatedData.map((student) => {
-                const totalEx = student.totalExercises || student.totalSessions || 25;
+                const totalEx = student.totalExercises || student.totalSessions || 0;
                 const passedEx = student.passedExercises ?? student.completedSessions ?? 0;
                 const percentage = totalEx > 0 ? (passedEx / totalEx) * 100 : 0;
                 return (

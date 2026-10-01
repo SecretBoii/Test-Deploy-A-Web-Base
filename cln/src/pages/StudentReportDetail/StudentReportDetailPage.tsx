@@ -53,7 +53,7 @@ export default function StudentReportDetailPage() {
 
   const student = data?.student || null;
   const activities = useMemo(() => data?.activities || [], [data?.activities]);
-  const totalExercises = data?.totalExercises || 25;
+  const totalExercises = data?.totalExercises ?? 0;
 
   // สถิติภาพรวมของผู้เรียน ดึงมาจาก Backend โดยตรง (Single Source of Truth)
   const stats = data?.stats || {

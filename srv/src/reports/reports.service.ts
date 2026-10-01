@@ -141,11 +141,19 @@ export class ReportsService {
     const students = await this.prisma.userProfile.findMany({
       where,
       include: {
-        education: true,
-        userSessions: true,
+        // ดึงเฉพาะฟิลด์สถาบันและคณะที่ต้องใช้แสดงผลจริง เพื่อลดขนาด Payload
+        education: {
+          select: {
+            university: true,
+            faculty: true,
+          },
+        },
+        // ดึงเฉพาะกิจกรรมที่เกิดใน Session ที่เปิดใช้งานจริง (status: 'active')
+        // หากอาจารย์ปิด Session เป็น inactive ประวัติจะถูกซ่อนไม่นำมาคำนวณ และเมื่อเปิด active อีกครั้งจะกลับมาคำนวณอัตโนมัติ
         activities: {
           where: {
             status: { not: 'PENDING' },
+            session: { status: 'active' },
             ...(dateRange.start || dateRange.end
               ? {
                   createdAt: {
@@ -156,6 +164,7 @@ export class ReportsService {
               : {}),
           },
           select: {
+            sessionId: true,
             exerciseId: true,
             score: true,
             runCount: true,
@@ -166,11 +175,13 @@ export class ReportsService {
       },
     });
 
-    const totalExercises = await this.prisma.exercise.count({
-      where: { status: 'active' },
+    // คำนวณจำนวนภาระงาน/โจทย์ทั้งหมดที่เปิดให้ทำใน Session ที่เปิดใช้งาน (status: 'active')
+    // โดยนับตามภาระงานจริงในแต่ละ Session (หากโจทย์ 1 ข้อถูกใช้ใน 2 Session จะนับเป็น 2 ภาระงาน)
+    const totalExercises = await this.prisma.sessionExercise.count({
+      where: {
+        session: { status: 'active' },
+      },
     });
-
-    const totalSessions = await this.prisma.session.count();
 
     return students.map((student) => {
       // กรองเฉพาะกิจกรรมที่เป็นการส่งตรวจ (Submit) เพื่อวัดผลสัมฤทธิ์จริงของแบบฝึกหัด
@@ -183,24 +194,32 @@ export class ReportsService {
         (a) => a.score >= 80,
       ).length;
 
-      // คำนวณจำนวนโจทย์ที่ไม่ซ้ำที่ส่งตรวจผ่านเกณฑ์ (>= 80 คะแนน)
+      // คำนวณจำนวนภาระงานที่ผู้เรียนเริ่มเข้าทำจริง (จับคู่ Session + Exercise)
+      // หากทำโจทย์ข้อเดียวกันในต่าง Session จะนับเป็นคนละภาระงานตามบริบทของบทเรียน
+      const attemptedExerciseSet = new Set(
+        student.activities.map((a) => `${a.sessionId}_${a.exerciseId}`),
+      );
+      const attemptedExercises = attemptedExerciseSet.size;
+
+      // คำนวณจำนวนภาระงานที่ส่งตรวจผ่านเกณฑ์ (>= 80 คะแนน) ในแต่ละ Session
       const passedExerciseSet = new Set(
         submitActivities
           .filter((a) => a.score >= 80)
-          .map((a) => a.exerciseId),
+          .map((a) => `${a.sessionId}_${a.exerciseId}`),
       );
       const passedExercises = passedExerciseSet.size;
 
-      // รวมคะแนนที่ดีที่สุดในแต่ละแบบฝึกหัดที่ผู้เรียน "ส่งตรวจ" (Best score per submitted exercise)
-      // ป้องกัน Bug: ต้องตรวจสอบ !bestScoreMap.has(act.exerciseId) เพื่อให้บันทึกข้อที่ส่งตรวจแล้วได้ 0 คะแนนด้วย
+      // รวมคะแนนที่ดีที่สุดในแต่ละ Session-Exercise ที่ผู้เรียน "ส่งตรวจ" (Best score per Session-Exercise)
+      // ป้องกัน Bug: ต้องตรวจสอบ !bestScoreMap.has(key) เพื่อให้บันทึกข้อที่ส่งตรวจแล้วได้ 0 คะแนนด้วย
       // ป้องกันไม่ให้ข้อที่ได้ 0 คะแนนหลุดออกจากตัวหารจนคะแนนเฉลี่ยสูงเกินจริง
-      const bestScoreMap = new Map<number, number>();
+      const bestScoreMap = new Map<string, number>();
       for (const act of submitActivities) {
+        const key = `${act.sessionId}_${act.exerciseId}`;
         if (
-          !bestScoreMap.has(act.exerciseId) ||
-          act.score > (bestScoreMap.get(act.exerciseId) ?? 0)
+          !bestScoreMap.has(key) ||
+          act.score > (bestScoreMap.get(key) ?? 0)
         ) {
-          bestScoreMap.set(act.exerciseId, act.score);
+          bestScoreMap.set(key, act.score);
         }
       }
       const bestScores = Array.from(bestScoreMap.values());
@@ -209,10 +228,18 @@ export class ReportsService {
           ? bestScores.reduce((sum, s) => sum + s, 0) / bestScores.length
           : 0;
 
-      // คำนวณจำนวนครั้งที่รันโค้ดเฉลี่ยต่อการส่งตรวจแต่ละครั้ง
-      const runs = submitActivities.map((a) => a.runCount);
+      // คำนวณจำนวนครั้งที่รันโค้ดทั้งหมด (ทั้งที่รันแล้วส่งตรวจ และรันทดสอบอิสระ)
+      const runActivities = student.activities.filter(
+        (a) => a.eventType === 'run',
+      );
+      const totalRuns = runActivities.length;
+
+      // คำนวณจำนวนครั้งที่รันโค้ดเฉลี่ยต่อโจทย์ที่เข้าทำ (Runs per Attempted Exercise)
+      // ป้องกันกรณีที่ผู้เรียนรันโค้ดอย่างเดียวแต่ยังไม่ได้ส่งตรวจ (เช่น testUser) ไม่ให้ตัวเลขเฉลี่ยถูกปัดเป็น 0.0
       const averageAttempts =
-        runs.length > 0 ? runs.reduce((sum, r) => sum + r, 0) / runs.length : 0;
+        attemptedExercises > 0
+          ? Number((totalRuns / attemptedExercises).toFixed(1))
+          : totalRuns;
 
       return {
         userId: student.userId,
@@ -220,10 +247,12 @@ export class ReportsService {
         fullName: `${student.firstName} ${student.lastName}`,
         university: student.education?.university || '-',
         faculty: student.education?.faculty || '-',
+        attemptedExercises, // จำนวนโจทย์ที่ไม่ซ้ำที่ผู้เรียนเริ่มเข้าทำจริง
         passedExercises, // จำนวนโจทย์ที่ผ่านจริงจากการส่งตรวจ
         totalExercises, // จำนวนโจทย์ทั้งหมดในระบบ
         completedSessions: passedExercises, // รองรับกรณีโค้ดเก่าเรียกใช้
         totalSessions: totalExercises,
+        totalRuns, // จำนวนครั้งที่กด Run โค้ดจริงทั้งหมด
         totalSubmissions,
         passedSubmissions,
         averageScore,
@@ -241,7 +270,10 @@ export class ReportsService {
     });
 
     const activities = await this.prisma.activity.findMany({
-      where: { userId },
+      where: {
+        userId,
+        session: { status: 'active' },
+      },
       orderBy: { submittedAt: 'desc' },
       include: {
         exercise: {
@@ -263,8 +295,12 @@ export class ReportsService {
       },
     });
 
-    const totalExercises = await this.prisma.exercise.count({
-      where: { status: 'active' },
+    // คำนวณจำนวนภาระงาน/โจทย์ทั้งหมดที่เปิดให้ทำใน Session ที่เปิดใช้งาน (status: 'active')
+    // นับตามภาระงานจริงในแต่ละ Session (1 ข้อในหลาย Session นับตามจำนวนภาระงานที่ต้องส่ง)
+    const totalExercises = await this.prisma.sessionExercise.count({
+      where: {
+        session: { status: 'active' },
+      },
     });
 
     // คำนวณสถิติภาพรวมของผู้เรียนคนนี้ที่ Backend (Single Source of Truth)
@@ -275,19 +311,20 @@ export class ReportsService {
     const passedExerciseSet = new Set(
       submitActivities
         .filter((a) => a.score >= 80)
-        .map((a) => a.exerciseId),
+        .map((a) => `${a.sessionId}_${a.exerciseId}`),
     );
     const passedCount = passedExerciseSet.size;
     const percentage =
       totalExercises > 0 ? (passedCount / totalExercises) * 100 : 0;
 
-    const bestScoreMap = new Map<number, number>();
+    const bestScoreMap = new Map<string, number>();
     for (const act of submitActivities) {
+      const key = `${act.sessionId}_${act.exerciseId}`;
       if (
-        !bestScoreMap.has(act.exerciseId) ||
-        act.score > (bestScoreMap.get(act.exerciseId) ?? 0)
+        !bestScoreMap.has(key) ||
+        act.score > (bestScoreMap.get(key) ?? 0)
       ) {
-        bestScoreMap.set(act.exerciseId, act.score);
+        bestScoreMap.set(key, act.score);
       }
     }
     const bestScores = Array.from(bestScoreMap.values());

@@ -25,6 +25,7 @@ import StudentErrorReportDetailPage from './pages/StudentErrorReportDetail/Stude
 import ExerciseReportDetailPage from './pages/ExerciseReportDetail/ExerciseReportDetailPage.tsx'
 import ExerciseResultsPage from './pages/ExerciseResults/ExerciseResultsPage.tsx'
 import ExerciseResultDetailsPage from './pages/ExerciseResultDetails/ExerciseResultDetailsPage.tsx'
+import StudentResultsPage from './pages/StudentResults/StudentResultsPage.tsx'
 import AdminAuditLogPage from './pages/Auditlog/AdminAuditLogPage.tsx'
 
 const theme = createTheme({
@@ -69,6 +70,7 @@ createRoot(document.getElementById('root')!).render(
                 <Route path="/exercises" element={<ExercisesPage />} />
                 <Route path="/exercise-results" element={<ExerciseResultsPage />} />
                 <Route path="/exercise-results/:exerciseId" element={<ExerciseResultDetailsPage />} />
+                <Route path="/student-results" element={<StudentResultsPage />} />
               </Route>
 
               {/* Teacher & Admin shared routes */}
