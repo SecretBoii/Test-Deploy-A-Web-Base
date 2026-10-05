@@ -1,5 +1,7 @@
 import { Controller, Post, Body, Get, Param, Query, UseGuards, Put, Delete, ForbiddenException, Req } from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
+import { ExercisesGradingService } from './exercises-grading.service';
+import { ExercisesProgressService } from './exercises-progress.service';
 import { SubmitExerciseDto, CreateExerciseDto, UpdateExerciseDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user-decorator';
@@ -10,8 +12,10 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 export class ExercisesController {
   constructor(
     private readonly exercisesService: ExercisesService,
+    private readonly gradingService: ExercisesGradingService,
+    private readonly progressService: ExercisesProgressService,
     private readonly auditLogService: AuditLogService,
-    ) {}
+  ) {}
 
   @Post('run')
   async runCode(
@@ -68,7 +72,7 @@ export class ExercisesController {
 
   @Get('test-skills')
   async testSkills() {
-    return this.exercisesService.getLoadedSkills();
+    return this.gradingService.getLoadedSkills();
   }
 
   @Get('status/:activityId')
@@ -78,30 +82,29 @@ export class ExercisesController {
 
   @Get('recent-session')
   async getRecentSession(@CurrentUser() user: any) {
-    return await this.exercisesService.getRecentSession(user.userId);
+    return await this.progressService.getRecentSession(user.userId);
   }
 
   // API ดึงความก้าวหน้าสรุปของแต่ละ Level (ต้องวางก่อน :id)
   @Get('levels-summary')
   async getLevelsSummary(@CurrentUser() user: any) {
-    return await 
-    this.exercisesService.getLevelsSummary(user.userId);
+    return await this.progressService.getLevelsSummary(user.userId);
   }
 
   @Get('dashboard-stats')
   async getDashboardStats(@CurrentUser() user: any) {
-    return await this.exercisesService.getDashboardStats(user.userId);
+    return await this.progressService.getDashboardStats(user.userId);
   }
 
   @Get('history')
   async getHistory(
     @CurrentUser() user: any, 
-    @Query('limit')limit?: string,
-    @Query('page')page?: string,
-    ) {
+    @Query('limit') limit?: string,
+    @Query('page') page?: string,
+  ) {
     const limitNum = limit ? Number(limit) : undefined;
     const pageNum = page ? Number(page) : 1;
-    return await this.exercisesService.getHistory(user.userId, limitNum, pageNum);
+    return await this.progressService.getHistory(user.userId, limitNum, pageNum);
   }
 
   // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session (ต้องวางก่อน :id)
@@ -110,7 +113,7 @@ export class ExercisesController {
     @Param('level') level: string,
     @CurrentUser() user: any,
   ) {
-    return await this.exercisesService.getLevelSessions(Number(level), user.userId);
+    return await this.progressService.getLevelSessions(Number(level), user.userId);
   }
 
   @Get('manage/all')

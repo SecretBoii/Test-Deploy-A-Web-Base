@@ -3,6 +3,8 @@ import { HttpModule } from '@nestjs/axios';
 import { BullModule } from '@nestjs/bullmq';
 import { ExercisesController } from './exercises.controller';
 import { ExercisesService } from './exercises.service';
+import { ExercisesGradingService } from './exercises-grading.service';
+import { ExercisesProgressService } from './exercises-progress.service';
 import { CodeExecutionProcessor } from './code-execution.processor';
 
 @Module({
@@ -13,6 +15,16 @@ import { CodeExecutionProcessor } from './code-execution.processor';
     }),
   ],
   controllers: [ExercisesController],
-  providers: [ExercisesService, CodeExecutionProcessor],
+  providers: [
+    ExercisesService,
+    ExercisesGradingService,
+    ExercisesProgressService,
+    CodeExecutionProcessor,
+  ],
+  exports: [
+    ExercisesService,
+    ExercisesGradingService,
+    ExercisesProgressService,
+  ],
 })
 export class ExercisesModule {}
