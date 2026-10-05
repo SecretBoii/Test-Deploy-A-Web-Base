@@ -607,12 +607,13 @@ export class ReportsService {
         university: student.education?.university || '-',
         faculty: student.education?.faculty || '-',
         isAttempted: true,
-        status: isPassed ? 'PASSED' : 'FAILED',
+        // หากส่งตรวจและผ่านเกณฑ์ >= 80 เป็น PASSED, หากส่งตรวจแต่ไม่ถึง 80 เป็น FAILED, หากรันอย่างเดียวแต่ยังไม่เคยส่งตรวจเป็น NOT_SUBMITTED
+        status: isPassed ? 'PASSED' : hasSubmit ? 'FAILED' : 'NOT_SUBMITTED',
         bestScore: hasSubmit ? bestScore : null,
         runCount: runs.length,
         submitCount: submits.length,
         totalAttempts: acts.length,
-        lastSubmittedAt: latestSubmit ? latestSubmit.submittedAt : null,
+        lastSubmittedAt: hasSubmit && submits[0] ? submits[0].submittedAt : null,
         latestActivity: latestSubmit
           ? {
               activityId: latestSubmit.activityId,

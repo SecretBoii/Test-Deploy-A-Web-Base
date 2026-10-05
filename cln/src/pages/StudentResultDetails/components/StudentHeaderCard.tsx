@@ -14,7 +14,7 @@ export interface StudentExerciseItem {
   expectedTime?: number;
   sessionName: string;
   bestScore: number | null;
-  status: 'PASSED' | 'FAILED';
+  status: 'PASSED' | 'FAILED' | 'NOT_SUBMITTED';
   runCount: number;
   submitCount: number;
   lastSubmittedAt: string | null;
@@ -63,7 +63,11 @@ export const StudentHeaderCard: React.FC<StudentHeaderCardProps> = ({
       `"${ex.topic.replace(/"/g, '""')}"`,
       `"${ex.sessionName.replace(/"/g, '""')}"`,
       ex.bestScore !== null ? ex.bestScore : '-',
-      ex.status === 'PASSED' ? 'ผ่าน (Passed)' : 'ยังไม่ผ่าน (Failed)',
+      ex.status === 'PASSED'
+        ? 'ผ่าน (Passed)'
+        : ex.status === 'FAILED'
+          ? 'ไม่ผ่าน (Failed)'
+          : 'ยังไม่ส่งตรวจ (Not Submitted)',
       ex.runCount,
       ex.submitCount,
       ex.lastSubmittedAt ? `"${formatThaiDateTime(ex.lastSubmittedAt)}"` : '-',

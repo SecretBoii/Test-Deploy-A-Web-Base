@@ -24,7 +24,7 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
   // ฟังก์ชันดาวน์โหลดรายงานคะแนนของนักศึกษาในโจทย์ข้อนี้เป็น CSV สำหรับอาจารย์
   const handleExportCsv = () => {
     const activeStudents = (students || []).filter(
-      (st) => (st.runCount > 0 || st.submitCount > 0 || st.isAttempted) && st.status !== 'NOT_STARTED',
+      (st) => st.runCount > 0 || st.submitCount > 0 || st.isAttempted,
     );
     if (activeStudents.length === 0) return;
 
@@ -34,11 +34,15 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
       `"${st.fullName}"`,
       `"${st.university || '-'}"`,
       `"${st.faculty || '-'}"`,
-      st.status === 'PASSED' ? 'ผ่าน' : 'ไม่ผ่าน',
+      st.status === 'PASSED'
+        ? 'ผ่าน (Passed)'
+        : st.status === 'FAILED'
+          ? 'ไม่ผ่าน (Failed)'
+          : 'ยังไม่ส่งตรวจ (Not Submitted)',
       st.bestScore !== null ? st.bestScore : '-',
       st.runCount,
       st.submitCount,
-      st.lastSubmittedAt ? new Date(st.lastSubmittedAt).toLocaleString('th-TH') : '-',
+      st.lastSubmittedAt ? `"${new Date(st.lastSubmittedAt).toLocaleString('th-TH')}"` : '-',
     ]);
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');

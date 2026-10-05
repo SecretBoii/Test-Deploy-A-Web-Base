@@ -28,11 +28,8 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
-  // นักศึกษาทั้งหมดได้รับการคัดกรองเฉพาะผู้ที่เข้าทำจริงมาจาก Backend แล้ว
-  // เสริม Defensive filter เพื่อรับประกันความถูกต้องว่าจะไม่มีสถานะ NOT_STARTED หลุดเข้ามา
-  const activeStudents = useMemo(() => {
-    return students.filter((st) => st.status !== 'NOT_STARTED');
-  }, [students]);
+  // รายชื่อนักศึกษาที่เข้าทำจริงส่งตรงมาจาก Backend เรียบร้อยแล้ว
+  const activeStudents = students;
 
   // จำนวนนักศึกษาแยกตามสถานะสำหรับแสดงตัวเลขในแท็บ
   const passedCount = useMemo(
@@ -41,6 +38,10 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
   );
   const failedCount = useMemo(
     () => activeStudents.filter((s) => s.status === 'FAILED').length,
+    [activeStudents],
+  );
+  const notSubmittedCount = useMemo(
+    () => activeStudents.filter((s) => s.status === 'NOT_SUBMITTED').length,
     [activeStudents],
   );
 
@@ -205,6 +206,30 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
               }}
             >
               เฉพาะที่ไม่ผ่าน ({failedCount})
+            </Button>
+            <Button
+              size="small"
+              onClick={() => {
+                setStatusFilter('NOT_SUBMITTED');
+                setPage(0);
+              }}
+              sx={{
+                bgcolor: statusFilter === 'NOT_SUBMITTED' ? '#ffffff' : 'transparent',
+                color: statusFilter === 'NOT_SUBMITTED' ? '#0f172a' : '#64748b',
+                fontWeight: statusFilter === 'NOT_SUBMITTED' ? 700 : 500,
+                fontSize: '12.5px',
+                borderRadius: '8px',
+                px: 1.8,
+                py: 0.5,
+                textTransform: 'none',
+                boxShadow: statusFilter === 'NOT_SUBMITTED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                '&:hover': {
+                  bgcolor: statusFilter === 'NOT_SUBMITTED' ? '#ffffff' : '#e2e8f0',
+                  color: statusFilter === 'NOT_SUBMITTED' ? '#0f172a' : '#334155',
+                },
+              }}
+            >
+              ยังไม่ส่งตรวจ ({notSubmittedCount})
             </Button>
           </Box>
 
@@ -374,7 +399,8 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                         Failed
                       </Box>
                     )}
-                    {st.status === 'NOT_STARTED' && (
+
+                    {st.status === 'NOT_SUBMITTED' && (
                       <Box
                         sx={{
                           display: 'inline-flex',
@@ -384,14 +410,14 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                           px: 1.4,
                           py: 0.35,
                           borderRadius: '6px',
-                          bgcolor: '#f8fafc',
-                          color: '#64748b',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          border: '1px solid #e2e8f0',
+                          bgcolor: '#f1f5f9',
+                          color: '#475569',
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          border: '1px solid #cbd5e1',
                         }}
                       >
-                        Not Started
+                        Not Submitted
                       </Box>
                     )}
                   </TableCell>

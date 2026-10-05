@@ -82,7 +82,7 @@ export default function StudentResultDetailsPage() {
           expectedTime: act.exercise?.expectedTime,
           sessionName: act.session?.sessionName || `Session #${act.sessionId}`,
           bestScore: isSubmit ? act.score : null,
-          status: isSubmit && act.score >= 80 ? 'PASSED' : 'FAILED',
+          status: isSubmit ? (act.score >= 80 ? 'PASSED' : 'FAILED') : 'NOT_SUBMITTED',
           runCount: isRun ? 1 : 0,
           submitCount: isSubmit ? 1 : 0,
           lastSubmittedAt: isSubmit ? (act.submittedAt || act.startedAt) : null,
@@ -104,9 +104,11 @@ export default function StudentResultDetailsPage() {
           if (existing.bestScore === null || act.score > existing.bestScore) {
             existing.bestScore = act.score;
             existing.bestActivity = act;
-            if (act.score >= 80) {
-              existing.status = 'PASSED';
-            }
+          }
+          if (act.score >= 80) {
+            existing.status = 'PASSED';
+          } else if (existing.status !== 'PASSED') {
+            existing.status = 'FAILED';
           }
         }
       }

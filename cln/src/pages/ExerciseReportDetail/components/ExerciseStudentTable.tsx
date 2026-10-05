@@ -119,7 +119,7 @@ export function ExerciseStudentTable({
                         ไม่ผ่าน
                       </Box>
                     )}
-                    {st.status === 'NOT_STARTED' && (
+                    {st.status === 'NOT_SUBMITTED' && (
                       <Box
                         sx={{
                           display: 'inline-flex',
@@ -127,14 +127,14 @@ export function ExerciseStudentTable({
                           px: 1.5,
                           py: 0.4,
                           borderRadius: '20px',
-                          bgcolor: '#f8fafc',
-                          color: '#94a3b8',
+                          bgcolor: '#f1f5f9',
+                          color: '#475569',
                           fontSize: '12px',
                           fontWeight: 600,
-                          border: '1px solid #e2e8f0',
+                          border: '1px solid #cbd5e1',
                         }}
                       >
-                        ยังไม่ทำ
+                        ยังไม่ส่งตรวจ
                       </Box>
                     )}
                   </TableCell>
