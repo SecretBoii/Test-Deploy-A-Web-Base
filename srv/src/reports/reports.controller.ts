@@ -9,11 +9,17 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user-decorator';
 import { ReportsService } from './reports.service';
+import { ReportsErrorService } from './reports-error.service';
+import { ReportsAnalyticsService } from './reports-analytics.service';
 
 @UseGuards(JwtAuthGuard)
 @Controller('reports')
 export class ReportsController {
-  constructor(private reportsService: ReportsService) {}
+  constructor(
+    private readonly reportsService: ReportsService,
+    private readonly reportsErrorService: ReportsErrorService,
+    private readonly reportsAnalyticsService: ReportsAnalyticsService,
+  ) {}
 
   private checkAdminOrTeacher(user: any) {
     if (user.roleId !== 3 && user.roleId !== 2) {
@@ -84,7 +90,7 @@ export class ReportsController {
     @Query('timeRange') timeRange?: string,
   ) {
     this.checkAdminOrTeacher(user);
-    return this.reportsService.getErrorReport({
+    return this.reportsErrorService.getErrorReport({
       startDate,
       endDate,
       education,
@@ -100,7 +106,7 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
   ) {
     this.checkAdminOrTeacher(user);
-    return this.reportsService.getUsageAnalytics({ startDate, endDate });
+    return this.reportsAnalyticsService.getUsageAnalytics({ startDate, endDate });
   }
 
   @Get('students/:userId/activities')
@@ -122,7 +128,7 @@ export class ReportsController {
     @Query('eventType') eventType?: string,
   ) {
     this.checkAdminOrTeacher(user);
-    return this.reportsService.getRecentSubmissions({
+    return this.reportsAnalyticsService.getRecentSubmissions({
       limit: limit ? Number(limit) : 50,
       startDate,
       endDate,
