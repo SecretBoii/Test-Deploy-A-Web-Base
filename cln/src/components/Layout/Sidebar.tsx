@@ -29,10 +29,10 @@ const MENU_DEFINITIONS: Record<string, { name: string; icon: React.ReactNode }> 
   dashboard: { name: 'Dashboard', icon: <LayoutDashboard size={20} /> },
   sessions: { name: 'Sessions', icon: <Play size={20} /> },
   exercises: { name: 'Exercises', icon: <Code2 size={20} /> },
-  students: { name: 'Students', icon: <GraduationCap size={20} /> },
-  results: { name: 'Student Results', icon: <TrendingUp size={20} /> },
+  exerciseresults: { name: 'ExerciseResults', icon: <GraduationCap size={20} /> },
+  studentresults: { name: 'StudentResults', icon: <TrendingUp size={20} /> },
   history: { name: 'History', icon: <Award size={20} /> },
-  users: { name: 'User Management', icon: <Users size={20} /> },
+  users: { name: 'UserManagement', icon: <Users size={20} /> },
   reports: { name: 'Reports', icon: <FileText size={20} /> },
   audit: { name: 'Audit Logs', icon: <Activity size={20} /> },
   profile: { name: 'Profile', icon: <User size={20} /> },
@@ -40,8 +40,8 @@ const MENU_DEFINITIONS: Record<string, { name: string; icon: React.ReactNode }> 
 
 const ROLE_MENUS: Record<number, string[]> = {
   1: ['home', 'sessions', 'history', 'profile'], // Student
-  2: ['dashboard', 'sessions', 'exercises', 'students', 'results', 'profile'], // Teacher
-  3: ['dashboard', 'users', 'reports', 'audit'], // Admin
+  2: ['dashboard', 'sessions', 'exercises', 'exerciseresults', 'studentresults', 'profile'], // Teacher
+  3: ['dashboard', 'reports', 'users', 'audit', 'profile'], // Admin
 }
 
 export function Sidebar({ activeItem, onItemClick, user, onLogout }: SidebarProps) {

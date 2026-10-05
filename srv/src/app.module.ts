@@ -7,6 +7,12 @@ import { AppService } from './app.service';
 import { CodeProcessor } from './code.processor'; 
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { UserActivityInterceptor } from './auth/user-activity.interceptor';
+import { ReportsModule } from './reports/reports.module';
+import { AuditLogModule } from './audit-log/audit-log.module';
+import { SessionsModule } from './sessions/sessions.module';
 
 @Module({
   imports: [
@@ -24,11 +30,19 @@ import { AuthModule } from './auth/auth.module';
     PrismaModule,
     ExercisesModule,
     AuthModule,
+    UsersModule,
+    ReportsModule,
+    AuditLogModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [
     AppService, 
-    CodeProcessor
+    CodeProcessor,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: UserActivityInterceptor,
+    }
   ],
 })
 export class AppModule {}

@@ -2,13 +2,13 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
-import SessionCard from './components/SessionCard';
-import LevelSummaryCard from './components/LevelSummaryCard';
-import { DIFFICULTY_LEVELS } from '../../constants/difficulty';
-import type { SessionDetail } from './types';
-import { apiClient } from '../../api/client';
-import { useAuth } from '../../context/AuthContext';
-import { MainLayout } from '../../components/Layout/MainLayout';
+import SessionCard from './SessionCard';
+import LevelSummaryCard from './LevelSummaryCard';
+import { DIFFICULTY_LEVELS } from '../../../../constants/difficulty';
+import type { SessionDetail } from '../../types';
+import { apiClient } from '../../../../api/client';
+import { useAuth } from '../../../../context/AuthContext';
+import { MainLayout } from '../../../../components/Layout/MainLayout';
 
 export const LevelDetailPage: React.FC = () => {
   const { user } = useAuth();
@@ -51,7 +51,7 @@ export const LevelDetailPage: React.FC = () => {
     return <Navigate to="/sessions" replace />;
   }
 
-  // Memoize level stats to avoid unnecessary recalculations on re-render
+  // คำนวณสรุปสถิติความก้าวหน้าในระดับนี้
   const levelStats = useMemo(() => {
     const totalSessions = sessionDetails.length;
     const totalExercises = sessionDetails.reduce((sum, s) => sum + s.totalExercises, 0);
@@ -67,6 +67,10 @@ export const LevelDetailPage: React.FC = () => {
       totalDuration,
     };
   }, [sessionDetails]);
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <MainLayout activeItem="Sessions">
@@ -100,44 +104,53 @@ export const LevelDetailPage: React.FC = () => {
             <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', fontFamily: 'inherit' }}>
               {currentMeta.label}
             </Typography>
-            <Typography variant="body2" sx={{ color: '#64748b', fontFamily: 'inherit', maxWidth: '800px' }}>
+            <Typography variant="body1" sx={{ color: '#64748b', fontSize: '0.95rem', fontFamily: 'inherit' }}>
               {currentMeta.description}
             </Typography>
           </Box>
         </Box>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={36} />
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress size={40} />
           </Box>
         ) : (
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2.2fr 1.1fr' }, gap: 3.5 }}>
-            {/* Left Column: Sessions List */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              {sessionDetails.map((session) => (
-                <SessionCard
-                  key={session.sessionId}
-                  session={session}
-                  levelColor={currentMeta?.color}
-                  onSelectExercise={(exerciseId) => {
-                    navigate(`/editor/${exerciseId}?sessionId=${session.sessionId}`)
-                  }}
-                />
-              ))}
-            </Box>
+          <>
+            {/* 2. สรุปความก้าวหน้าและข้อมูลของระดับ (Level Summary Card) */}
+            <LevelSummaryCard
+              level={level}
+              totalSessions={levelStats.totalSessions}
+              totalExercises={levelStats.totalExercises}
+              completedExercises={levelStats.completedExercises}
+              levelPercent={levelStats.levelPercent}
+              totalDuration={levelStats.totalDuration}
+            />
 
-            {/* Right Column: Level Summary Sidebar */}
-            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-              <LevelSummaryCard
-                level={level}
-                totalSessions={levelStats.totalSessions}
-                totalExercises={levelStats.totalExercises}
-                completedExercises={levelStats.completedExercises}
-                levelPercent={levelStats.levelPercent}
-                totalDuration={levelStats.totalDuration}
-              />
+            {/* 3. รายการ Sessions ทั้งหมดในระดับนี้ */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.15rem', fontFamily: 'inherit' }}>
+                  ชุดบทเรียนทั้งหมดในระดับนี้
+                </Typography>
+                <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 600, fontSize: '0.8rem', fontFamily: 'inherit' }}>
+                  {sessionDetails.length} บทเรียน
+                </Typography>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {sessionDetails.map((session) => (
+                  <SessionCard
+                    key={session.sessionId}
+                    session={session}
+                    levelColor={currentMeta.color}
+                    onSelectExercise={(exerciseId) => {
+                      navigate(`/editor/${exerciseId}`);
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
-          </Box>
+          </>
         )}
       </Box>
     </MainLayout>

@@ -12,26 +12,39 @@ export function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState('')
 
+  // ป้องกันการกดยืนยันซ้ำซ้อน (Double submit) ระหว่างรอเซิร์ฟเวอร์ประมวลผล เพื่อแก้ปัญหา Audit Log ซ้ำ
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (loading) return
+
     setError('')
+    setSuccess('')
+    setLoading(true)
 
     try {
       const userData = await login(username.trim(), password)
       console.log('Logging in with:', userData)
       sessionStorage.clear()
       setUser(userData)
+      setSuccess('เข้าสู่ระบบสำเร็จ! กำลังนำคุณเข้าสู่ระบบ...')
 
-      if (userData.roleId === 2 || userData.roleId === 3) {
-        navigate('/dashboard')
-      } else {
-        navigate('/home')
-      }
-    } catch (err: any) {
+      // หน่วงเวลาเล็กน้อยเพื่อให้ผู้ใช้เห็นการแจ้งเตือนสถานะสำเร็จ ก่อนเปลี่ยนหน้า
+      setTimeout(() => {
+        if (userData.roleId === 2 || userData.roleId === 3) {
+          navigate('/dashboard')
+        } else {
+          navigate('/home')
+        }
+      }, 500)
+    } catch (err: unknown) {
       console.error('Login error:', err)
-      const errorMsg = err.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+      const errorResponse = err as { response?: { data?: { message?: string } } }
+      const errorMsg = errorResponse.response?.data?.message || 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
       setError(errorMsg)
+      setLoading(false)
     }
   }
 
@@ -57,6 +70,8 @@ export function Login() {
         username={username}
         password={password}
         error={error}
+        success={success}
+        loading={loading}
         onChangeUsername={setUsername}
         onChangePassword={setPassword}
         onSubmit={handleSubmit}

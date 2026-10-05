@@ -16,8 +16,6 @@ import { firstValueFrom, last } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { session } from 'passport';
-import { SourceCode } from 'eslint';
 
 // Map จากตัวเลข Level (Frontend) → String ที่เก็บในฐานข้อมูล
 const LEVEL_MAP: Record<number, string> = {
@@ -259,7 +257,23 @@ export class ExercisesService implements OnModuleInit {
           },
         });
 
-        const startedAtTime = oldestRun ? oldestRun.startedAt : new Date();
+        // คำนวณเวลาเริ่มต้นทำโจทย์ (startedAt):
+        // ป้องกันกรณีผู้เรียนเปิดหน้าจอทิ้งไว้ข้ามวัน (Idle Timeout):
+        // หาก oldestRun เกิดขึ้นนานเกิน 2 ชั่วโมง ให้ตรวจดูว่า latestRun อยู่ในรอบ 2 ชั่วโมงหรือไม่
+        // ถ้าไม่อยู่ ให้เริ่มนับเวลาใหม่จากเวลาปัจจุบัน ไม่ดึงเวลาย้อนหลังข้ามวันมาคิด
+        const now = new Date();
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+        let startedAtTime = now;
+
+        if (oldestRun) {
+          const oldestDiff = now.getTime() - new Date(oldestRun.startedAt).getTime();
+          if (oldestDiff >= 0 && oldestDiff <= TWO_HOURS_MS) {
+            startedAtTime = oldestRun.startedAt;
+          } else if (latestRun) {
+            const latestDiff = now.getTime() - new Date(latestRun.startedAt).getTime();
+            startedAtTime = (latestDiff >= 0 && latestDiff <= TWO_HOURS_MS) ? latestRun.startedAt : now;
+          }
+        }
 
         const activity = await this.prisma.activity.create({
           data: {
@@ -1034,8 +1048,36 @@ export class ExercisesService implements OnModuleInit {
   }
 
   async getAllExercisesForManage() {
-    return await this.prisma.exercise.findMany({
+    const exercises = await this.prisma.exercise.findMany({
       orderBy: { exerciseId: 'desc' },
+      include: {
+        sessionExercises: {
+          include: {
+            session: {
+              select: {
+                sessionId: true,
+                sessionName: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { sequenceOrder: 'asc' },
+        },
+      },
+    });
+
+    return exercises.map((ex) => {
+      const { sessionExercises, ...rest } = ex;
+      return {
+        ...rest,
+        sessions: sessionExercises
+          .filter((se) => Boolean(se.session))
+          .map((se) => ({
+            sessionId: se.session.sessionId,
+            sessionName: se.session.sessionName,
+            status: se.session.status,
+          })),
+      };
     });
   }
   async createExercise(dto: any) {

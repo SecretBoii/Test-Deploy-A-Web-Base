@@ -16,7 +16,12 @@ const MENU_ROUTE_MAP: Record<string, string> = {
   Dashboard: '/dashboard',
   Sessions: '/sessions',
   Exercises: '/exercises',
+  ExerciseResults: '/exercise-results',
+  StudentResults: '/student-results',
   History: '/history',
+  UserManagement: '/users',
+  Reports: '/reports',
+  'Audit Logs': '/audit-logs',
   Profile: '/profile',
 }
 
@@ -50,9 +55,14 @@ export function MainLayout({ children, activeItem }: MainLayoutProps) {
   if (!currentActiveItem) {
     if (location.pathname.startsWith('/sessions')) currentActiveItem = 'Sessions'
     else if (location.pathname.startsWith('/dashboard')) currentActiveItem = 'Dashboard'
+    else if (location.pathname.startsWith('/exercise-results')) currentActiveItem = 'ExerciseResults'
+    else if (location.pathname.startsWith('/student-results')) currentActiveItem = 'StudentResults'
     else if (location.pathname.startsWith('/exercises')) currentActiveItem = 'Exercises'
     else if (location.pathname.startsWith('/history')) currentActiveItem = 'History'
     else if (location.pathname.startsWith('/profile')) currentActiveItem = 'Profile'
+    else if (location.pathname.startsWith('/users')) currentActiveItem = 'UserManagement'
+    else if (location.pathname.startsWith('/reports')) currentActiveItem = 'Reports'
+    else if (location.pathname.startsWith('/audit-logs')) currentActiveItem = 'Audit Logs'
     else currentActiveItem = 'Home'
   }
 

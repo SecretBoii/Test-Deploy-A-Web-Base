@@ -34,10 +34,10 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         color: '#ffffff',
       }
     }
-    // Default green
+    // Default primary theme
     return {
-      bgcolor: '#10b981',
-      hoverBg: '#059669',
+      bgcolor: '#4f46e5',
+      hoverBg: '#4338ca',
       color: '#ffffff',
     }
   }

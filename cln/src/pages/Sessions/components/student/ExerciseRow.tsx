@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { CheckCircle2, Clock, PlayCircle, RotateCcw } from 'lucide-react';
-import type { ExerciseItem } from '../types';
+import type { ExerciseItem } from '../../types';
 
 interface ExerciseRowProps {
   exercise: ExerciseItem;
