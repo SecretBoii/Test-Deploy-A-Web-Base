@@ -1,13 +1,13 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { spawn } from 'child_process';
-import { ExercisesService } from './exercises.service';
+import { ExercisesGradingService } from './exercises-grading.service';
 
 const TIMEOUT_LIMIT = 5; // กำหนด 5 วินาที
 
 @Processor('code-execution', { concurrency: 4 })
 export class CodeExecutionProcessor extends WorkerHost {
-  constructor(private readonly exercisesService: ExercisesService) {
+  constructor(private readonly gradingService: ExercisesGradingService) {
     super();
   }
 
@@ -155,7 +155,7 @@ except Exception as e:
 
     const runResult = await runDockerOnly();
 
-    await this.exercisesService.completeGrading(
+    await this.gradingService.completeGrading(
       activityId,
       runResult,
       event_type,
