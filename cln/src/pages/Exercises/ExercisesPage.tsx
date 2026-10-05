@@ -11,7 +11,7 @@ import { ExerciseTable } from './components/ExerciseTable'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { ExerciseToolbar } from './components/ExerciseToolbar'
 import { ExercisePreviewDialog } from './components/ExercisePreviewDialog'
-import type { Exercise, SortField, SortOrder } from './types'
+import type { Exercise, ExerciseFormData, SortField, SortOrder } from './types'
 
 export function ExercisesPage() {
   const [loading, setLoading] = useState(true)
@@ -128,7 +128,7 @@ export function ExercisesPage() {
     setDialogOpen(true)
   }
 
-  const handleSave = async (formData: any) => {
+  const handleSave = async (formData: ExerciseFormData) => {
     try {
       if (selectedExercise) {
         // แก้ไขโจทย์เดิม

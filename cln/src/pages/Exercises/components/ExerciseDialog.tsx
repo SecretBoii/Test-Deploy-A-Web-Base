@@ -14,12 +14,13 @@ import {
 } from '@mui/material'
 import { X, Save, Pencil, Plus, BookOpen, FileText } from 'lucide-react'
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty'
+import type { Exercise, ExerciseFormData } from '../types'
 
 interface ExerciseDialogProps {
   open: boolean
   onClose: () => void
-  onSave: (data: any) => void
-  exerciseData?: any
+  onSave: (data: ExerciseFormData) => void
+  exerciseData?: Exercise | null
 }
 
 const STATUS_OPTIONS = [
@@ -33,7 +34,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
   onSave,
   exerciseData,
 }) => {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<ExerciseFormData>({
     title: '',
     topic: '',
     objective: '',
@@ -105,6 +106,54 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
     }
   }
 
+  // สไตล์มาตรฐานสำหรับช่องกรอกข้อมูลเดี่ยว ให้มีความสูง 42px กระชับแบบ Modern SaaS สอดคล้องกับหน้าพรีวิว (รูปที่ 3)
+  const inputBaseSx = {
+    borderRadius: '10px',
+    bgcolor: '#ffffff',
+    height: '42px',
+    fontSize: '13.5px',
+    color: '#0f172a',
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#4f46e5',
+      borderWidth: '1.5px',
+      boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+    },
+    '& .MuiInputBase-input': {
+      py: 0,
+      height: '42px',
+      boxSizing: 'border-box',
+      fontSize: '13.5px',
+      color: '#0f172a',
+    },
+  }
+
+  // สไตล์สำหรับ Dropdown (Select) ให้ข้อความและปุ่มลูกศรจัดกึ่งกลางพอดีที่ความสูง 42px เท่ากับหน้าพรีวิว
+  const selectBaseSx = {
+    borderRadius: '10px',
+    bgcolor: '#ffffff',
+    height: '42px',
+    fontSize: '13.5px',
+    color: '#0f172a',
+    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+      borderColor: '#4f46e5',
+      borderWidth: '1.5px',
+      boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
+    },
+    '& .MuiSelect-select': {
+      py: 0,
+      height: '42px',
+      display: 'flex',
+      alignItems: 'center',
+      boxSizing: 'border-box',
+      fontSize: '13.5px',
+      color: '#0f172a',
+    },
+  }
+
   return (
       <Dialog
         open={open}
@@ -114,46 +163,44 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
         slotProps={{
           paper: {
             sx: {
-              borderRadius: '20px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
+              borderRadius: '16px',
               border: '1px solid #e2e8f0',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.05)',
+              overflow: 'hidden',
               bgcolor: '#ffffff',
             },
           },
         }}
       >
-        {/* 1. ส่วนหัว Header ของหน้าต่าง */}
+        {/* 1. ส่วนหัว Header ของหน้าต่าง (ปรับขนาด padding และ icon ให้เท่ากับ ExercisePreviewDialog) */}
         <Box
           sx={{
-            px: 3.5,
-            py: 2.5,
+            px: 3,
+            py: 2.25,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: '1px solid #f1f5f9',
+            borderBottom: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.75 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
-                width: 42,
-                height: 42,
-                borderRadius: '12px',
+                width: 40,
+                height: 40,
+                borderRadius: '10px',
                 bgcolor: '#eef2ff',
-                border: '1px solid #e0e7ff',
+                color: '#4f46e5',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#4f46e5',
-                boxShadow: '0 2px 4px rgba(79, 70, 229, 0.08)',
               }}
             >
-              {exerciseData ? <Pencil size={20} /> : <Plus size={22} />}
+              {exerciseData ? <Pencil size={20} /> : <Plus size={20} />}
             </Box>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '18px', lineHeight: 1.2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontSize: '17px', lineHeight: 1.2 }}>
                 {exerciseData ? `แก้ไขโจทย์ #${exerciseData.exerciseId}` : 'สร้างโจทย์แบบฝึกหัดใหม่'}
               </Typography>
               <Typography variant="caption" sx={{ color: '#64748b', fontSize: '12.5px', mt: 0.25, display: 'block' }}>
@@ -165,19 +212,19 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
           </Box>
           <IconButton
             onClick={onClose}
+            size="small"
             sx={{
               color: '#94a3b8',
               borderRadius: '8px',
-              p: 1,
               '&:hover': { color: '#0f172a', bgcolor: '#f1f5f9' },
               transition: 'all 0.15s ease',
             }}
           >
-            <X size={20} />
+            <X size={18} />
           </IconButton>
         </Box>
 
-        {/* 2. เนื้อหาฟอร์ม (Modern Clean Form แบ่งการ์ดซอฟต์ๆ #f8fafc พร้อม Top Labels) */}
+        {/* 2. เนื้อหาฟอร์ม (ปรับระยะ Padding เป็น 3.5 ให้เท่ากับ ExercisePreviewDialog รูปที่ 3) */}
         <DialogContent sx={{ p: 3.5, bgcolor: '#ffffff', display: 'flex', flexDirection: 'column', gap: 3 }}>
           {/* หมวดที่ 1: ข้อมูลทั่วไปและการตั้งค่าโจทย์ */}
           <Box
@@ -226,6 +273,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   </Typography>
                   <TextField
                     fullWidth
+                    size="small"
                     name="title"
                     value={form.title}
                     onChange={handleChange}
@@ -234,17 +282,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                     placeholder="เช่น ประกาศตัวแปรและพิมพ์ผลลัพธ์..."
                     slotProps={{
                       input: {
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: inputBaseSx,
                       },
                     }}
                   />
@@ -269,6 +307,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   </Typography>
                   <TextField
                     fullWidth
+                    size="small"
                     name="topic"
                     value={form.topic}
                     onChange={handleChange}
@@ -277,17 +316,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                     placeholder="เช่น Variables, Loops"
                     slotProps={{
                       input: {
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: inputBaseSx,
                       },
                     }}
                   />
@@ -302,23 +331,14 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   </Typography>
                   <TextField
                     fullWidth
+                    size="small"
                     name="objective"
                     value={form.objective}
                     onChange={handleChange}
                     placeholder="เช่น เพื่อให้ผู้เรียนเข้าใจการกำหนดค่าตัวแปรและแสดงผลออกหน้าจอ"
                     slotProps={{
                       input: {
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: inputBaseSx,
                       },
                     }}
                   />
@@ -326,7 +346,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
               </Grid>
 
               {/* ระดับความยาก Bloom */}
-              <Grid size={{ xs: 12, sm: 5 }}>
+              <Grid size={{ xs: 12, sm: 5.4 }}>
                 <Box>
                   <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
                     ระดับความยาก (Bloom's Taxonomy)
@@ -334,22 +354,13 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   <TextField
                     select
                     fullWidth
+                    size="small"
                     name="difficultyLevel"
                     value={form.difficultyLevel}
                     onChange={handleChange}
                     slotProps={{
                       input: {
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: selectBaseSx,
                       },
                     }}
                   >
@@ -363,7 +374,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
               </Grid>
 
               {/* เวลาที่แนะนำ */}
-              <Grid size={{ xs: 12, sm: 3.5 }}>
+              <Grid size={{ xs: 12, sm: 3.2 }}>
                 <Box>
                   <Typography
                     sx={{
@@ -380,6 +391,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   </Typography>
                   <TextField
                     fullWidth
+                    size="small"
                     type="number"
                     name="expectedTime"
                     value={form.expectedTime}
@@ -389,21 +401,11 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                     slotProps={{
                       input: {
                         endAdornment: (
-                          <InputAdornment position="end" sx={{ color: '#64748b', '& p': { fontSize: '13px' } }}>
+                          <InputAdornment position="end" sx={{ color: '#64748b', mr: 0.5, '& p': { fontSize: '13px' } }}>
                             นาที
                           </InputAdornment>
                         ),
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: inputBaseSx,
                       },
                     }}
                   />
@@ -411,7 +413,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
               </Grid>
 
               {/* สถานะการเผยแพร่ */}
-              <Grid size={{ xs: 12, sm: 3.5 }}>
+              <Grid size={{ xs: 12, sm: 3.4 }}>
                 <Box>
                   <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155', mb: 0.75 }}>
                     สถานะการเผยแพร่
@@ -419,22 +421,13 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                   <TextField
                     select
                     fullWidth
+                    size="small"
                     name="status"
                     value={form.status}
                     onChange={handleChange}
                     slotProps={{
                       input: {
-                        sx: {
-                          borderRadius: '10px',
-                          bgcolor: '#ffffff',
-                          '& fieldset': { borderColor: '#cbd5e1' },
-                          '&:hover fieldset': { borderColor: '#94a3b8' },
-                          '&.Mui-focused fieldset': {
-                            borderColor: '#4f46e5',
-                            borderWidth: '1.5px',
-                            boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
-                          },
-                        },
+                        sx: selectBaseSx,
                       },
                     }}
                   >
@@ -498,7 +491,7 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
               <TextField
                 fullWidth
                 multiline
-                rows={4}
+                rows={3}
                 name="description"
                 value={form.description}
                 onChange={handleChange}
@@ -511,10 +504,11 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                       borderRadius: '10px',
                       bgcolor: '#ffffff',
                       lineHeight: 1.6,
-                      fontSize: '14px',
-                      '& fieldset': { borderColor: '#cbd5e1' },
-                      '&:hover fieldset': { borderColor: '#94a3b8' },
-                      '&.Mui-focused fieldset': {
+                      fontSize: '13.5px',
+                      p: 1.5,
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#4f46e5',
                         borderWidth: '1.5px',
                         boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
@@ -544,9 +538,11 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
                       borderRadius: '10px',
                       bgcolor: '#ffffff',
                       fontSize: '13.5px',
-                      '& fieldset': { borderColor: '#cbd5e1' },
-                      '&:hover fieldset': { borderColor: '#94a3b8' },
-                      '&.Mui-focused fieldset': {
+                      lineHeight: 1.6,
+                      p: 1.5,
+                      '& .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
+                      '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#94a3b8' },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
                         borderColor: '#4f46e5',
                         borderWidth: '1.5px',
                         boxShadow: '0 0 0 3px rgba(79, 70, 229, 0.12)',
@@ -559,12 +555,12 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
           </Box>
         </DialogContent>
 
-        {/* 3. ส่วนท้าย Actions */}
+        {/* 3. ส่วนท้าย Actions (ปรับความสูงปุ่ม 40px, padding px: 3, py: 2 ให้เท่ากับ ExercisePreviewDialog) */}
         <DialogActions
           sx={{
-            px: 3.5,
-            py: 2.25,
-            borderTop: '1px solid #f1f5f9',
+            px: 3,
+            py: 2,
+            borderTop: '1px solid #e2e8f0',
             bgcolor: '#ffffff',
             gap: 1.5,
           }}
@@ -574,12 +570,13 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
             variant="outlined"
             sx={{
               borderRadius: '10px',
+              height: '40px',
               textTransform: 'none',
               fontWeight: 600,
+              fontSize: '13px',
               borderColor: '#cbd5e1',
               color: '#475569',
-              px: 3,
-              py: 0.9,
+              px: 2.5,
               '&:hover': {
                 bgcolor: '#f8fafc',
                 borderColor: '#94a3b8',
@@ -594,16 +591,17 @@ export const ExerciseDialog: React.FC<ExerciseDialogProps> = ({
             startIcon={<Save size={16} />}
             sx={{
               borderRadius: '10px',
+              height: '40px',
               textTransform: 'none',
               fontWeight: 700,
+              fontSize: '13px',
               bgcolor: '#4f46e5',
               color: '#ffffff',
-              px: 3.5,
-              py: 0.9,
-              boxShadow: '0 2px 8px rgba(79, 70, 229, 0.25)',
+              px: 2.5,
+              boxShadow: 'none',
               '&:hover': {
                 bgcolor: '#4338ca',
-                boxShadow: '0 4px 12px rgba(79, 70, 229, 0.35)',
+                boxShadow: 'none',
               },
               transition: 'all 0.15s ease',
             }}

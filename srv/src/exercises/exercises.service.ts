@@ -16,8 +16,6 @@ import { firstValueFrom, last } from 'rxjs';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
-import { session } from 'passport';
-import { SourceCode } from 'eslint';
 
 // Map จากตัวเลข Level (Frontend) → String ที่เก็บในฐานข้อมูล
 const LEVEL_MAP: Record<number, string> = {
@@ -1050,8 +1048,36 @@ export class ExercisesService implements OnModuleInit {
   }
 
   async getAllExercisesForManage() {
-    return await this.prisma.exercise.findMany({
+    const exercises = await this.prisma.exercise.findMany({
       orderBy: { exerciseId: 'desc' },
+      include: {
+        sessionExercises: {
+          include: {
+            session: {
+              select: {
+                sessionId: true,
+                sessionName: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { sequenceOrder: 'asc' },
+        },
+      },
+    });
+
+    return exercises.map((ex) => {
+      const { sessionExercises, ...rest } = ex;
+      return {
+        ...rest,
+        sessions: sessionExercises
+          .filter((se) => Boolean(se.session))
+          .map((se) => ({
+            sessionId: se.session.sessionId,
+            sessionName: se.session.sessionName,
+            status: se.session.status,
+          })),
+      };
     });
   }
   async createExercise(dto: any) {

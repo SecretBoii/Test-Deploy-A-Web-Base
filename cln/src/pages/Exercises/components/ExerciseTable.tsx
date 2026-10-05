@@ -12,9 +12,9 @@ import {
   Typography,
   TableSortLabel,
   Tooltip,
-  Skeleton,
+  CircularProgress,
 } from '@mui/material'
-import { Edit3, Trash2, HelpCircle, Clock, Eye } from 'lucide-react'
+import { Edit3, Trash2, HelpCircle, Eye } from 'lucide-react'
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty'
 import type { Exercise, SortField, SortOrder } from '../types'
 
@@ -42,10 +42,21 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
   return (
     <TableContainer sx={{ overflowX: 'auto' }}>
       <Table sx={{ minWidth: 950 }}>
+        {/* หัวตาราง (Table Head): ปรับชื่อฟิลด์เป็นภาษาไทยและปรับขนาด Typography (13px, weight 700) สอดคล้องกับหน้าสถิติรูปที่ 2 */}
         <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-          <TableRow>
-            {/* Clickable ID Header */}
-            <TableCell width="90px" sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8 }}>
+          <TableRow
+            sx={{
+              '& th': {
+                fontWeight: 700,
+                color: '#475569',
+                fontSize: '13px',
+                py: 1.8,
+                whiteSpace: 'nowrap',
+              },
+            }}
+          >
+            {/* คอลัมน์ 1: รหัสโจทย์ (คงการคลิกเรียงลำดับ Asc/Desc) */}
+            <TableCell width="105px">
               <TableSortLabel
                 active={sortField === 'id'}
                 direction={sortField === 'id' ? sortOrder : 'asc'}
@@ -55,22 +66,27 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                ID
+                รหัสโจทย์
               </TableSortLabel>
             </TableCell>
 
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, minWidth: '220px' }}>
-              TITLE & DESCRIPTION
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '130px' }}>
-              TOPIC
-            </TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, minWidth: '180px' }}>
-              OBJECTIVE
+            {/* คอลัมน์ 2: ชื่อโจทย์ */}
+            <TableCell sx={{ minWidth: '200px' }}>
+              ชื่อโจทย์
             </TableCell>
 
-            {/* Clickable BLOOM LEVEL Header */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, minWidth: '170px' }}>
+            {/* คอลัมน์ 3: หัวข้อบทเรียน */}
+            <TableCell sx={{ width: '130px' }}>
+              หัวข้อบทเรียน
+            </TableCell>
+
+            {/* คอลัมน์ 4: วัตถุประสงค์การเรียนรู้ */}
+            <TableCell sx={{ minWidth: '180px' }}>
+              วัตถุประสงค์
+            </TableCell>
+
+            {/* คอลัมน์ 5: ระดับการเรียนรู้ (คงการคลิกเรียงลำดับ Asc/Desc) */}
+            <TableCell sx={{ minWidth: '175px' }}>
               <TableSortLabel
                 active={sortField === 'bloom'}
                 direction={sortField === 'bloom' ? sortOrder : 'asc'}
@@ -80,45 +96,39 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                BLOOM LEVEL
+                ระดับการเรียนรู้ (Bloom)
               </TableSortLabel>
             </TableCell>
 
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '100px' }}>
-              TIME
+            {/* คอลัมน์ 6: เวลาที่กำหนด */}
+            <TableCell sx={{ width: '110px' }}>
+              เวลาที่กำหนด
             </TableCell>
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '120px' }}>
-              STATUS
+
+            {/* คอลัมน์ 7: สถานะ */}
+            <TableCell sx={{ width: '110px' }}>
+              สถานะ
             </TableCell>
-            <TableCell width="135px" align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8 }}>
-              ACTIONS
+
+            {/* คอลัมน์ 8: การจัดการ */}
+            <TableCell width="135px" align="center">
+              การจัดการ
             </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {loading ? (
-            // Loading Skeletons
-            [...Array(5)].map((_, idx) => (
-              <TableRow key={`skeleton-${idx}`}>
-                <TableCell><Skeleton variant="text" width={40} height={24} /></TableCell>
-                <TableCell>
-                  <Skeleton variant="text" width="80%" height={22} sx={{ mb: 0.5 }} />
-                  <Skeleton variant="text" width="60%" height={16} />
-                </TableCell>
-                <TableCell><Skeleton variant="rounded" width={70} height={24} sx={{ borderRadius: '6px' }} /></TableCell>
-                <TableCell><Skeleton variant="text" width="90%" height={20} /></TableCell>
-                <TableCell><Skeleton variant="rounded" width={110} height={24} sx={{ borderRadius: '6px' }} /></TableCell>
-                <TableCell><Skeleton variant="text" width={50} height={20} /></TableCell>
-                <TableCell><Skeleton variant="rounded" width={75} height={24} sx={{ borderRadius: '20px' }} /></TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))
+            // แสดงสถานะกำลังโหลดแบบ CircularProgress กลางตาราง สไตล์เดียวกับ ExerciseResults
+            <TableRow>
+              <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                  <CircularProgress size={36} sx={{ color: '#4f46e5' }} />
+                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13.5px' }}>
+                    กำลังโหลดข้อมูลแบบฝึกหัด...
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
           ) : exercises.length === 0 ? (
             <TableRow>
               <TableCell colSpan={8} align="center" sx={{ py: 8 }}>
@@ -172,42 +182,18 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
                     #{row.exerciseId}
                   </TableCell>
 
-                  {/* TITLE & DESCRIPTION */}
+                  {/* TITLE */}
                   <TableCell sx={{ py: 2 }}>
-                    <Box sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px', mb: 0.35 }}>
+                    <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '13.5px' }}>
                       {row.title}
-                    </Box>
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: '#64748b',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        lineHeight: 1.45,
-                        fontSize: '12.5px',
-                      }}
-                    >
-                      {row.description}
                     </Typography>
                   </TableCell>
 
                   {/* TOPIC */}
-                  <TableCell sx={{ py: 2 }}>
-                    <Chip
-                      label={row.topic}
-                      size="small"
-                      sx={{
-                        bgcolor: '#f1f5f9',
-                        color: '#334155',
-                        fontWeight: 600,
-                        borderRadius: '6px',
-                        fontSize: '11.5px',
-                        height: '24px',
-                        border: '1px solid #e2e8f0',
-                      }}
-                    />
+                  <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: '13px' }}>
+                      {row.topic}
+                    </Typography>
                   </TableCell>
 
                   {/* OBJECTIVE */}
@@ -228,47 +214,28 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* BLOOM LEVEL + SUBTEXT */}
+                  {/* BLOOM LEVEL */}
                   <TableCell sx={{ py: 2 }}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'flex-start' }}>
-                      <Chip
-                        label={`Lv.${row.difficultyLevel} - ${diffMeta.label.split('&')[0].trim()}`}
-                        size="small"
-                        sx={{
-                          bgcolor: diffMeta.bg,
-                          color: diffMeta.color,
-                          fontWeight: 700,
-                          borderRadius: '6px',
-                          border: `1px solid ${diffMeta.border}`,
-                          fontSize: '11px',
-                          height: '24px',
-                        }}
-                      />
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: '#64748b',
-                          fontSize: '11px',
-                          display: 'block',
-                          pl: 0.5,
-                          maxWidth: 160,
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                        title={diffMeta.description}
-                      >
-                        {diffMeta.description}
-                      </Typography>
-                    </Box>
+                    <Chip
+                      label={`Lv.${row.difficultyLevel} - ${diffMeta.label.split('&')[0].trim()}`}
+                      size="small"
+                      sx={{
+                        bgcolor: diffMeta.bg,
+                        color: diffMeta.color,
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                        border: `1px solid ${diffMeta.border}`,
+                        fontSize: '11.5px',
+                        height: '24px',
+                      }}
+                    />
                   </TableCell>
 
                   {/* TIME */}
                   <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: '#334155', fontWeight: 600, fontSize: '13px' }}>
-                      <Clock size={14} color="#94a3b8" />
-                      <span>{row.expectedTime} นาที</span>
-                    </Box>
+                    <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: '13px' }}>
+                      {row.expectedTime} นาที
+                    </Typography>
                   </TableCell>
 
                   {/* STATUS */}
