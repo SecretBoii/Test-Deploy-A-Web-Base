@@ -11,21 +11,18 @@ import {
   TableRow,
   Avatar,
   Button,
-  Skeleton,
+  Chip,
 } from '@mui/material'
-import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined'
 import { TeacherCodeInspectionDialog } from './TeacherCodeInspectionDialog'
 import type { RecentSubmissionItem } from '../TeacherDashboard'
 import { formatThaiDateTime } from '../../../../utils/dateUtils'
 
 interface TeacherRecentSubmissionsProps {
   submissions: RecentSubmissionItem[]
-  isLoading: boolean
 }
 
 export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> = ({
   submissions,
-  isLoading,
 }) => {
   // State สำหรับควบคุม Dialog เปิดดูตรวจโค้ด
   const [selectedSubmission, setSelectedSubmission] = useState<RecentSubmissionItem | null>(null)
@@ -44,9 +41,8 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
         }}
       >
-        {/* หัวการ์ด: ไอคอนและชื่อส่วน */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-          <HistoryOutlinedIcon sx={{ color: '#4f46e5', fontSize: 22 }} />
+        {/* หัวการ์ด: ชื่อส่วน */}
+        <Box sx={{ mb: 2 }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
             ประวัติกิจกรรมล่าสุด (Recent Activity)
           </Typography>
@@ -69,21 +65,7 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
               </TableRow>
             </TableHead>
             <TableBody>
-              {isLoading ? (
-                [...Array(5)].map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell><Skeleton width={140} height={28} /></TableCell>
-                    <TableCell><Skeleton width={180} height={28} /></TableCell>
-                    <TableCell align="center"><Skeleton width={70} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    <TableCell align="center"><Skeleton width={70} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    <TableCell align="center"><Skeleton width={80} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    <TableCell align="center"><Skeleton width={50} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    <TableCell align="center"><Skeleton width={60} height={28} sx={{ mx: 'auto' }} /></TableCell>
-                    <TableCell><Skeleton width={120} height={28} /></TableCell>
-                    <TableCell align="center"><Skeleton width={75} height={32} sx={{ mx: 'auto' }} /></TableCell>
-                  </TableRow>
-                ))
-              ) : recentActivities.length === 0 ? (
+              {recentActivities.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={9}
@@ -142,8 +124,8 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                         </Typography>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 3: ประเภท (Submit / Run Code สไตล์ Capsule Badge) */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
+                      {/* คอลัมน์ที่ 3: ประเภท (Submit / Run Code สไตล์ Capsule Slate ตามแบบ StudentActivityTable) */}
+                      <TableCell align="center" sx={{ py: 1.5 }}>
                         <Box
                           sx={{
                             display: 'inline-block',
@@ -162,8 +144,8 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                         </Box>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 4: การใช้คำใบ้ */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
+                      {/* คอลัมน์ที่ 4: การใช้คำใบ้ (แสดงขีด - สีเทาเมื่อไม่ใช้ และแสดงป้ายส้มเมื่อใช้ ตามมาตรฐานตาราง) */}
+                      <TableCell align="center" sx={{ py: 1.5 }}>
                         {row.hintUsed ? (
                           <Box
                             sx={{
@@ -187,64 +169,61 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                         )}
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 5: ผลการประเมิน (Passed / Failed คลีนๆ ไม่มีวงเล็บ) */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
-                        <Box
+                      {/* คอลัมน์ที่ 5: ผลการประเมิน (ชิปมน Passed / Failed ขอบ 8px ตามแบบ StudentExerciseTable) */}
+                      <TableCell align="center" sx={{ py: 1.5 }}>
+                        <Chip
+                          label={isPassed ? 'Passed' : 'Failed'}
+                          size="small"
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: 0.6,
-                            px: 1.2,
-                            py: 0.3,
-                            borderRadius: '6px',
-                            bgcolor: isPassed ? '#f0fdf4' : '#fef2f2',
-                            color: isPassed ? '#166534' : '#991b1b',
+                            bgcolor: isPassed ? '#ecfdf5' : '#fef2f2',
+                            color: isPassed ? '#059669' : '#dc2626',
+                            border: `1px solid ${isPassed ? '#a7f3d0' : '#fecaca'}`,
+                            fontWeight: 700,
                             fontSize: '12px',
-                            fontWeight: 600,
-                            border: isPassed ? '1px solid #bbf7d0' : '1px solid #fecaca',
+                            borderRadius: '8px',
+                            height: '24px',
+                            px: 0.8,
                           }}
-                        >
-                          {isPassed ? 'Passed' : 'Failed'}
-                        </Box>
+                        />
                       </TableCell>
 
                       {/* คอลัมน์ที่ 6: คะแนน */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
-                        <Typography sx={{ fontWeight: 500, color: '#0f172a', fontSize: '13px' }}>
-                          {row.score ?? 0}
+                      <TableCell align="center" sx={{ py: 1.5 }}>
+                        <Typography sx={{ fontWeight: 700, fontSize: '13px', color: isPassed ? '#059669' : '#334155' }}>
+                          {row.score}
                         </Typography>
                       </TableCell>
 
                       {/* คอลัมน์ที่ 7: จำนวนครั้งที่รัน */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
-                        <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
+                      <TableCell align="center" sx={{ py: 1.5 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '13px', color: '#64748b' }}>
                           {row.runCount} ครั้ง
                         </Typography>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 8: วันและเวลาที่ทำ (ฟอร์แมตภาษาไทยตามภาพ) */}
-                      <TableCell sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
-                        <Typography sx={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
+                      {/* คอลัมน์ที่ 8: วันและเวลา */}
+                      <TableCell sx={{ py: 1.5 }}>
+                        <Typography sx={{ fontSize: '12.5px', color: '#64748b', whiteSpace: 'nowrap' }}>
                           {formatThaiDateTime(row.submittedAt)}
                         </Typography>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 9: ปุ่มตรวจโค้ด สไตล์ Solid Dark-Navy */}
-                      <TableCell align="center" sx={{ py: 1.5, whiteSpace: 'nowrap' }}>
+                      {/* คอลัมน์ที่ 9: ปุ่มดูรายละเอียดโค้ด (สไตล์ Dark Navy มน 8px ถอดแบบรูปที่ 2) */}
+                      <TableCell align="center" sx={{ py: 1.5 }}>
                         <Button
                           variant="contained"
                           size="small"
                           onClick={() => setSelectedSubmission(row)}
                           sx={{
-                            borderRadius: '8px',
                             bgcolor: '#0f172a',
                             color: '#ffffff',
-                            fontWeight: 600,
-                            fontSize: '12px',
+                            borderRadius: '8px',
                             textTransform: 'none',
+                            fontWeight: 700,
+                            fontSize: '12.5px',
+                            px: 2,
+                            py: 0.7,
                             boxShadow: 'none',
-                            py: 0.6,
-                            px: 1.8,
                             whiteSpace: 'nowrap',
                             '&:hover': {
                               bgcolor: '#1e293b',

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Box, Alert, Button } from '@mui/material'
+import { Box, Alert, Button, Card, CircularProgress, Typography } from '@mui/material'
 import { apiClient } from '../../../api/client'
 import { DashboardTimeFilter } from './admin/DashboardTimeFilter'
 import { TeacherStatCards } from './teacher/TeacherStatCards'
@@ -122,10 +122,6 @@ interface BackendRecentSubmission {
   }
 }
 
-/**
- * คอมโพเนนต์หลัก TeacherDashboard
- * ทำหน้าที่เชื่อมต่อ Backend APIs ดึงสถิติจริง และแจกแจง Props ให้คอมโพเนนต์ลูก
- */
 export function TeacherDashboard() {
   const [selectedDate, setSelectedDate] = useState<string>(getTodayStr)
 
@@ -352,25 +348,41 @@ export function TeacherDashboard() {
         </Alert>
       )}
 
-      {/* 2. การ์ดสถิติ 6 ใบ เรียงแถวเดียว (Compact Row) */}
-      <TeacherStatCards
-        stats={combinedStats}
-        isLoading={isLoading}
-        isOverviewLoading={isOverviewLoading}
-      />
+      {/* จัดการสถานะกำลังโหลดแบบรวมศูนย์ (Unified Loading) ด้วย CircularProgress Card สไตล์เดียวกับ ExerciseResults และ StudentResults */}
+      {isLoading || isOverviewLoading ? (
+        <Card
+          sx={{
+            p: 8,
+            textAlign: 'center',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            bgcolor: '#ffffff',
+            boxShadow: 'none',
+          }}
+        >
+          <CircularProgress size={36} />
+          <Typography variant="body2" sx={{ mt: 2, color: '#64748b', fontWeight: 600 }}>
+            กำลังโหลดข้อมูลแดชบอร์ดภาพรวมผู้สอน...
+          </Typography>
+        </Card>
+      ) : (
+        <>
+          {/* 2. การ์ดสถิติ 6 ใบ สไตล์ Clean Minimal Typography */}
+          <TeacherStatCards stats={combinedStats} />
 
-      {/* 3. กราฟวิเคราะห์ 2 คอลัมน์ (ความคืบหน้ารายโจทย์ + Top Python Errors) */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' }, gap: 3 }}>
-        <TeacherExerciseProgress
-          exercises={exerciseProgress}
-          isLoading={isLoading}
-          selectedDate={selectedDate}
-        />
-        <TeacherErrorDistribution errors={errorStats} isLoading={isLoading} />
-      </Box>
+          {/* 3. กราฟวิเคราะห์ 2 คอลัมน์ (ความคืบหน้ารายโจทย์ + Top Python Errors) */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' }, gap: 3 }}>
+            <TeacherExerciseProgress
+              exercises={exerciseProgress}
+              selectedDate={selectedDate}
+            />
+            <TeacherErrorDistribution errors={errorStats} />
+          </Box>
 
-      {/* 4. ตารางประวัติการส่งงานล่าสุด (Recent Submissions Table) */}
-      <TeacherRecentSubmissions submissions={recentSubmissions} isLoading={isLoading} />
+          {/* 4. ตารางประวัติการส่งงานล่าสุด (Recent Submissions Table) */}
+          <TeacherRecentSubmissions submissions={recentSubmissions} />
+        </>
+      )}
     </Box>
   )
 }
