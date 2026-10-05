@@ -11,7 +11,6 @@ import {
   Box,
   Typography,
   TableSortLabel,
-  Tooltip,
   CircularProgress,
 } from '@mui/material'
 import { Edit3, Trash2, HelpCircle, Eye } from 'lucide-react'
@@ -279,72 +278,66 @@ export const ExerciseTable: React.FC<ExerciseTableProps> = ({
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       {/* Preview Button (Admin Audit Log style: Soft blue) */}
                       {onPreview && (
-                        <Tooltip title="ดูพรีวิวโจทย์" arrow>
-                          <IconButton
-                            size="small"
-                            onClick={() => onPreview(row)}
-                            sx={{
-                              color: '#2563eb',
-                              bgcolor: '#eff6ff',
-                              border: '1px solid #bfdbfe',
-                              borderRadius: '8px',
-                              width: 32,
-                              height: 32,
-                              '&:hover': {
-                                bgcolor: '#dbeafe',
-                                borderColor: '#93c5fd',
-                              },
-                              transition: 'all 0.15s ease',
-                            }}
-                          >
-                            <Eye size={15} />
-                          </IconButton>
-                        </Tooltip>
+                        <IconButton
+                          size="small"
+                          onClick={() => onPreview(row)}
+                          sx={{
+                            color: '#2563eb',
+                            bgcolor: '#eff6ff',
+                            border: '1px solid #bfdbfe',
+                            borderRadius: '8px',
+                            width: 32,
+                            height: 32,
+                            '&:hover': {
+                              bgcolor: '#dbeafe',
+                              borderColor: '#93c5fd',
+                            },
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Eye size={15} />
+                        </IconButton>
                       )}
 
                       {/* Edit Button (Admin UserTable style: Indigo icon on white border) */}
-                      <Tooltip title="แก้ไขข้อมูลโจทย์" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(row)}
-                          sx={{
-                            color: '#4f46e5',
-                            bgcolor: '#ffffff',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                              bgcolor: 'rgba(79, 70, 229, 0.08)',
-                              borderColor: '#818cf8',
-                            },
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Edit3 size={15} />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEdit(row)}
+                        sx={{
+                          color: '#4f46e5',
+                          bgcolor: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: 'rgba(79, 70, 229, 0.08)',
+                            borderColor: '#818cf8',
+                          },
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Edit3 size={15} />
+                      </IconButton>
 
                       {/* Delete Button (Admin UserTable style: Solid red with white icon) */}
-                      <Tooltip title="ลบโจทย์ออกจากระบบ" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(row.exerciseId)}
-                          sx={{
-                            color: '#ffffff',
-                            bgcolor: '#ef4444',
-                            borderRadius: '8px',
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                              bgcolor: '#dc2626',
-                            },
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onDelete(row.exerciseId)}
+                        sx={{
+                          color: '#ffffff',
+                          bgcolor: '#ef4444',
+                          borderRadius: '8px',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#dc2626',
+                          },
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>

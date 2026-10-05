@@ -69,7 +69,7 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        minHeight: { xs: 450, md: 560 },
+        minHeight: { xs: 400, md: 460 },
         gap: 1.75,
       }}
     >
@@ -221,7 +221,7 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
               display: 'flex',
               gap: 0.75,
               flexWrap: 'wrap',
-              maxHeight: 88,
+              maxHeight: 65,
               overflowY: 'auto',
             }}
           >
@@ -259,8 +259,8 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
       <Box
         sx={{
           flexGrow: 1,
-          minHeight: 280,
-          maxHeight: { xs: 350, md: 480 },
+          minHeight: 220,
+          maxHeight: { xs: 280, md: 340 },
           overflowY: 'auto',
           border: '1px solid #e2e8f0',
           borderRadius: '10px',

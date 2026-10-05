@@ -4,7 +4,6 @@ import {
   Typography,
   Button,
   IconButton,
-  Tooltip,
   TextField,
   InputAdornment,
   MenuItem,
@@ -200,41 +199,37 @@ export const ExerciseToolbar: React.FC<ExerciseToolbarProps> = ({
 
         {/* ปุ่มรีเฟรชข้อมูล: ทรงมน 10px สูง 42px สีขาวคมชัด */}
         {onRefresh && (
-          <Tooltip title="รีเฟรชข้อมูล" arrow>
-            <span>
-              <IconButton
-                onClick={onRefresh}
-                disabled={loading}
-                sx={{
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  width: '42px',
-                  height: '42px',
-                  bgcolor: '#ffffff',
-                  color: '#64748b',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease',
-                  '&:hover': {
-                    bgcolor: '#f8fafc',
-                    borderColor: '#94a3b8',
-                    color: '#0f172a',
-                  },
-                  '&.Mui-disabled': {
-                    bgcolor: '#ffffff',
-                    borderColor: '#e2e8f0',
-                    color: '#cbd5e1',
-                  },
-                }}
-              >
-                <RefreshCw
-                  size={16}
-                  style={{
-                    animation: loading ? 'spin 1s linear infinite' : 'none',
-                  }}
-                />
-              </IconButton>
-            </span>
-          </Tooltip>
+          <IconButton
+            onClick={onRefresh}
+            disabled={loading}
+            sx={{
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              width: '42px',
+              height: '42px',
+              bgcolor: '#ffffff',
+              color: '#64748b',
+              flexShrink: 0,
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                bgcolor: '#f8fafc',
+                borderColor: '#94a3b8',
+                color: '#0f172a',
+              },
+              '&.Mui-disabled': {
+                bgcolor: '#ffffff',
+                borderColor: '#e2e8f0',
+                color: '#cbd5e1',
+              },
+            }}
+          >
+            <RefreshCw
+              size={16}
+              style={{
+                animation: loading ? 'spin 1s linear infinite' : 'none',
+              }}
+            />
+          </IconButton>
         )}
 
         {/* ปุ่มล้างตัวกรอง: สไตล์มินิมอลแบบ ExerciseResultsPage */}

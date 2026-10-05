@@ -11,10 +11,9 @@ import {
   Box,
   Typography,
   TableSortLabel,
-  Tooltip,
-  Skeleton,
+  CircularProgress,
 } from '@mui/material';
-import { Edit3, Trash2, Clock, Eye, Layers } from 'lucide-react';
+import { Edit3, Trash2, Eye, Layers } from 'lucide-react';
 import { DIFFICULTY_LEVELS } from '../../../../constants/difficulty';
 import type { TeacherSessionItem, SessionSortField, SessionSortOrder } from '../../types';
 
@@ -42,10 +41,22 @@ export const SessionTable: React.FC<SessionTableProps> = ({
   return (
     <TableContainer sx={{ overflowX: 'auto' }}>
       <Table sx={{ minWidth: 950 }}>
-        <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-          <TableRow>
-            {/* Header ID */}
-            <TableCell width="85px" sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8 }}>
+        <TableHead>
+          <TableRow
+            sx={{
+              bgcolor: '#f8fafc',
+              '& th': {
+                borderBottom: '1px solid #e2e8f0',
+                fontWeight: 700,
+                color: '#475569',
+                fontSize: '13px',
+                py: 1.8,
+                whiteSpace: 'nowrap',
+              },
+            }}
+          >
+            {/* Header รหัสบทเรียน */}
+            <TableCell width="95px">
               <TableSortLabel
                 active={sortField === 'id'}
                 direction={sortField === 'id' ? sortOrder : 'asc'}
@@ -55,12 +66,12 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                ID
+                รหัสบทเรียน
               </TableSortLabel>
             </TableCell>
 
-            {/* Header Session Name & Objective */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, minWidth: '240px' }}>
+            {/* Header ชื่อบทเรียนและจุดประสงค์ */}
+            <TableCell sx={{ minWidth: '240px' }}>
               <TableSortLabel
                 active={sortField === 'name'}
                 direction={sortField === 'name' ? sortOrder : 'asc'}
@@ -70,12 +81,12 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                SESSION NAME & OBJECTIVE
+                ชื่อบทเรียนและจุดประสงค์
               </TableSortLabel>
             </TableCell>
 
-            {/* Header Target Level */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, minWidth: '170px' }}>
+            {/* Header ระดับเป้าหมาย */}
+            <TableCell sx={{ minWidth: '170px' }}>
               <TableSortLabel
                 active={sortField === 'level'}
                 direction={sortField === 'level' ? sortOrder : 'asc'}
@@ -85,12 +96,12 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                TARGET LEVEL
+                ระดับเป้าหมาย
               </TableSortLabel>
             </TableCell>
 
-            {/* Header Duration */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '130px' }}>
+            {/* Header ระยะเวลา */}
+            <TableCell sx={{ width: '120px' }}>
               <TableSortLabel
                 active={sortField === 'duration'}
                 direction={sortField === 'duration' ? sortOrder : 'asc'}
@@ -100,50 +111,40 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   '& .MuiTableSortLabel-icon': { color: '#475569 !important' },
                 }}
               >
-                DURATION
+                ระยะเวลา
               </TableSortLabel>
             </TableCell>
 
-            {/* Header Exercises Count */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '140px' }}>
-              EXERCISES
+            {/* Header จำนวนข้อ */}
+            <TableCell sx={{ width: '110px' }}>
+              จำนวนข้อ
             </TableCell>
 
-            {/* Header Status */}
-            <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8, width: '120px' }}>
-              STATUS
+            {/* Header สถานะ */}
+            <TableCell sx={{ width: '110px' }}>
+              สถานะ
             </TableCell>
 
-            {/* Header Actions */}
-            <TableCell width="135px" align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '12.5px', py: 1.8 }}>
-              ACTIONS
+            {/* Header การจัดการ */}
+            <TableCell width="135px" align="center">
+              การจัดการ
             </TableCell>
           </TableRow>
         </TableHead>
 
         <TableBody>
           {loading ? (
-            // Loading Skeletons
-            [...Array(5)].map((_, i) => (
-              <TableRow key={`skeleton-${i}`}>
-                <TableCell><Skeleton variant="text" width={40} height={24} /></TableCell>
-                <TableCell>
-                  <Skeleton variant="text" width="80%" height={22} sx={{ mb: 0.5 }} />
-                  <Skeleton variant="text" width="55%" height={16} />
-                </TableCell>
-                <TableCell><Skeleton variant="rounded" width={110} height={24} sx={{ borderRadius: '6px' }} /></TableCell>
-                <TableCell><Skeleton variant="text" width={60} height={20} /></TableCell>
-                <TableCell><Skeleton variant="rounded" width={65} height={24} sx={{ borderRadius: '6px' }} /></TableCell>
-                <TableCell><Skeleton variant="rounded" width={75} height={24} sx={{ borderRadius: '20px' }} /></TableCell>
-                <TableCell align="center">
-                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                    <Skeleton variant="rounded" width={32} height={32} sx={{ borderRadius: '8px' }} />
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))
+            // แสดงสถานะกำลังโหลดแบบ CircularProgress กลางตาราง สไตล์เดียวกับ ExerciseTable
+            <TableRow>
+              <TableCell colSpan={7} align="center" sx={{ py: 8 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+                  <CircularProgress size={36} sx={{ color: '#4f46e5' }} />
+                  <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, fontSize: '13.5px' }}>
+                    กำลังโหลดข้อมูลชุดบทเรียน...
+                  </Typography>
+                </Box>
+              </TableCell>
+            </TableRow>
           ) : sessions.length === 0 ? (
             // Empty State ตามแบบ ExerciseTable
             <TableRow>
@@ -236,29 +237,18 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                     />
                   </TableCell>
 
-                  {/* Duration */}
+                  {/* Duration (ระยะเวลา) - แสดงข้อความธรรมดา ไม่มีไอคอนนาฬิกา สไตล์เดียวกับ ExerciseTable */}
                   <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, color: '#334155', fontWeight: 600, fontSize: '13px' }}>
-                      <Clock size={14} color="#94a3b8" />
-                      <span>{session.duration} นาที</span>
-                    </Box>
+                    <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: '13px' }}>
+                      {session.duration} นาที
+                    </Typography>
                   </TableCell>
 
-                  {/* Exercises Count */}
-                  <TableCell sx={{ py: 2 }}>
-                    <Chip
-                      size="small"
-                      label={`${session.exerciseCount} ข้อ`}
-                      sx={{
-                        bgcolor: '#f1f5f9',
-                        color: '#334155',
-                        fontWeight: 600,
-                        borderRadius: '6px',
-                        fontSize: '11.5px',
-                        height: '24px',
-                        border: '1px solid #e2e8f0',
-                      }}
-                    />
+                  {/* Exercises Count (จำนวนข้อ) - แสดงข้อความธรรมดา ไม่มีกรอบ Chip คลีนสบายตา */}
+                  <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
+                    <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: '13px' }}>
+                      {session.exerciseCount} ข้อ
+                    </Typography>
                   </TableCell>
 
                   {/* Status (Pill พร้อม Glowing Status Dot ตามแบบ ExerciseTable) */}
@@ -301,71 +291,65 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                   <TableCell align="center" sx={{ py: 2 }}>
                     <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                       {/* Preview Button (Soft blue) */}
-                      <Tooltip title="ดูโจทย์ใน Session" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => onPreview(session)}
-                          sx={{
-                            color: '#2563eb',
-                            bgcolor: '#eff6ff',
-                            border: '1px solid #bfdbfe',
-                            borderRadius: '8px',
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                              bgcolor: '#dbeafe',
-                              borderColor: '#93c5fd',
-                            },
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Eye size={15} />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onPreview(session)}
+                        sx={{
+                          color: '#2563eb',
+                          bgcolor: '#eff6ff',
+                          border: '1px solid #bfdbfe',
+                          borderRadius: '8px',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#dbeafe',
+                            borderColor: '#93c5fd',
+                          },
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Eye size={15} />
+                      </IconButton>
 
                       {/* Edit Button (Indigo on white border) */}
-                      <Tooltip title="แก้ไขข้อมูล Session" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => onEdit(session)}
-                          sx={{
-                            color: '#4f46e5',
-                            bgcolor: '#ffffff',
-                            border: '1px solid #e2e8f0',
-                            borderRadius: '8px',
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                              bgcolor: 'rgba(79, 70, 229, 0.08)',
-                              borderColor: '#818cf8',
-                            },
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Edit3 size={15} />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEdit(session)}
+                        sx={{
+                          color: '#4f46e5',
+                          bgcolor: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: 'rgba(79, 70, 229, 0.08)',
+                            borderColor: '#818cf8',
+                          },
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Edit3 size={15} />
+                      </IconButton>
 
                       {/* Delete Button (Solid red) */}
-                      <Tooltip title="ลบ Session ออกจากระบบ" arrow>
-                        <IconButton
-                          size="small"
-                          onClick={() => onDelete(session.sessionId)}
-                          sx={{
-                            color: '#ffffff',
-                            bgcolor: '#ef4444',
-                            borderRadius: '8px',
-                            width: 32,
-                            height: 32,
-                            '&:hover': {
-                              bgcolor: '#dc2626',
-                            },
-                            transition: 'all 0.15s ease',
-                          }}
-                        >
-                          <Trash2 size={15} />
-                        </IconButton>
-                      </Tooltip>
+                      <IconButton
+                        size="small"
+                        onClick={() => onDelete(session.sessionId)}
+                        sx={{
+                          color: '#ffffff',
+                          bgcolor: '#ef4444',
+                          borderRadius: '8px',
+                          width: 32,
+                          height: 32,
+                          '&:hover': {
+                            bgcolor: '#dc2626',
+                          },
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <Trash2 size={15} />
+                      </IconButton>
                     </Box>
                   </TableCell>
                 </TableRow>

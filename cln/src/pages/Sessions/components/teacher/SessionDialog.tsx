@@ -267,13 +267,13 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
       </Box>
 
       {/* 2. เนื้อหาฟอร์ม (แบ่ง 2 คอลัมน์ซ้าย-ขวา แบบ Split Layout) */}
-      <DialogContent sx={{ p: 3, bgcolor: '#ffffff', overflowY: 'auto', maxHeight: 'calc(88vh - 130px)' }}>
+      <DialogContent sx={{ p: 3, bgcolor: '#ffffff', overflowY: 'auto', maxHeight: 'calc(90vh - 120px)' }}>
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: '4.8fr 7.2fr' },
             gap: 2.5,
-            alignItems: 'stretch',
+            alignItems: 'start',
           }}
         >
           {/* คอลัมน์ซ้าย: ข้อมูลทั่วไปและการตั้งค่า Session */}
@@ -285,7 +285,6 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
               border: '1px solid #e2e8f0',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'space-between',
               gap: 2,
             }}
           >
@@ -370,7 +369,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                 <TextField
                   fullWidth
                   multiline
-                  rows={3}
+                  rows={2}
                   name="sessionObjective"
                   value={form.sessionObjective}
                   onChange={handleChange}
@@ -468,7 +467,7 @@ export const SessionDialog: React.FC<SessionDialogProps> = ({
                     value={form.duration}
                     onChange={handleChange}
                     error={!!errors.duration}
-                    helperText={errors.duration || (totalEstimatedTime > 0 ? `เวลารวมโจทย์: ${totalEstimatedTime} นาที` : undefined)}
+                    helperText={errors.duration}
                     slotProps={{
                       input: {
                         sx: {

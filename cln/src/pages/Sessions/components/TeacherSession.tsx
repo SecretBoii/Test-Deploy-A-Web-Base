@@ -278,6 +278,10 @@ export const TeacherSession: React.FC = () => {
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
         session={previewSession}
+        onEdit={(s) => {
+          setPreviewOpen(false);
+          handleEdit(s);
+        }}
       />
 
       {/* Dialog ยืนยันการลบชุดบทเรียน */}
