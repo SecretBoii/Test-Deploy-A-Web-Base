@@ -86,7 +86,7 @@ export interface ExerciseStudentItem {
   university: string;
   faculty: string;
   isAttempted: boolean;
-  status: 'PASSED' | 'FAILED' | 'NOT_STARTED';
+  status: 'PASSED' | 'FAILED' | 'NOT_SUBMITTED';
   bestScore: number | null;
   runCount: number;
   submitCount: number;

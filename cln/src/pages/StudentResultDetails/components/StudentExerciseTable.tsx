@@ -30,17 +30,21 @@ export const StudentExerciseTable: React.FC<StudentExerciseTableProps> = ({
   onInspectCode,
 }) => {
   const [search, setSearch] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'PASSED' | 'FAILED'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'PASSED' | 'FAILED' | 'NOT_SUBMITTED'>('all');
   const [page, setPage] = useState<number>(0);
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
-  // คำนวณจำนวนข้อที่ผ่านและไม่ผ่านสำหรับตัวเลขในแท็บ Capsule Pills
+  // คำนวณจำนวนข้อที่ผ่าน, ไม่ผ่าน และยังไม่ส่งตรวจ สำหรับแท็บ Capsule Pills
   const passedCount = useMemo(
     () => exercises.filter((ex) => ex.status === 'PASSED').length,
     [exercises],
   );
   const failedCount = useMemo(
     () => exercises.filter((ex) => ex.status === 'FAILED').length,
+    [exercises],
+  );
+  const notSubmittedCount = useMemo(
+    () => exercises.filter((ex) => ex.status === 'NOT_SUBMITTED').length,
     [exercises],
   );
 
@@ -220,6 +224,30 @@ export const StudentExerciseTable: React.FC<StudentExerciseTableProps> = ({
               >
                 เฉพาะที่ไม่ผ่าน ({failedCount})
               </Button>
+              <Button
+                size="small"
+                onClick={() => {
+                  setStatusFilter('NOT_SUBMITTED');
+                  setPage(0);
+                }}
+                sx={{
+                  bgcolor: statusFilter === 'NOT_SUBMITTED' ? '#ffffff' : 'transparent',
+                  color: statusFilter === 'NOT_SUBMITTED' ? '#0f172a' : '#64748b',
+                  fontWeight: statusFilter === 'NOT_SUBMITTED' ? 700 : 500,
+                  fontSize: '12.5px',
+                  borderRadius: '8px',
+                  px: 1.8,
+                  py: 0.5,
+                  textTransform: 'none',
+                  boxShadow: statusFilter === 'NOT_SUBMITTED' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                  '&:hover': {
+                    bgcolor: statusFilter === 'NOT_SUBMITTED' ? '#ffffff' : '#e2e8f0',
+                    color: statusFilter === 'NOT_SUBMITTED' ? '#0f172a' : '#334155',
+                  },
+                }}
+              >
+                ยังไม่ส่งตรวจ ({notSubmittedCount})
+              </Button>
             </Box>
 
             {/* ปุ่มล้างตัวกรอง สไตล์รูปที่ 1 */}
@@ -310,7 +338,6 @@ export const StudentExerciseTable: React.FC<StudentExerciseTableProps> = ({
                 <TableBody>
                   {paginatedExercises.map((ex) => {
                     const diffMeta = DIFFICULTY_LEVELS[ex.difficultyLevel] || DIFFICULTY_LEVELS[1];
-                    const isPassed = ex.status === 'PASSED';
 
                     return (
                       <TableRow
@@ -361,22 +388,56 @@ export const StudentExerciseTable: React.FC<StudentExerciseTableProps> = ({
                           </Typography>
                         </TableCell>
 
-                        {/* 4. สถานะ (ชิปมน Passed / Failed สไตล์รูปที่ 2) */}
+                        {/* 4. สถานะ (ชิปมน Passed / Failed / ยังไม่ส่งตรวจ) */}
                         <TableCell align="center">
-                          <Chip
-                            label={isPassed ? 'Passed' : 'Failed'}
-                            size="small"
-                            sx={{
-                              bgcolor: isPassed ? '#ecfdf5' : '#fef2f2',
-                              color: isPassed ? '#059669' : '#dc2626',
-                              border: `1px solid ${isPassed ? '#a7f3d0' : '#fecaca'}`,
-                              fontWeight: 700,
-                              fontSize: '12px',
-                              borderRadius: '8px',
-                              px: 0.8,
-                              height: '24px',
-                            }}
-                          />
+                          {ex.status === 'PASSED' && (
+                            <Chip
+                              label="Passed"
+                              size="small"
+                              sx={{
+                                bgcolor: '#ecfdf5',
+                                color: '#059669',
+                                border: '1px solid #a7f3d0',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                borderRadius: '8px',
+                                px: 0.8,
+                                height: '24px',
+                              }}
+                            />
+                          )}
+                          {ex.status === 'FAILED' && (
+                            <Chip
+                              label="Failed"
+                              size="small"
+                              sx={{
+                                bgcolor: '#fef2f2',
+                                color: '#dc2626',
+                                border: '1px solid #fecaca',
+                                fontWeight: 700,
+                                fontSize: '12px',
+                                borderRadius: '8px',
+                                px: 0.8,
+                                height: '24px',
+                              }}
+                            />
+                          )}
+                          {ex.status === 'NOT_SUBMITTED' && (
+                            <Chip
+                              label="Not Submitted"
+                              size="small"
+                              sx={{
+                                bgcolor: '#f1f5f9',
+                                color: '#475569',
+                                border: '1px solid #cbd5e1',
+                                fontWeight: 700,
+                                fontSize: '11.5px',
+                                borderRadius: '8px',
+                                px: 0.8,
+                                height: '24px',
+                              }}
+                            />
+                          )}
                         </TableCell>
 
                         {/* 5. Run (ครั้ง) */}
