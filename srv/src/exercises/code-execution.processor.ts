@@ -69,7 +69,7 @@ except Exception as e:
       stderr: string;
     }> => {
       return new Promise((resolve) => {
-        let child = spawn('docker', [
+        const child = spawn('docker', [
           'run',
           '--rm',
           '-i',
@@ -87,17 +87,20 @@ except Exception as e:
         let stderr = '';
         let resolved = false;
 
-        const timeoutId = setTimeout(() => {
-          if (!resolved) {
-            resolved = true;
-            child.kill();
-            resolve({
-              status: 'Time Limit Exceeded',
-              stdout,
-              stderr: `Execution timed out (${TIMEOUT_LIMIT}s limit exceeded)`,
-            });
-          }
-        }, TIMEOUT_LIMIT * 1000 + 1000); // ตั้งเวลารอ Node.js ให้ทำงานจนเสร็จ
+        const timeoutId = setTimeout(
+          () => {
+            if (!resolved) {
+              resolved = true;
+              child.kill();
+              resolve({
+                status: 'Time Limit Exceeded',
+                stdout,
+                stderr: `Execution timed out (${TIMEOUT_LIMIT}s limit exceeded)`,
+              });
+            }
+          },
+          TIMEOUT_LIMIT * 1000 + 1000,
+        ); // ตั้งเวลารอ Node.js ให้ทำงานจนเสร็จ
 
         child.on('error', (err) => {
           if (!resolved) {

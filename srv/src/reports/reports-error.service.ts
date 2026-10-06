@@ -43,10 +43,18 @@ export class ReportsErrorService {
     if (filter.search) {
       where.OR = [
         { exceptionMessage: { contains: filter.search, mode: 'insensitive' } },
-        { user: { username: { contains: filter.search, mode: 'insensitive' } } },
-        { user: { firstName: { contains: filter.search, mode: 'insensitive' } } },
-        { user: { lastName: { contains: filter.search, mode: 'insensitive' } } },
-        { exercise: { title: { contains: filter.search, mode: 'insensitive' } } },
+        {
+          user: { username: { contains: filter.search, mode: 'insensitive' } },
+        },
+        {
+          user: { firstName: { contains: filter.search, mode: 'insensitive' } },
+        },
+        {
+          user: { lastName: { contains: filter.search, mode: 'insensitive' } },
+        },
+        {
+          exercise: { title: { contains: filter.search, mode: 'insensitive' } },
+        },
       ];
     }
 

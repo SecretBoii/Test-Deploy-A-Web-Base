@@ -102,9 +102,7 @@ export function getTimeRangeDates(
   } else if (timeRange === 'yearly') {
     // วันที่ 1 ม.ค. ถึง 31 ธ.ค. ของปีปัจจุบันในไทย
     const start = new Date(Date.UTC(year, 0, 1, 0, 0, 0, 0) - MS_7_HOURS);
-    const end = new Date(
-      Date.UTC(year, 11, 31, 23, 59, 59, 999) - MS_7_HOURS,
-    );
+    const end = new Date(Date.UTC(year, 11, 31, 23, 59, 59, 999) - MS_7_HOURS);
     return { start, end };
   }
 

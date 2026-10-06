@@ -160,7 +160,6 @@ export class ReportsService {
         passedSubmissions,
         averageScore,
         averageAttempts,
-        lastActiveAt: student.lastActiveAt,
       };
     });
   }
@@ -218,10 +217,7 @@ export class ReportsService {
     const bestScoreMap = new Map<string, number>();
     for (const act of submitActivities) {
       const key = `${act.sessionId}_${act.exerciseId}`;
-      if (
-        !bestScoreMap.has(key) ||
-        act.score > (bestScoreMap.get(key) ?? 0)
-      ) {
+      if (!bestScoreMap.has(key) || act.score > (bestScoreMap.get(key) ?? 0)) {
         bestScoreMap.set(key, act.score);
       }
     }
@@ -250,7 +246,6 @@ export class ReportsService {
             university: student.education?.university || '-',
             faculty: student.education?.faculty || '-',
             major: student.education?.major || '-',
-            lastActiveAt: student.lastActiveAt,
           }
         : null,
       totalExercises,
@@ -278,8 +273,15 @@ export class ReportsService {
         education: filters.education
           ? {
               OR: [
-                { university: { contains: filters.education, mode: 'insensitive' } },
-                { faculty: { contains: filters.education, mode: 'insensitive' } },
+                {
+                  university: {
+                    contains: filters.education,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  faculty: { contains: filters.education, mode: 'insensitive' },
+                },
               ],
             }
           : undefined,
@@ -305,8 +307,18 @@ export class ReportsService {
                 ? {
                     education: {
                       OR: [
-                        { university: { contains: filters.education, mode: 'insensitive' } },
-                        { faculty: { contains: filters.education, mode: 'insensitive' } },
+                        {
+                          university: {
+                            contains: filters.education,
+                            mode: 'insensitive',
+                          },
+                        },
+                        {
+                          faculty: {
+                            contains: filters.education,
+                            mode: 'insensitive',
+                          },
+                        },
                       ],
                     },
                   }
@@ -335,7 +347,9 @@ export class ReportsService {
     });
 
     return exercises.map((ex) => {
-      const submitActivities = ex.activities.filter((a) => a.eventType === 'submit');
+      const submitActivities = ex.activities.filter(
+        (a) => a.eventType === 'submit',
+      );
       const runActivities = ex.activities.filter((a) => a.eventType === 'run');
 
       // รวมคะแนนที่ดีที่สุดของนักศึกษาแต่ละคน (Unique User) เพื่อวัดผลสัมฤทธิ์ที่แท้จริง
@@ -348,7 +362,9 @@ export class ReportsService {
       }
 
       // นับจำนวนนักศึกษาที่ไม่ซ้ำที่เข้าทำโจทย์ข้อนี้
-      const attemptedUserIds = Array.from(new Set(ex.activities.map((a) => a.userId)));
+      const attemptedUserIds = Array.from(
+        new Set(ex.activities.map((a) => a.userId)),
+      );
       const attemptedStudents = attemptedUserIds.length;
 
       // จำนวนนักศึกษาที่ทำผ่านเกณฑ์ (>= 80 คะแนน)
@@ -358,41 +374,59 @@ export class ReportsService {
       });
 
       // อัตราการผ่านคิดจากคนที่เข้าทำ (Pass Rate among Attempted)
-      const passRateAttempted = attemptedStudents > 0 ? (passedStudents / attemptedStudents) * 100 : 0;
+      const passRateAttempted =
+        attemptedStudents > 0 ? (passedStudents / attemptedStudents) * 100 : 0;
 
       // อัตราการผ่านคิดจากนักศึกษาทั้งหมดในระบบ (Overall Pass Rate)
-      const passRateOverall = totalStudents > 0 ? (passedStudents / totalStudents) * 100 : 0;
+      const passRateOverall =
+        totalStudents > 0 ? (passedStudents / totalStudents) * 100 : 0;
 
       // คะแนนเฉลี่ยของนักศึกษาที่เข้าทำโจทย์ข้อนี้ (คำนวณจากคะแนนที่ดีที่สุดของแต่ละคน)
       let totalBestScoreSum = 0;
       userBestScoreMap.forEach((score) => {
         totalBestScoreSum += score;
       });
-      const avgScore = attemptedStudents > 0 ? totalBestScoreSum / attemptedStudents : 0;
+      const avgScore =
+        attemptedStudents > 0 ? totalBestScoreSum / attemptedStudents : 0;
 
       // ค่าเฉลี่ยจำนวนครั้ง Run และ Submit ต่อคนที่เข้าทำ
       const totalRuns = runActivities.length;
       const totalSubmits = submitActivities.length;
       const avgRuns = attemptedStudents > 0 ? totalRuns / attemptedStudents : 0;
-      const avgSubmits = attemptedStudents > 0 ? totalSubmits / attemptedStudents : 0;
+      const avgSubmits =
+        attemptedStudents > 0 ? totalSubmits / attemptedStudents : 0;
 
       // อัตราการขอคำใบ้
       const hintUsedCount = ex.activities.filter((a) => a.hintUsed).length;
-      const hintUsageRate = ex.activities.length > 0 ? (hintUsedCount / ex.activities.length) * 100 : 0;
+      const hintUsageRate =
+        ex.activities.length > 0
+          ? (hintUsedCount / ex.activities.length) * 100
+          : 0;
 
       // เวลาเฉลี่ยที่ใช้จริง (นาที) กรองเฉพาะช่วงเวลาที่ทำต่อเนื่องจริง (ไม่เกิน 120 นาที)
       const rawTimes = submitActivities
         .filter((a) => a.startedAt && a.submittedAt)
-        .map((a) => Math.max(0, (new Date(a.submittedAt).getTime() - new Date(a.startedAt).getTime()) / (1000 * 60)));
+        .map((a) =>
+          Math.max(
+            0,
+            (new Date(a.submittedAt).getTime() -
+              new Date(a.startedAt).getTime()) /
+              (1000 * 60),
+          ),
+        );
 
       const realisticTimes = rawTimes.filter((t) => t <= 120);
-      const timesToAverage = realisticTimes.length > 0 
-        ? realisticTimes 
-        : rawTimes.map((t) => Math.min(t, Math.max((ex.expectedTime || 10) * 3, 60)));
+      const timesToAverage =
+        realisticTimes.length > 0
+          ? realisticTimes
+          : rawTimes.map((t) =>
+              Math.min(t, Math.max((ex.expectedTime || 10) * 3, 60)),
+            );
 
-      const avgTimeSpentMinutes = timesToAverage.length > 0
-        ? timesToAverage.reduce((s, t) => s + t, 0) / timesToAverage.length
-        : 0;
+      const avgTimeSpentMinutes =
+        timesToAverage.length > 0
+          ? timesToAverage.reduce((s, t) => s + t, 0) / timesToAverage.length
+          : 0;
 
       return {
         exerciseId: ex.exerciseId,
@@ -418,7 +452,10 @@ export class ReportsService {
     });
   }
 
-  async getExerciseStudentBreakdown(exerciseId: number, filters?: { education?: string }) {
+  async getExerciseStudentBreakdown(
+    exerciseId: number,
+    filters?: { education?: string },
+  ) {
     // 1. ดึงรายละเอียดโจทย์
     const exercise = await this.prisma.exercise.findUnique({
       where: { exerciseId },
@@ -440,8 +477,15 @@ export class ReportsService {
         education: filters?.education
           ? {
               OR: [
-                { university: { contains: filters.education, mode: 'insensitive' } },
-                { faculty: { contains: filters.education, mode: 'insensitive' } },
+                {
+                  university: {
+                    contains: filters.education,
+                    mode: 'insensitive',
+                  },
+                },
+                {
+                  faculty: { contains: filters.education, mode: 'insensitive' },
+                },
               ],
             }
           : undefined,
@@ -501,7 +545,8 @@ export class ReportsService {
         runCount: runs.length,
         submitCount: submits.length,
         totalAttempts: acts.length,
-        lastSubmittedAt: hasSubmit && submits[0] ? submits[0].submittedAt : null,
+        lastSubmittedAt:
+          hasSubmit && submits[0] ? submits[0].submittedAt : null,
         latestActivity: latestSubmit
           ? {
               activityId: latestSubmit.activityId,
@@ -540,8 +585,10 @@ export class ReportsService {
         totalStudents: attemptedCount,
         attemptedCount,
         passedCount,
-        passRateAttempted: attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
-        passRateOverall: attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
+        passRateAttempted:
+          attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
+        passRateOverall:
+          attemptedCount > 0 ? (passedCount / attemptedCount) * 100 : 0,
         totalRuns: totalRunsSum,
         totalSubmits: totalSubmitsSum,
         avgRuns: attemptedCount > 0 ? totalRunsSum / attemptedCount : 0,

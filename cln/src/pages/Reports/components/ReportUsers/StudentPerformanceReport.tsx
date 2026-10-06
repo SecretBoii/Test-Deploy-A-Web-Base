@@ -18,11 +18,10 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // ตัวกรองผู้เรียนแบบ Client-side Real-time (ค้นหาชื่อ/username, ความคืบหน้า, ช่วงคะแนน, การเข้าใช้งาน)
+  // ตัวกรองผู้เรียนแบบ Client-side Real-time (ค้นหาชื่อ/username, ความคืบหน้า, ช่วงคะแนน)
   const [search, setSearch] = useState('');
   const [progressFilter, setProgressFilter] = useState('');
   const [scoreFilter, setScoreFilter] = useState('');
-  const [activeFilter, setActiveFilter] = useState('');
   
   const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
@@ -38,14 +37,13 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
     setSearch('');
     setProgressFilter('');
     setScoreFilter('');
-    setActiveFilter('');
     setPage(0);
   };
 
   // ตรวจสอบสถานะว่ามีการกรองข้อมูลอยู่หรือไม่ เพื่อเปิด/ปิดปุ่มล้างตัวกรอง
-  const isFiltered = Boolean(search.trim() || progressFilter || scoreFilter || activeFilter);
+  const isFiltered = Boolean(search.trim() || progressFilter || scoreFilter);
 
-  // กรองข้อมูลผู้เรียนบน Client-side ตามเงื่อนไขค้นหา ความคืบหน้า คะแนน และเวลาใช้งานล่าสุด
+  // กรองข้อมูลผู้เรียนบน Client-side ตามเงื่อนไขค้นหา ความคืบหน้า และคะแนน
   const filteredData = useMemo(() => {
     const qSearch = search.trim().toLowerCase();
 
@@ -76,29 +74,9 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
         if (scoreFilter === 'low' && score >= 50) return false;
       }
 
-      // 4. กรองตามสถานะการเข้าใช้งานล่าสุด (ภายใน 7 วัน หรือ ไม่มีความเคลื่อนไหว)
-      if (activeFilter) {
-        const hasActiveDate = Boolean(student.lastActiveAt);
-        if (activeFilter === 'active_week') {
-          if (!hasActiveDate) return false;
-          const lastDate = new Date(student.lastActiveAt!).getTime();
-          if (isNaN(lastDate)) return false;
-          const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-          if (lastDate < sevenDaysAgo) return false;
-        } else if (activeFilter === 'inactive') {
-          if (hasActiveDate) {
-            const lastDate = new Date(student.lastActiveAt!).getTime();
-            if (!isNaN(lastDate)) {
-              const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-              if (lastDate >= sevenDaysAgo) return false;
-            }
-          }
-        }
-      }
-
       return true;
     });
-  }, [data, search, progressFilter, scoreFilter, activeFilter]);
+  }, [data, search, progressFilter, scoreFilter]);
 
   // เรียงลำดับข้อมูลผู้เรียนเริ่มต้นตามคะแนนเฉลี่ยจากมากไปน้อย เพื่อให้อาจารย์เห็นภาพรวมผลสัมฤทธิ์ได้ทันที
   const sortedData = useMemo(() => {
@@ -272,25 +250,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
           </Select>
         </FormControl>
 
-        {/* 3. กรองการเข้าใช้งานล่าสุด */}
-        <FormControl size="small" sx={{ width: { xs: '100%', sm: 170 }, flexShrink: 0 }}>
-          <InputLabel sx={labelSx}>การใช้งานล่าสุด</InputLabel>
-          <Select
-            value={activeFilter}
-            onChange={(e) => {
-              setActiveFilter(e.target.value);
-              setPage(0);
-            }}
-            label="การใช้งานล่าสุด"
-            sx={selectSx}
-          >
-            <MenuItem value="">ทั้งหมด</MenuItem>
-            <MenuItem value="active_week">ภายใน 7 วัน</MenuItem>
-            <MenuItem value="inactive">ไม่มีความเคลื่อนไหว</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* 4. ปุ่มล้างตัวกรอง */}
+        {/* 3. ปุ่มล้างตัวกรอง */}
         <Button
           variant="outlined"
           onClick={handleReset}
@@ -339,7 +299,6 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                 </Tooltip>
               </TableCell>
               <TableCell align="center">ความพยายามเฉลี่ย</TableCell>
-              <TableCell>ใช้งานล่าสุด</TableCell>
               <TableCell align="center" sx={{ minWidth: '130px', fontWeight: 700, color: '#475569' }}>
                 การจัดการ
               </TableCell>
@@ -348,7 +307,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Box sx={{ width: '100%', maxWidth: 300, mx: 'auto' }}>
                     <LinearProgress sx={{ borderRadius: 3, height: 6 }} />
                     <Typography variant="caption" sx={{ color: '#64748b', mt: 1, display: 'block' }}>กำลังโหลดรายงานความคืบหน้า...</Typography>
@@ -357,7 +316,7 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 6 }}>
                   <Users size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
                   <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>
                     {isFiltered ? 'ไม่พบข้อมูลรายชื่อผู้เรียนที่ตรงกับเงื่อนไข' : 'ไม่พบข้อมูลรายชื่อผู้เรียน'}
@@ -422,9 +381,6 @@ export function StudentPerformanceReport({ data, isLoading }: StudentPerformance
                       <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>
                         {student.averageAttempts.toFixed(1)} ครั้ง
                       </Typography>
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '13px', color: '#64748b' }}>
-                      {student.lastActiveAt ? new Date(student.lastActiveAt).toLocaleDateString('th-TH') : '-'}
                     </TableCell>
                     {/* ปุ่มจัดการ: Solid Dark-Navy คมชัด หนักแน่น ไม่ใช้สีอ่อน */}
                     <TableCell align="center">

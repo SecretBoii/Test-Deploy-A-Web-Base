@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -8,10 +12,13 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * ดึงรายชื่อผู้ใช้งานพร้อมสถิติจำนวนสมาชิกแยกตามบทบาท
+   * ปรับปรุง: นำการคำนวณสถานะ Online และฟิลด์ lastActiveAt ออก เพื่อลด overhead และสอดคล้องกับโครงสร้างฐานข้อมูล
+   */
   async findAll(
     search?: string,
     roleId?: number,
-    status?: 'online' | 'offline',
     page?: number,
     limit?: number,
   ) {
@@ -32,56 +39,36 @@ export class UsersService {
       whereConditions.push({ roleId });
     }
 
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-    if (status === 'online') {
-      whereConditions.push({ lastActiveAt: { gte: fiveMinutesAgo } });
-    } else if (status === 'offline') {
-      whereConditions.push({
-        OR: [
-          { lastActiveAt: null },
-          { lastActiveAt: { lt: fiveMinutesAgo } },
-        ],
-      });
-    }
-
     const where = whereConditions.length > 0 ? { AND: whereConditions } : {};
 
     const skip = page && limit ? (page - 1) * limit : undefined;
     const take = limit ? limit : undefined;
 
     // ดึงข้อมูลผู้ใช้งานและนับสถิติตามประเภทบทบาทแยกกัน (Student: 1, Teacher: 2, Admin: 3)
-    const [users, total, systemTotal, onlineCount, studentCount, teacherCount, adminCount] = await Promise.all([
-      this.prisma.userProfile.findMany({
-        where,
-        include: {
-          role: true,
-          education: true,
-        },
-        orderBy: {
-          userId: 'asc',
-        },
-        skip,
-        take,
-      }),
-      this.prisma.userProfile.count({ where }),
-      this.prisma.userProfile.count(),
-      this.prisma.userProfile.count({
-        where: { lastActiveAt: { gte: fiveMinutesAgo } },
-      }),
-      this.prisma.userProfile.count({ where: { roleId: 1 } }),
-      this.prisma.userProfile.count({ where: { roleId: 2 } }),
-      this.prisma.userProfile.count({ where: { roleId: 3 } }),
-    ]);
+    const [users, total, systemTotal, studentCount, teacherCount, adminCount] =
+      await Promise.all([
+        this.prisma.userProfile.findMany({
+          where,
+          include: {
+            role: true,
+            education: true,
+          },
+          orderBy: {
+            userId: 'asc',
+          },
+          skip,
+          take,
+        }),
+        this.prisma.userProfile.count({ where }),
+        this.prisma.userProfile.count(),
+        this.prisma.userProfile.count({ where: { roleId: 1 } }),
+        this.prisma.userProfile.count({ where: { roleId: 2 } }),
+        this.prisma.userProfile.count({ where: { roleId: 3 } }),
+      ]);
 
     const data = users.map((user) => {
-      const isOnline = user.lastActiveAt
-        ? Date.now() - new Date(user.lastActiveAt).getTime() < 5 * 60 * 1000
-        : false;
       const { password, ...result } = user;
-      return {
-        ...result,
-        isOnline,
-      };
+      return result;
     });
 
     return {
@@ -89,7 +76,6 @@ export class UsersService {
       total,
       stats: {
         total: systemTotal,
-        onlineCount,
         studentCount,
         teacherCount,
         adminCount,
@@ -111,13 +97,7 @@ export class UsersService {
     if (!user) return null;
 
     const { password, ...result } = user;
-    const isOnline = user.lastActiveAt
-      ? Date.now() - new Date(user.lastActiveAt).getTime() < 5 * 60 * 1000
-      : false;
-    return {
-      ...result,
-      isOnline,
-    };
+    return result;
   }
 
   async create(dto: CreateUserDto) {
@@ -249,9 +229,11 @@ export class UsersService {
     });
 
     if (user.educationId) {
-      await this.prisma.education.delete({
-        where: { educationId: user.educationId },
-      }).catch((e) => console.log('Clean-up education skipped:', e.message));
+      await this.prisma.education
+        .delete({
+          where: { educationId: user.educationId },
+        })
+        .catch((e) => console.log('Clean-up education skipped:', e.message));
     }
 
     return { success: true, message: 'ลบผู้ใช้เสร็จสิ้น' };

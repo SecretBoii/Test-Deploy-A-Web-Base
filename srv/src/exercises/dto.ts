@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsString, IsBoolean, IsOptional, IsInt } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  IsBoolean,
+  IsOptional,
+  IsInt,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class SubmitExerciseDto {

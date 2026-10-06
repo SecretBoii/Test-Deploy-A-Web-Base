@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSessionDto, UpdateSessionDto } from './dto';
 
@@ -13,10 +18,7 @@ export class SessionsService {
    */
   async findAll() {
     const sessions = await this.prisma.session.findMany({
-      orderBy: [
-        { targetLevel: 'asc' },
-        { sessionId: 'asc' },
-      ],
+      orderBy: [{ targetLevel: 'asc' }, { sessionId: 'asc' }],
       include: {
         sessionExercises: {
           orderBy: { sequenceOrder: 'asc' },
@@ -131,9 +133,15 @@ export class SessionsService {
       const updatedSession = await tx.session.update({
         where: { sessionId: id },
         data: {
-          ...(sessionData.sessionName && { sessionName: sessionData.sessionName }),
-          ...(sessionData.sessionObjective && { sessionObjective: sessionData.sessionObjective }),
-          ...(sessionData.targetLevel && { targetLevel: sessionData.targetLevel }),
+          ...(sessionData.sessionName && {
+            sessionName: sessionData.sessionName,
+          }),
+          ...(sessionData.sessionObjective && {
+            sessionObjective: sessionData.sessionObjective,
+          }),
+          ...(sessionData.targetLevel && {
+            targetLevel: sessionData.targetLevel,
+          }),
           ...(sessionData.duration && { duration: sessionData.duration }),
           ...(sessionData.status && { status: sessionData.status }),
           updatedAt: new Date(),
@@ -148,11 +156,13 @@ export class SessionsService {
 
         const uniqueExerciseIds = [...new Set(exerciseIds)];
         if (uniqueExerciseIds.length > 0) {
-          const sessionExercisesData = uniqueExerciseIds.map((exId: number, index: number) => ({
-            sessionId: id,
-            exerciseId: exId,
-            sequenceOrder: index + 1,
-          }));
+          const sessionExercisesData = uniqueExerciseIds.map(
+            (exId: number, index: number) => ({
+              sessionId: id,
+              exerciseId: exId,
+              sequenceOrder: index + 1,
+            }),
+          );
 
           await tx.sessionExercise.createMany({
             data: sessionExercisesData,
@@ -180,7 +190,7 @@ export class SessionsService {
 
     if (progressCount > 0 || activityCount > 0) {
       throw new BadRequestException(
-        `ไม่สามารถลบ Session นี้ได้ เนื่องจากมีประวัติการเรียนหรือการส่งงานของนักเรียนแล้ว (${progressCount + activityCount} รายการ) แนะนำให้เปลี่ยนสถานะเป็น Inactive แทน`
+        `ไม่สามารถลบ Session นี้ได้ เนื่องจากมีประวัติการเรียนหรือการส่งงานของนักเรียนแล้ว (${progressCount + activityCount} รายการ) แนะนำให้เปลี่ยนสถานะเป็น Inactive แทน`,
       );
     }
 

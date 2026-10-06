@@ -106,7 +106,10 @@ export class ReportsController {
     @Query('endDate') endDate?: string,
   ) {
     this.checkAdminOrTeacher(user);
-    return this.reportsAnalyticsService.getUsageAnalytics({ startDate, endDate });
+    return this.reportsAnalyticsService.getUsageAnalytics({
+      startDate,
+      endDate,
+    });
   }
 
   @Get('students/:userId/activities')
@@ -136,4 +139,3 @@ export class ReportsController {
     });
   }
 }
-

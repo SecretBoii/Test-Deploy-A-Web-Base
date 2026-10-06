@@ -23,7 +23,6 @@ import {
   BookOpen,
   GraduationCap,
   Clock,
-  Activity,
   Copy,
   Check,
 } from 'lucide-react';
@@ -237,39 +236,6 @@ export function UserDetailDialog({
                     px: 0.5,
                   }}
                 />
-
-                {/* สถานะการเชื่อมต่อ */}
-                <Box
-                  sx={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.75,
-                    bgcolor: user.isOnline ? '#ecfdf5' : '#f1f5f9',
-                    px: 1.2,
-                    py: 0.3,
-                    borderRadius: '6px',
-                    border: `1px solid ${user.isOnline ? '#a7f3d0' : '#e2e8f0'}`,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 7,
-                      height: 7,
-                      borderRadius: '50%',
-                      bgcolor: user.isOnline ? '#10b981' : '#94a3b8',
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: user.isOnline ? '#059669' : '#64748b',
-                      fontWeight: 600,
-                      fontSize: '12px',
-                    }}
-                  >
-                    {user.isOnline ? 'ออนไลน์' : 'ออฟไลน์'}
-                  </Typography>
-                </Box>
               </Box>
             </Box>
           </Box>
@@ -491,7 +457,7 @@ export function UserDetailDialog({
             ประวัติการใช้งานระบบ (System Logs)
           </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12 }}>
               <Box sx={{ p: 2, bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
                 <Typography
                   variant="caption"
@@ -501,19 +467,6 @@ export function UserDetailDialog({
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '14.5px' }}>
                   {formatDateTime(user.registerTimestamp)}
-                </Typography>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
-              <Box sx={{ p: 2, bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <Activity size={15} color="#64748b" /> การเข้าใช้งานล่าสุด
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '14.5px' }}>
-                  {user.lastActiveAt ? formatDateTime(user.lastActiveAt) : 'ยังไม่เคยเข้าสู่ระบบ'}
                 </Typography>
               </Box>
             </Grid>

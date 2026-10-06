@@ -47,7 +47,9 @@ export class AuthService {
 
     for (const u of existingUsers) {
       if (await bcrypt.compare(dto.password, u.password)) {
-        throw new Error('Username และ Password นี้ถูกใช้งานร่วมกันโดยบัญชีอื่นแล้ว');
+        throw new Error(
+          'Username และ Password นี้ถูกใช้งานร่วมกันโดยบัญชีอื่นแล้ว',
+        );
       }
     }
 
@@ -233,7 +235,9 @@ export class AuthService {
 
       for (const u of otherUsers) {
         if (await bcrypt.compare(dto.password, u.password)) {
-          throw new BadRequestException('Username และ Password นี้ถูกใช้งานร่วมกันโดยบัญชีอื่นแล้ว');
+          throw new BadRequestException(
+            'Username และ Password นี้ถูกใช้งานร่วมกันโดยบัญชีอื่นแล้ว',
+          );
         }
       }
 
