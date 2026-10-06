@@ -87,6 +87,7 @@ export interface ExerciseStudentItem {
   isAttempted: boolean;
   status: 'PASSED' | 'FAILED' | 'NOT_SUBMITTED';
   bestScore: number | null;
+  hasUsedHint?: boolean;
   runCount: number;
   submitCount: number;
   totalAttempts: number;

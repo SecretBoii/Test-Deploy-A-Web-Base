@@ -78,7 +78,7 @@ export class ExercisesController {
       action: 'SUBMIT_EXERCISE',
       entity: 'Exercise',
       entityId: exerciseId,
-      details: { runCount, sessionId },
+      details: { runCount, hintUsed, sessionId },
     });
     return result;
   }

@@ -24,7 +24,6 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
   const [difficultyFilter, setDifficultyFilter] = useState<string>('');
   const [topicFilter, setTopicFilter] = useState<string>('');
   const [passRateFilter, setPassRateFilter] = useState<string>('');
-  const [attemptFilter, setAttemptFilter] = useState<string>('');
 
   const handleChangePage = (_: React.MouseEvent<HTMLButtonElement> | null, newPage: number) => {
     setPage(newPage);
@@ -35,16 +34,21 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
     setPage(0);
   };
 
-  // ดึงรายการหัวข้อบทเรียนทั้งหมดที่มีในข้อมูลแบบไดนามิก
-  const availableTopics = useMemo(() => {
-    return Array.from(new Set(data.map((d) => d.topic).filter(Boolean)));
+  // กรองเฉพาะโจทย์ที่มีผู้เข้าทำจริงเท่านั้น (Strict Rule: attemptedStudents > 0)
+  const attemptedExercises = useMemo(() => {
+    return data.filter((ex) => (ex.attemptedStudents ?? 0) > 0);
   }, [data]);
+
+  // ดึงรายการหัวข้อบทเรียนทั้งหมดที่มีในข้อมูลแบบไดนามิกเฉพาะข้อที่มีการเข้าทำ
+  const availableTopics = useMemo(() => {
+    return Array.from(new Set(attemptedExercises.map((d) => d.topic).filter(Boolean)));
+  }, [attemptedExercises]);
 
   // กรองข้อมูลโจทย์ตามตัวกรองที่เลือก และคำค้นหา
   const filteredData = useMemo(() => {
     const q = search.toLowerCase().trim();
 
-    return data.filter((ex) => {
+    return attemptedExercises.filter((ex) => {
       // 0. กรองตามคำค้นหา (ชื่อโจทย์ หรือ หัวข้อบทเรียน)
       if (q) {
         const matchesTitle = ex.title?.toLowerCase().includes(q);
@@ -59,7 +63,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
       if (topicFilter && ex.topic !== topicFilter) {
         return false;
       }
-      // 3. กรองตามอัตราการผ่าน (แบบที่ 1: เกณฑ์ 50% ครึ่งหนึ่ง)
+      // 3. กรองตามอัตราการผ่าน (เกณฑ์ 50% ครึ่งหนึ่ง)
       const passRate = ex.passRateAttempted ?? ex.successRate;
       const attempted = ex.attemptedStudents ?? 0;
 
@@ -73,16 +77,12 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
         if (attempted === 0 || passRate > 0) return false;
       }
 
-      // 4. กรองตามสถานะการเข้าทำ
-      if (attemptFilter === 'attempted' && attempted === 0) return false;
-      if (attemptFilter === 'not_attempted' && attempted > 0) return false;
-
       return true;
     });
-  }, [data, search, difficultyFilter, topicFilter, passRateFilter, attemptFilter]);
+  }, [attemptedExercises, search, difficultyFilter, topicFilter, passRateFilter]);
 
   const isFiltered = Boolean(
-    search.trim() || difficultyFilter || topicFilter || passRateFilter || attemptFilter
+    search.trim() || difficultyFilter || topicFilter || passRateFilter
   );
 
   const handleResetFilters = () => {
@@ -90,17 +90,21 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
     setDifficultyFilter('');
     setTopicFilter('');
     setPassRateFilter('');
-    setAttemptFilter('');
     setPage(0);
   };
 
+  // เรียงลำดับรายการโจทย์ตาม exerciseId จากน้อยไปมากเป็นค่าเริ่มต้น
+  const sortedData = useMemo(() => {
+    return [...filteredData].sort((a, b) => a.exerciseId - b.exerciseId);
+  }, [filteredData]);
+
   // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
   const safePage = (page >= totalPages && totalPages > 0) ? 0 : page;
 
   const paginatedData = useMemo(() => {
-    return filteredData.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
-  }, [filteredData, safePage, rowsPerPage]);
+    return sortedData.slice(safePage * rowsPerPage, safePage * rowsPerPage + rowsPerPage);
+  }, [sortedData, safePage, rowsPerPage]);
   
   // สไตล์และข้อความแสดงระดับความยาก 5 ระดับ (Bloom's Taxonomy)
   const getDifficultyChip = (level: number) => {
@@ -171,7 +175,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
       {/* Header ของตารางวิเคราะห์โจทย์ */}
       <Box sx={{ mb: 2 }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
-          สถิติประสิทธิภาพโจทย์แบบฝึกหัด ({filteredData.length}{isFiltered ? ` / ${data.length}` : ''} ข้อ)
+          สถิติประสิทธิภาพโจทย์ที่มีการเข้าทำ ({sortedData.length}{isFiltered ? ` / ${attemptedExercises.length}` : ''} ข้อ)
         </Typography>
       </Box>
 
@@ -271,25 +275,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
           </Select>
         </FormControl>
 
-        {/* 4. กรองสถานะผู้เข้าทำ - กว้าง 160px */}
-        <FormControl size="small" sx={{ width: { xs: '100%', sm: 160 }, flexShrink: 0 }}>
-          <InputLabel sx={labelSx}>สถานะการเข้าทำ</InputLabel>
-          <Select
-            value={attemptFilter}
-            onChange={(e) => {
-              setAttemptFilter(e.target.value);
-              setPage(0);
-            }}
-            label="สถานะการเข้าทำ"
-            sx={selectSx}
-          >
-            <MenuItem value="">ทั้งหมด</MenuItem>
-            <MenuItem value="attempted">มีคนเข้าทำแล้ว</MenuItem>
-            <MenuItem value="not_attempted">ยังไม่มีคนทำ (0 คน)</MenuItem>
-          </Select>
-        </FormControl>
-
-        {/* 5. ปุ่มล้างตัวกรองปุ่มเดียว (รีเซ็ตทั้งค้นหาและ Dropdown ทั้งหมด) */}
+        {/* 4. ปุ่มล้างตัวกรองปุ่มเดียว (รีเซ็ตทั้งค้นหาและ Dropdown ทั้งหมด) */}
         <Button
           variant="outlined"
           onClick={handleResetFilters}
@@ -355,7 +341,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                 <TableCell colSpan={8} align="center" sx={{ py: 6 }}>
                   <HelpCircle size={36} color="#cbd5e1" style={{ marginBottom: 8 }} />
                   <Typography sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '14px' }}>
-                    {isFiltered ? 'ไม่พบโจทย์ที่ตรงกับเงื่อนไขตัวกรองที่เลือก' : 'ไม่พบข้อมูลสถิติโจทย์'}
+                    {isFiltered ? 'ไม่พบโจทย์ที่ตรงกับเงื่อนไขตัวกรองที่เลือก' : 'ยังไม่มีแบบฝึกหัดที่มีผู้เข้าทำในระบบ'}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -380,7 +366,9 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                   >
                     <TableCell>
                       <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>{exercise.title}</Typography>
-                      <Typography variant="caption" sx={{ color: '#64748b' }}>หัวข้อ: {exercise.topic}</Typography>
+                      <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.3 }}>
+                        รหัส #{exercise.exerciseId} {exercise.topic ? `• หัวข้อ: ${exercise.topic}` : ''}
+                      </Typography>
                     </TableCell>
                     
                     {/* ระดับความยาก 5 ระดับ */}

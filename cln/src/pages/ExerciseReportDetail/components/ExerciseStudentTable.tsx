@@ -30,13 +30,14 @@ export function ExerciseStudentTable({
   return (
     <>
       <TableContainer sx={{ overflowX: 'auto' }}>
-        <Table sx={{ minWidth: 800 }}>
+        <Table sx={{ minWidth: 900 }}>
           <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
             <TableRow sx={{ '& th': { bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0', py: 1.8, fontWeight: 700, color: '#475569', fontSize: '13px' } }}>
               <TableCell>นักศึกษา</TableCell>
               <TableCell>มหาวิทยาลัย / คณะ</TableCell>
               <TableCell align="center">คะแนนสูงสุด</TableCell>
               <TableCell align="center">สถานะ</TableCell>
+              <TableCell align="center">คำใบ้</TableCell>
               <TableCell align="center">Run (ครั้ง)</TableCell>
               <TableCell align="center">Submit (ครั้ง)</TableCell>
               <TableCell align="center">ส่งตรวจล่าสุด</TableCell>
@@ -46,7 +47,7 @@ export function ExerciseStudentTable({
           <TableBody>
             {students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 6, color: '#94a3b8' }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 6, color: '#94a3b8' }}>
                   <Typography sx={{ fontWeight: 600, fontSize: '14px' }}>
                     ไม่พบข้อมูลนักศึกษาตามเงื่อนไขที่เลือก
                   </Typography>
@@ -65,7 +66,7 @@ export function ExerciseStudentTable({
                 >
                   <TableCell>
                     <Typography sx={{ fontWeight: 800, color: '#0f172a', fontSize: '14px' }}>{st.fullName}</Typography>
-                    <Typography variant="caption" sx={{ color: '#64748b' }}>@{st.username}</Typography>
+                    <Typography variant="caption" sx={{ color: '#64748b' }}>รหัส #{st.userId} • @{st.username}</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#1e293b' }}>{st.university || '-'}</Typography>
@@ -137,6 +138,17 @@ export function ExerciseStudentTable({
                         ยังไม่ส่งตรวจ
                       </Box>
                     )}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Typography
+                      sx={{
+                        color: st.hasUsedHint ? '#0f172a' : '#64748b',
+                        fontSize: '13px',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {st.hasUsedHint ? 'ใช้คำใบ้' : 'ไม่ใช้'}
+                    </Typography>
                   </TableCell>
                   <TableCell align="center">
                     <Typography sx={{ fontWeight: 500, fontSize: '13px', color: '#0f172a' }}>{st.runCount} ครั้ง</Typography>

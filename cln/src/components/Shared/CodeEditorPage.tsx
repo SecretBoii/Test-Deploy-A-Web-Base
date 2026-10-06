@@ -25,6 +25,7 @@ export interface ExerciseDetail {
   status?: string
   hint: string
   runCount?: number
+  hasUsedHint?: boolean
 }
 
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
@@ -52,11 +53,16 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   useEffect(() => {
     if (exerciseId) {
       setLoadingExercise(true)
-      setHintUsed(false)
       apiClient
         .get(`/exercises/${exerciseId}`)
         .then((res) => {
           setExerciseData(res.data)
+          // หากผู้เรียนเคยเปิดดูคำใบ้ในข้อนี้มาก่อน ให้เปิดค้างไว้ตามเดิมแม้จะมีการรีเฟรชหน้าเว็บ
+          if (res.data?.hasUsedHint) {
+            setHintUsed(true)
+          } else {
+            setHintUsed(false)
+          }
         })
         .catch((err) => {
           console.error('Failed to load exercise:', err)

@@ -32,7 +32,7 @@ export function ExerciseKpiCards({ stats }: ExerciseKpiCardsProps) {
             {stats.attemptedCount}
           </Typography>
           <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600 }}>
-            / {stats.totalStudents} คน
+            คน
           </Typography>
         </Box>
       </Card>

@@ -76,17 +76,19 @@ export default function ExerciseReportDetailPage() {
   const exercise = data?.exercise;
   const stats = data?.stats;
 
-  // กรองรายชื่อนักศึกษาตามข้อความค้นหาและสถานะการประเมิน
+  // กรองรายชื่อนักศึกษาตามข้อความค้นหาและสถานะการประเมิน พร้อมเรียงตาม userId จากน้อยไปมากเป็นค่าเริ่มต้น
   const filteredStudents = useMemo(() => {
     if (!data?.students) return [];
-    return data.students.filter((st) => {
-      if (statusFilter && st.status !== statusFilter) return false;
-      if (search.trim()) {
-        const q = search.toLowerCase();
-        return st.fullName.toLowerCase().includes(q) || st.username.toLowerCase().includes(q);
-      }
-      return true;
-    });
+    return data.students
+      .filter((st) => {
+        if (statusFilter && st.status !== statusFilter) return false;
+        if (search.trim()) {
+          const q = search.toLowerCase();
+          return st.fullName.toLowerCase().includes(q) || st.username.toLowerCase().includes(q);
+        }
+        return true;
+      })
+      .sort((a, b) => a.userId - b.userId);
   }, [data?.students, search, statusFilter]);
 
   // ป้องกัน Pagination ค้างหน้าที่เกินจากจำนวนข้อมูลจริงเมื่อผลการกรองลดลง
