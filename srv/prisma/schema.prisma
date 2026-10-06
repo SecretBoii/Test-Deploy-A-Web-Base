@@ -37,7 +37,6 @@ model UserProfile {
   educationId       Int                   @map("education_id")
   roleId            Int                   @map("role_id")
   registerTimestamp DateTime              @default(now()) @map("register_timestamp") @db.Timestamp(6)
-  lastActiveAt      DateTime?             @map("last_active_at") @db.Timestamp(6)
   activities        Activity[]
   education         Education             @relation(fields: [educationId], references: [educationId], onDelete: NoAction, onUpdate: NoAction)
   role              Role                  @relation(fields: [roleId], references: [roleId], onDelete: NoAction, onUpdate: NoAction)

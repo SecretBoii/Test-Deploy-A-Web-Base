@@ -17,7 +17,7 @@ export interface LogFromRequestParams {
   entity: string;
   entityId?: number;
   details?: Record<string, unknown>;
-  customUser?: { userId?: number; username?: string; };
+  customUser?: { userId?: number; username?: string };
 }
 @Injectable()
 export class AuditLogService {
@@ -36,20 +36,17 @@ export class AuditLogService {
     });
   }
 
-  async logFromRequest(
-    req: any,
-    params: LogFromRequestParams,
-  ) {
+  async logFromRequest(req: any, params: LogFromRequestParams) {
     const user = params.customUser || req?.user;
 
-      return this.create({
-        userId: user?.userId || user?.sub,
-        username: user?.username,
-        action: params.action,
-        entity: params.entity,
-        entityId: params.entityId,
-        details: params.details,
-      });
+    return this.create({
+      userId: user?.userId || user?.sub,
+      username: user?.username,
+      action: params.action,
+      entity: params.entity,
+      entityId: params.entityId,
+      details: params.details,
+    });
   }
 
   async findAll(query: AuditLogDto) {
@@ -62,11 +59,15 @@ export class AuditLogService {
       dateWhere.createdAt = {};
       if (startDate) {
         const start = new Date(`${startDate}T00:00:00`);
-        dateWhere.createdAt.gte = isNaN(start.getTime()) ? new Date(startDate) : start;
+        dateWhere.createdAt.gte = isNaN(start.getTime())
+          ? new Date(startDate)
+          : start;
       }
       if (endDate) {
         const end = new Date(`${endDate}T23:59:59.999`);
-        dateWhere.createdAt.lte = isNaN(end.getTime()) ? new Date(endDate) : end;
+        dateWhere.createdAt.lte = isNaN(end.getTime())
+          ? new Date(endDate)
+          : end;
       }
     }
 
@@ -203,7 +204,8 @@ export class AuditLogService {
       // ประกอบชื่อ-นามสกุลจริงของผู้ใช้งาน
       let fullName: string | undefined = undefined;
       if (log.user?.firstName || log.user?.lastName) {
-        fullName = `${log.user.firstName || ''} ${log.user.lastName || ''}`.trim();
+        fullName =
+          `${log.user.firstName || ''} ${log.user.lastName || ''}`.trim();
       }
 
       const { user, ...rest } = log;

@@ -1,5 +1,5 @@
 import { Box, Card, Typography, Skeleton } from '@mui/material';
-import { Users, Wifi, GraduationCap, BookOpen, ShieldCheck } from 'lucide-react';
+import { Users, GraduationCap, BookOpen, ShieldCheck } from 'lucide-react';
 import type { UserStats } from '../../../api/users';
 
 interface UserStatsHeaderProps {
@@ -9,7 +9,6 @@ interface UserStatsHeaderProps {
 
 export function UserStatsHeader({ stats, loading }: UserStatsHeaderProps) {
   const total = stats?.total || 0;
-  const onlineCount = stats?.onlineCount || 0;
   const studentCount = stats?.studentCount || 0;
   const teacherCount = stats?.teacherCount || 0;
   const adminCount = stats?.adminCount || 0;
@@ -21,13 +20,6 @@ export function UserStatsHeader({ stats, loading }: UserStatsHeaderProps) {
       unit: 'คน',
       icon: <Users size={22} color="#2563eb" />,
       bgColor: '#eff6ff',
-    },
-    {
-      title: 'กำลังออนไลน์',
-      value: onlineCount.toLocaleString(),
-      unit: 'คน',
-      icon: <Wifi size={22} color="#059669" />,
-      bgColor: '#ecfdf5',
     },
     {
       title: 'นักเรียน',
@@ -59,8 +51,7 @@ export function UserStatsHeader({ stats, loading }: UserStatsHeaderProps) {
         gridTemplateColumns: {
           xs: '1fr',
           sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-          lg: 'repeat(5, 1fr)',
+          md: 'repeat(4, 1fr)',
         },
         gap: 2,
       }}

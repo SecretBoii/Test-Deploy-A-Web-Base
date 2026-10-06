@@ -40,7 +40,6 @@ export class UsersController {
     @CurrentUser() adminUser: any,
     @Query('search') search?: string,
     @Query('roleId') roleId?: string,
-    @Query('status') status?: 'online' | 'offline',
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
@@ -51,7 +50,6 @@ export class UsersController {
     return await this.usersService.findAll(
       search,
       parsedRoleId,
-      status,
       parsedPage,
       parsedLimit,
     );
@@ -88,7 +86,6 @@ export class UsersController {
     return createdUser;
   }
 
-
   @Put(':id')
   async updateUser(
     @CurrentUser() adminUser: any,
@@ -97,7 +94,10 @@ export class UsersController {
     @Req() req: any,
   ) {
     this.checkAdmin(adminUser);
-    const updatedUser = await this.usersService.update(Number(id), updateUserDto);
+    const updatedUser = await this.usersService.update(
+      Number(id),
+      updateUserDto,
+    );
     await this.auditLogService.logFromRequest(req, {
       action: 'UPDATE_USER',
       entity: 'UserProfile',
@@ -109,7 +109,6 @@ export class UsersController {
     });
     return updatedUser;
   }
-
 
   @Delete(':id')
   async deleteUser(
@@ -127,5 +126,4 @@ export class UsersController {
     });
     return result;
   }
-
 }

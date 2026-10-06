@@ -28,7 +28,6 @@ export function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<number | ''>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
   
   // State สำหรับ สรุปสถิติภาพรวม และ Pagination
   const [stats, setStats] = useState<UserStats | undefined>(undefined);
@@ -37,12 +36,11 @@ export function UsersPage() {
   const [rowsPerPage, setRowsPerPage] = useState<number>(10);
 
   // เช็คว่ามีการตั้งค่าตัวกรองอยู่หรือไม่
-  const isFiltered = Boolean(search.trim() || roleFilter !== '' || statusFilter !== '');
+  const isFiltered = Boolean(search.trim() || roleFilter !== '');
 
   const handleResetFilters = () => {
     setSearch('');
     setRoleFilter('');
-    setStatusFilter('');
     setPage(0);
   };
 
@@ -63,7 +61,7 @@ export function UsersPage() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [page, rowsPerPage, search, roleFilter, statusFilter]);
+  }, [page, rowsPerPage, search, roleFilter]);
 
   const fetchUsers = async () => {
     try {
@@ -74,7 +72,6 @@ export function UsersPage() {
       };
       if (search.trim()) params.search = search.trim();
       if (roleFilter !== '') params.roleId = roleFilter;
-      if (statusFilter !== '') params.status = statusFilter;
       const res = await getUsers(params);
       setUsers(res.data || []);
       setTotal(res.total || 0);
@@ -157,19 +154,6 @@ export function UsersPage() {
       month: '2-digit',
       year: 'numeric',
     });
-  };
-
-  const getRelativeTime = (dateString?: string) => {
-    if (!dateString) return 'ไม่มีข้อมูล';
-    const diff = Date.now() - new Date(dateString).getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (minutes < 1) return 'เมื่อสักครู่';
-    if (minutes < 60) return `เมื่อ ${minutes} นาทีที่แล้ว`;
-    if (hours < 24) return `เมื่อ ${hours} ชั่วโมงที่แล้ว`;
-    return `เมื่อ ${days} วันที่แล้ว`;
   };
 
   const handleConfirmExecute = async () => {
@@ -271,29 +255,6 @@ export function UsersPage() {
               </Select>
             </FormControl>
 
-            <FormControl size="small" sx={{ minWidth: 160 }}>
-              <InputLabel sx={{ fontSize: '13px', fontWeight: 700, color: '#475569' }}>สถานะ</InputLabel>
-              <Select
-                value={statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value as string);
-                  setPage(0);
-                }}
-                label="สถานะ"
-                sx={{
-                  borderRadius: '12px',
-                  bgcolor: '#f8fafc',
-                  height: '46px',
-                  '& .MuiOutlinedInput-notchedOutline': { border: '1px solid #e2e8f0' },
-                  '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#cbd5e1' },
-                }}
-              >
-                <MenuItem value="">ทั้งหมด</MenuItem>
-                <MenuItem value="online">Online</MenuItem>
-                <MenuItem value="offline">Offline</MenuItem>
-              </Select>
-            </FormControl>
-
             <Tooltip title="รีเฟรชข้อมูล">
               <IconButton
                 onClick={() => {
@@ -361,7 +322,6 @@ export function UsersPage() {
               onDelete={handleDeleteClick}
               onPreview={(user) => setPreviewUser(user)}
               formatDate={formatDate}
-              getRelativeTime={getRelativeTime}
               total={total}
               page={page}
               rowsPerPage={rowsPerPage}

@@ -23,21 +23,17 @@ export interface User {
   roleId: number;
   role: UserRole;
   education: UserEducation;
-  isOnline: boolean;
-  lastActiveAt?: string;
 }
 
 export interface UserFilterParams {
     search?: string;
     roleId?: number;
-    status?: string;
     page?: number;
     limit?: number;
 }
 
 export interface UserStats {
     total: number;
-    onlineCount: number;
     studentCount: number;
     teacherCount: number;
     adminCount?: number;
@@ -57,7 +53,6 @@ export const getUsers = async (params: UserFilterParams): Promise<GetUsersRespon
     // ป้องกันกรณีที่ Backend คืนค่าเป็น Array แบบเดิม โดยเพิ่ม client-side pagination fallback
     if (Array.isArray(response.data)) {
         const total = response.data.length;
-        const onlineCount = response.data.filter((u) => u.isOnline).length;
         const studentCount = response.data.filter((u) => u.roleId === 1).length;
         const teacherCount = response.data.filter((u) => u.roleId === 2).length;
         const adminCount = response.data.filter((u) => u.roleId === 3).length;
@@ -70,7 +65,6 @@ export const getUsers = async (params: UserFilterParams): Promise<GetUsersRespon
             total,
             stats: {
                 total,
-                onlineCount,
                 studentCount,
                 teacherCount,
                 adminCount,
@@ -93,7 +87,7 @@ export const createUser = async (data: Omit<User, 'userId' | 'registerTimestamp'
     return response.data;
 }
 
-export const updateUser = async (id: number, data: Partial<Omit<User, 'userId' | 'role' | 'registerTimestamp' | 'isOnline'>> & { password?: string }) => {
+export const updateUser = async (id: number, data: Partial<Omit<User, 'userId' | 'role' | 'registerTimestamp'>> & { password?: string }) => {
     const response = await apiClient.put<User>(`/users/${id}`, data);
     return response.data;
 }

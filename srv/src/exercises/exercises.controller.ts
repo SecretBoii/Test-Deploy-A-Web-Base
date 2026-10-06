@@ -1,4 +1,16 @@
-import { Controller, Post, Body, Get, Param, Query, UseGuards, Put, Delete, ForbiddenException, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  UseGuards,
+  Put,
+  Delete,
+  ForbiddenException,
+  Req,
+} from '@nestjs/common';
 import { ExercisesService } from './exercises.service';
 import { ExercisesGradingService } from './exercises-grading.service';
 import { ExercisesProgressService } from './exercises-progress.service';
@@ -20,10 +32,11 @@ export class ExercisesController {
   @Post('run')
   async runCode(
     @Body() submitExerciseDto: SubmitExerciseDto,
-    @CurrentUser() user: any, 
+    @CurrentUser() user: any,
     @Req() req: any,
   ) {
-    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } = submitExerciseDto;
+    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } =
+      submitExerciseDto;
     const result = await this.exercisesService.submitExercise(
       user.userId,
       exerciseId,
@@ -49,7 +62,8 @@ export class ExercisesController {
     @CurrentUser() user: any,
     @Req() req: any,
   ) {
-    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } = submitExerciseDto;
+    const { exerciseId, sourceCode, hintUsed, sessionId, runCount } =
+      submitExerciseDto;
     const result = await this.exercisesService.submitExercise(
       user.userId,
       exerciseId,
@@ -68,7 +82,6 @@ export class ExercisesController {
     });
     return result;
   }
-
 
   @Get('test-skills')
   async testSkills() {
@@ -98,13 +111,17 @@ export class ExercisesController {
 
   @Get('history')
   async getHistory(
-    @CurrentUser() user: any, 
+    @CurrentUser() user: any,
     @Query('limit') limit?: string,
     @Query('page') page?: string,
   ) {
     const limitNum = limit ? Number(limit) : undefined;
     const pageNum = page ? Number(page) : 1;
-    return await this.progressService.getHistory(user.userId, limitNum, pageNum);
+    return await this.progressService.getHistory(
+      user.userId,
+      limitNum,
+      pageNum,
+    );
   }
 
   // API ดึงข้อมูล Sessions ย่อยทั้งหมดใน Level นั้นๆ พร้อมข้อมูลโจทย์ใน Session (ต้องวางก่อน :id)
@@ -113,19 +130,28 @@ export class ExercisesController {
     @Param('level') level: string,
     @CurrentUser() user: any,
   ) {
-    return await this.progressService.getLevelSessions(Number(level), user.userId);
+    return await this.progressService.getLevelSessions(
+      Number(level),
+      user.userId,
+    );
   }
 
   @Get('manage/all')
   async getAllExercises(@CurrentUser() user: any) {
     if (user.roleId !== 2 && user.roleId !== 3) {
-      throw new ForbiddenException('Only teachers and admins can view all exercises.');
+      throw new ForbiddenException(
+        'Only teachers and admins can view all exercises.',
+      );
     }
     return await this.exercisesService.getAllExercisesForManage();
   }
 
   @Post()
-  async create(@Body() dto: CreateExerciseDto, @CurrentUser() user: any, @Req() req: any) {
+  async create(
+    @Body() dto: CreateExerciseDto,
+    @CurrentUser() user: any,
+    @Req() req: any,
+  ) {
     if (user.roleId !== 2) {
       throw new ForbiddenException('Only teachers can create exercises.');
     }
@@ -134,7 +160,11 @@ export class ExercisesController {
       action: 'CREATE_EXERCISE',
       entity: 'Exercise',
       entityId: created.exerciseId,
-      details: { title: created.title, topic: created.topic, difficulty: created.difficultyLevel },
+      details: {
+        title: created.title,
+        topic: created.topic,
+        difficulty: created.difficultyLevel,
+      },
     });
     return created;
   }
@@ -160,7 +190,11 @@ export class ExercisesController {
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string, @CurrentUser() user: any, @Req() req: any) {
+  async delete(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Req() req: any,
+  ) {
     if (user.roleId !== 2) {
       throw new ForbiddenException('Only teachers can delete exercises.');
     }
@@ -174,12 +208,9 @@ export class ExercisesController {
     return deleted;
   }
 
-
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
   @Get(':id')
-  async getExerciseById(
-    @Param('id') id: string,
-    @CurrentUser() user: any,) {
-    return await this.exercisesService.getExerciseById(Number(id),user.userId);
+  async getExerciseById(@Param('id') id: string, @CurrentUser() user: any) {
+    return await this.exercisesService.getExerciseById(Number(id), user.userId);
   }
 }

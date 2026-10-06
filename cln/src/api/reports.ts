@@ -24,7 +24,6 @@ export interface StudentReportData {
   totalRuns?: number;
   totalSubmissions?: number;
   passedSubmissions?: number;
-  lastActiveAt?: string;
 }
 
 export interface StudentActivityItem {
@@ -195,7 +194,6 @@ export interface StudentActivitiesResponse {
     university: string;
     faculty: string;
     major: string;
-    lastActiveAt?: string;
   } | null;
   totalExercises: number;
   stats?: StudentActivitiesStats;

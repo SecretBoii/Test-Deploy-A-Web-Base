@@ -31,7 +31,9 @@ export class CreateSessionDto {
   duration: number;
 
   @IsString()
-  @IsIn(['active', 'inactive'], { message: 'สถานะต้องเป็น active หรือ inactive เท่านั้น' })
+  @IsIn(['active', 'inactive'], {
+    message: 'สถานะต้องเป็น active หรือ inactive เท่านั้น',
+  })
   status: string;
 
   @IsOptional()

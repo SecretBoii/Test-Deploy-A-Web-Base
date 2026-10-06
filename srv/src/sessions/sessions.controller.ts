@@ -41,7 +41,10 @@ export class SessionsController {
   }
 
   @Get(':id')
-  async getSessionById(@Param('id', ParseIntPipe) id: number, @CurrentUser() user: any) {
+  async getSessionById(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() user: any,
+  ) {
     this.checkTeacherRole(user);
     return await this.sessionsService.findOne(id);
   }

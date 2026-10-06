@@ -21,7 +21,6 @@ interface UserTableProps {
   onDelete: (id: number, username: string) => void;
   onPreview: (user: User) => void;
   formatDate: (dateString?: string) => string;
-  getRelativeTime: (dateString?: string) => string;
   total?: number;
   page?: number;
   rowsPerPage?: number;
@@ -35,7 +34,6 @@ export function UserTable({
   onDelete,
   onPreview,
   formatDate,
-  getRelativeTime,
   total,
   page,
   rowsPerPage,
@@ -103,16 +101,6 @@ export function UserTable({
           sx={{ bgcolor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}
         >
           <TableRow>
-            <TableCell
-              sx={{
-                fontWeight: 700,
-                color: "#475569",
-                fontSize: "13px",
-                py: 1.8,
-              }}
-            >
-              สถานะการเชื่อมต่อ
-            </TableCell>
             <TableCell
               sx={{
                 fontWeight: 700,
@@ -191,7 +179,7 @@ export function UserTable({
           {users.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={8}
+                colSpan={7}
                 align="center"
                 sx={{ py: 8, color: "#94a3b8" }}
               >
@@ -207,61 +195,7 @@ export function UserTable({
                 hover
                 sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
               >
-                {/* 1. ไฟแจ้งเตือน Online / Offline */}
-                <TableCell sx={{ py: 2 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.2 }}>
-                    <Box
-                      sx={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: "50%",
-                        bgcolor: user.isOnline ? "#10b981" : "#cbd5e1",
-                        boxShadow: user.isOnline
-                          ? "0 0 0 0 rgba(16, 185, 129, 0.7)"
-                          : "none",
-                        animation: user.isOnline
-                          ? "pulse 1.8s infinite"
-                          : "none",
-                        "@keyframes pulse": {
-                          "0%": {
-                            transform: "scale(0.95)",
-                            boxShadow: "0 0 0 0 rgba(16, 185, 129, 0.7)",
-                          },
-                          "70%": {
-                            transform: "scale(1)",
-                            boxShadow: "0 0 0 5px rgba(16, 185, 129, 0)",
-                          },
-                          "100%": {
-                            transform: "scale(0.95)",
-                            boxShadow: "0 0 0 0 rgba(16, 185, 129, 0)",
-                          },
-                        },
-                      }}
-                    />
-                    <Tooltip
-                      title={
-                        user.isOnline
-                          ? "กำลังเชื่อมต่ออินเทอร์เน็ต"
-                          : `ล็อกอินล่าสุด: ${formatDate(user.lastActiveAt)}`
-                      }
-                    >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontWeight: 600,
-                          color: user.isOnline ? "#0f966a" : "#64748b",
-                          fontSize: "13px",
-                        }}
-                      >
-                        {user.isOnline
-                          ? "Online"
-                          : getRelativeTime(user.lastActiveAt)}
-                      </Typography>
-                    </Tooltip>
-                  </Box>
-                </TableCell>
-
-                {/* 2. รายละเอียดรายแถว */}
+                {/* รายละเอียดรายแถว */}
                 <TableCell
                   sx={{
                     fontWeight: 800,
