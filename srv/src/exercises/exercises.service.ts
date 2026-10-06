@@ -32,7 +32,7 @@ export class ExercisesService {
 
     // ป้องกันกรณี userId เป็น undefined หรือ NaN เพื่อไม่ให้ระบบค้าง/Error ตอน Query Database
     if (!userId || isNaN(userId)) {
-      return { ...exercise, runCount: 0 };
+      return { ...exercise, runCount: 0, hasUsedHint: false };
     }
 
     const latestSubmit = await this.prisma.activity.findFirst({
@@ -61,7 +61,22 @@ export class ExercisesService {
       },
     });
 
-    return { ...exercise, runCount };
+    // ตรวจสอบประวัติว่าผู้เรียนเคยเปิดดูคำใบ้ (Hint) ในโจทย์ข้อนี้มาก่อนหรือไม่ เพื่อให้ Frontend จดจำสถานะได้
+    // ใช้ select เฉพาะ activityId เพื่อลดภาระการดึงก้อนข้อมูลขนาดใหญ่จากฐานข้อมูล
+    const hintActivity = await this.prisma.activity.findFirst({
+      where: {
+        userId: Number(userId),
+        exerciseId: id,
+        hintUsed: true,
+      },
+      select: { activityId: true },
+    });
+
+    return {
+      ...exercise,
+      runCount,
+      hasUsedHint: Boolean(hintActivity),
+    };
   }
 
   async submitExercise(
@@ -183,6 +198,21 @@ export class ExercisesService {
           }
         }
 
+        // ตรวจสอบสถานะการใช้งานคำใบ้ (Hint) อย่างครอบคลุม:
+        // หากส่งมาเป็น true หรือรอบ Run ล่าสุดเป็น true อยู่แล้ว ให้ใช้ค่านั้นทันทีโดยไม่ต้อง Query ฐานข้อมูลซ้ำซ้อน
+        let isHintUsed = Boolean(hintUsed || latestRun.hintUsed);
+        if (!isHintUsed) {
+          const hasUsedHintBefore = await this.prisma.activity.findFirst({
+            where: {
+              userId: Number(userId),
+              exerciseId: Number(exerciseId),
+              hintUsed: true,
+            },
+            select: { activityId: true },
+          });
+          isHintUsed = Boolean(hasUsedHintBefore);
+        }
+
         const activity = await this.prisma.activity.create({
           data: {
             userId: Number(userId),
@@ -190,7 +220,7 @@ export class ExercisesService {
             sessionId: sessionId,
             startedAt: startedAtTime,
             submittedAt: new Date(),
-            hintUsed: latestRun.hintUsed,
+            hintUsed: isHintUsed,
             answer: latestRun.answer,
             score: latestRun.score,
             status: 'SUCCESS',
@@ -211,6 +241,20 @@ export class ExercisesService {
       }
 
       // กรณี 'run' สร้าง Activity ชั่วคราวและส่งเข้าคิวงาน
+      // หากส่งมาเป็น true อยู่แล้ว ให้ใช้ได้ทันทีโดยไม่ต้อง Query ซ้ำซ้อน
+      let isHintUsedForRun = Boolean(hintUsed);
+      if (!isHintUsedForRun) {
+        const hasUsedHintBeforeRun = await this.prisma.activity.findFirst({
+          where: {
+            userId: Number(userId),
+            exerciseId: Number(exerciseId),
+            hintUsed: true,
+          },
+          select: { activityId: true },
+        });
+        isHintUsedForRun = Boolean(hasUsedHintBeforeRun);
+      }
+
       const activity = await this.prisma.activity.create({
         data: {
           userId: Number(userId),
@@ -218,7 +262,7 @@ export class ExercisesService {
           sessionId: sessionId,
           startedAt: new Date(),
           submittedAt: new Date(),
-          hintUsed: hintUsed,
+          hintUsed: isHintUsedForRun,
           answer: sourceCode,
           score: 0,
           status: 'PENDING',
@@ -242,7 +286,7 @@ export class ExercisesService {
         sourceCode,
         event_type,
         run_count,
-        hintUsed,
+        hintUsed: isHintUsedForRun,
         testInput: testInputs,
       });
 

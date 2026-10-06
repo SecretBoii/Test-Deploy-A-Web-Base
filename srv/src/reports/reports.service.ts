@@ -288,16 +288,55 @@ export class ReportsService {
       },
     });
 
-    // 2. ดึงข้อมูลโจทย์พร้อมกิจกรรม (Activities) โดยกรองตามชื่อโจทย์หรือหัวข้อหากมีคำค้นหา
+    // 2. ดึงเฉพาะโจทย์ที่มีนักศึกษาเข้าทำจริง (มีกิจกรรม run หรือ submit) เรียงตาม exerciseId จากน้อยไปมาก
     const exercises = await this.prisma.exercise.findMany({
-      where: filters.search
-        ? {
-            OR: [
-              { title: { contains: filters.search, mode: 'insensitive' } },
-              { topic: { contains: filters.search, mode: 'insensitive' } },
-            ],
-          }
-        : undefined,
+      where: {
+        ...(filters.search
+          ? {
+              OR: [
+                { title: { contains: filters.search, mode: 'insensitive' } },
+                { topic: { contains: filters.search, mode: 'insensitive' } },
+              ],
+            }
+          : {}),
+        activities: {
+          some: {
+            user: {
+              roleId: 1,
+              ...(filters.education
+                ? {
+                    education: {
+                      OR: [
+                        {
+                          university: {
+                            contains: filters.education,
+                            mode: 'insensitive',
+                          },
+                        },
+                        {
+                          faculty: {
+                            contains: filters.education,
+                            mode: 'insensitive',
+                          },
+                        },
+                      ],
+                    },
+                  }
+                : {}),
+            },
+            eventType: { in: ['run', 'submit'] },
+            ...(dateRange.start || dateRange.end
+              ? {
+                  createdAt: {
+                    gte: dateRange.start,
+                    lte: dateRange.end,
+                  },
+                }
+              : {}),
+          },
+        },
+      },
+      orderBy: { exerciseId: 'asc' },
       include: {
         activities: {
           where: {
@@ -500,7 +539,8 @@ export class ReportsService {
           orderBy: { submittedAt: 'desc' },
         },
       },
-      orderBy: { firstName: 'asc' },
+      // เรียงลำดับนักศึกษาตาม userId จากน้อยไปมากเป็นค่าเริ่มต้น เพื่อความสะดวกในการตรวจเช็คและเทียบข้อมูลทะเบียน
+      orderBy: { userId: 'asc' },
     });
 
     // 3. รวบรวมสถิติรายบุคคลเฉพาะผู้ที่เข้าทำจริง
@@ -518,6 +558,9 @@ export class ReportsService {
       const isAttempted = acts.length > 0;
       if (isAttempted) attemptedCount += 1;
 
+      // ตรวจสอบว่าผู้เรียนเคยเปิดดูคำใบ้ (Hint) ในโจทย์ข้อนี้หรือไม่
+      const hasUsedHint = acts.some((a) => a.hintUsed === true);
+
       let bestScore = 0;
       const hasSubmit = submits.length > 0;
       if (hasSubmit) {
@@ -531,7 +574,11 @@ export class ReportsService {
       totalRunsSum += runs.length;
       totalSubmitsSum += submits.length;
 
-      const latestSubmit = submits[0] || acts[0] || null;
+      // ค้นหารอบที่ทำได้คะแนนสูงสุด (Best Submit) เพื่อให้ผลการตรวจโค้ดตรงกับคะแนนสูงสุด 100 ในตาราง
+      // หากยังไม่เคย Submit (รันอย่างเดียว) ให้ดึงรอบกิจกรรมล่าสุด
+      const bestSubmit = hasSubmit
+        ? submits.find((s) => s.score === bestScore) || submits[0]
+        : acts[0] || null;
 
       return {
         userId: student.userId,
@@ -542,28 +589,29 @@ export class ReportsService {
         isAttempted: true,
         status: isPassed ? 'PASSED' : hasSubmit ? 'FAILED' : 'NOT_SUBMITTED',
         bestScore: hasSubmit ? bestScore : null,
+        hasUsedHint,
         runCount: runs.length,
         submitCount: submits.length,
         totalAttempts: acts.length,
         lastSubmittedAt:
           hasSubmit && submits[0] ? submits[0].submittedAt : null,
-        latestActivity: latestSubmit
+        latestActivity: bestSubmit
           ? {
-              activityId: latestSubmit.activityId,
+              activityId: bestSubmit.activityId,
               userId: student.userId,
               exerciseId: exercise.exerciseId,
-              sessionId: latestSubmit.sessionId,
-              startedAt: latestSubmit.startedAt,
-              submittedAt: latestSubmit.submittedAt,
-              hintUsed: latestSubmit.hintUsed,
-              score: latestSubmit.score,
-              status: latestSubmit.status,
-              answer: latestSubmit.answer,
-              output: latestSubmit.output,
-              exceptionMessage: latestSubmit.exceptionMessage,
-              aiFeedback: latestSubmit.aiFeedback,
-              eventType: latestSubmit.eventType,
-              runCount: latestSubmit.runCount,
+              sessionId: bestSubmit.sessionId,
+              startedAt: bestSubmit.startedAt,
+              submittedAt: bestSubmit.submittedAt,
+              hintUsed: hasUsedHint || Boolean(bestSubmit.hintUsed),
+              score: bestSubmit.score,
+              status: bestSubmit.status,
+              answer: bestSubmit.answer,
+              output: bestSubmit.output,
+              exceptionMessage: bestSubmit.exceptionMessage,
+              aiFeedback: bestSubmit.aiFeedback,
+              eventType: bestSubmit.eventType,
+              runCount: bestSubmit.runCount,
             }
           : null,
       };

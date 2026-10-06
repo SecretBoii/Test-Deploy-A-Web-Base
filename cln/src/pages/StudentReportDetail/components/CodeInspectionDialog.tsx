@@ -87,6 +87,22 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
               }}
             />
 
+            {/* ชิปแสดงการใช้คำใบ้ */}
+            {activity.hintUsed && (
+              <Chip
+                label="ใช้คำใบ้"
+                size="small"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  bgcolor: '#fef3c7',
+                  color: '#b45309',
+                  border: '1px solid #fde68a',
+                  borderRadius: '6px',
+                }}
+              />
+            )}
+
             {/* ชิปสถานะ Passed / Failed */}
             <Box
               sx={{

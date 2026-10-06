@@ -89,7 +89,7 @@ export function ExerciseStudentFilters({
             <MenuItem value="">ทั้งหมด</MenuItem>
             <MenuItem value="PASSED">ผ่าน (≥ 80)</MenuItem>
             <MenuItem value="FAILED">ยังไม่ผ่าน (&lt; 80)</MenuItem>
-            <MenuItem value="NOT_STARTED">ยังไม่เริ่มทำ</MenuItem>
+            <MenuItem value="NOT_SUBMITTED">ยังไม่ส่งตรวจ</MenuItem>
           </Select>
         </FormControl>
 
