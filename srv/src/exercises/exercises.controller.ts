@@ -45,6 +45,7 @@ export class ExercisesController {
       hintUsed,
       sessionId,
       runCount,
+      user.roleId,
     );
     // บันทึก Audit Log เมื่อนักเรียนกด Run ทดสอบโค้ด
     await this.auditLogService.logFromRequest(req, {
@@ -72,6 +73,7 @@ export class ExercisesController {
       hintUsed,
       sessionId,
       runCount,
+      user.roleId,
     );
     // บันทึก Audit Log เมื่อส่งตรวจงานจริง
     await this.auditLogService.logFromRequest(req, {
@@ -211,6 +213,10 @@ export class ExercisesController {
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
   @Get(':id')
   async getExerciseById(@Param('id') id: string, @CurrentUser() user: any) {
-    return await this.exercisesService.getExerciseById(Number(id), user.userId);
+    return await this.exercisesService.getExerciseById(
+      Number(id),
+      user.userId,
+      user.roleId,
+    );
   }
 }

@@ -244,11 +244,38 @@ export const SessionTable: React.FC<SessionTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* Exercises Count (จำนวนข้อ) - แสดงข้อความธรรมดา ไม่มีกรอบ Chip คลีนสบายตา */}
+                  {/* Exercises Count (จำนวนข้อ) พร้อมป้ายเตือนหากมีข้อ Inactive อยู่ในบทเรียน */}
                   <TableCell sx={{ py: 2, whiteSpace: 'nowrap' }}>
                     <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: '13px' }}>
                       {session.exerciseCount} ข้อ
                     </Typography>
+                    {(() => {
+                      const inactiveCount = (session.exercises || []).filter(
+                        (e) => e.status && e.status.toLowerCase() === 'inactive',
+                      ).length;
+                      if (inactiveCount > 0) {
+                        return (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: '#b45309',
+                              bgcolor: '#fef3c7',
+                              border: '1px solid #fde68a',
+                              px: 0.75,
+                              py: 0.2,
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              display: 'inline-block',
+                              mt: 0.5,
+                            }}
+                          >
+                            Inactive {inactiveCount} ข้อ
+                          </Typography>
+                        );
+                      }
+                      return null;
+                    })()}
                   </TableCell>
 
                   {/* Status (Pill พร้อม Glowing Status Dot ตามแบบ ExerciseTable) */}

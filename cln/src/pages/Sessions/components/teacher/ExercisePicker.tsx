@@ -18,6 +18,7 @@ export interface ExerciseOption {
   topic: string;
   difficultyLevel: number;
   expectedTime: number;
+  status?: string;
 }
 
 export interface ExercisePickerProps {
@@ -37,13 +38,14 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
 }) => {
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerLevelFilter, setPickerLevelFilter] = useState<string>('all');
+  const [pickerStatusFilter, setPickerStatusFilter] = useState<string>('all');
 
   // รายการโจทย์ที่ถูกเลือก เพื่อนำมาแสดงใต้ช่อง Search
   const selectedExercises = useMemo(() => {
     return allExercises.filter((ex) => selectedExerciseIdsSet.has(ex.exerciseId));
   }, [allExercises, selectedExerciseIdsSet]);
 
-  // กรองรายการโจทย์ตามคำค้นหาและระดับความยาก
+  // กรองรายการโจทย์ตามคำค้นหา ระดับความยาก และสถานะ Active/Inactive
   const filteredExercises = useMemo(() => {
     return allExercises.filter((ex) => {
       const matchSearch =
@@ -55,9 +57,15 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
       const matchLevel =
         pickerLevelFilter === 'all' || ex.difficultyLevel === Number(pickerLevelFilter);
 
-      return matchSearch && matchLevel;
+      const isExActive = !ex.status || ex.status.toLowerCase() === 'active';
+      const matchStatus =
+        pickerStatusFilter === 'all' ||
+        (pickerStatusFilter === 'active' && isExActive) ||
+        (pickerStatusFilter === 'inactive' && !isExActive);
+
+      return matchSearch && matchLevel && matchStatus;
     });
-  }, [allExercises, pickerSearch, pickerLevelFilter]);
+  }, [allExercises, pickerSearch, pickerLevelFilter, pickerStatusFilter]);
 
   return (
     <Box
@@ -146,7 +154,7 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
           value={pickerLevelFilter}
           onChange={(e) => setPickerLevelFilter(e.target.value)}
           size="small"
-          sx={{ width: 170 }}
+          sx={{ width: 145 }}
           slotProps={{
             input: {
               sx: {
@@ -167,6 +175,31 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
               Level {lvl}
             </MenuItem>
           ))}
+        </TextField>
+
+        <TextField
+          select
+          value={pickerStatusFilter}
+          onChange={(e) => setPickerStatusFilter(e.target.value)}
+          size="small"
+          sx={{ width: 155 }}
+          slotProps={{
+            input: {
+              sx: {
+                borderRadius: '10px',
+                bgcolor: '#ffffff',
+                border: '1px solid #e2e8f0',
+                height: '38px',
+                fontSize: '13px',
+                fontWeight: 600,
+                '& fieldset': { border: 'none' },
+              },
+            },
+          }}
+        >
+          <MenuItem value="all">สถานะ: ทั้งหมด</MenuItem>
+          <MenuItem value="active">Active เท่านั้น</MenuItem>
+          <MenuItem value="inactive">Inactive เท่านั้น</MenuItem>
         </TextField>
       </Box>
 
@@ -225,32 +258,39 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
               overflowY: 'auto',
             }}
           >
-            {selectedExercises.map((ex) => (
-              <Chip
-                key={ex.exerciseId}
-                label={`#${ex.exerciseId} ${ex.title}`}
-                size="small"
-                onDelete={() => onToggleExercise(ex.exerciseId)}
-                sx={{
-                  bgcolor: '#eef2ff',
-                  color: '#312e81',
-                  border: '1px solid #c7d2fe',
-                  fontWeight: 600,
-                  fontSize: '12px',
-                  borderRadius: '6px',
-                  maxWidth: 260,
-                  '& .MuiChip-label': {
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  },
-                  '& .MuiChip-deleteIcon': {
-                    color: '#6366f1',
-                    '&:hover': { color: '#ef4444' },
-                  },
-                }}
-              />
-            ))}
+            {selectedExercises.map((ex) => {
+              const isInactive = ex.status && ex.status.toLowerCase() === 'inactive';
+              return (
+                <Chip
+                  key={ex.exerciseId}
+                  label={
+                    isInactive
+                      ? `#${ex.exerciseId} ${ex.title} [Inactive]`
+                      : `#${ex.exerciseId} ${ex.title}`
+                  }
+                  size="small"
+                  onDelete={() => onToggleExercise(ex.exerciseId)}
+                  sx={{
+                    bgcolor: isInactive ? '#fef3c7' : '#eef2ff',
+                    color: isInactive ? '#92400e' : '#312e81',
+                    border: `1px solid ${isInactive ? '#fcd34d' : '#c7d2fe'}`,
+                    fontWeight: 600,
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    maxWidth: 280,
+                    '& .MuiChip-label': {
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    },
+                    '& .MuiChip-deleteIcon': {
+                      color: isInactive ? '#b45309' : '#6366f1',
+                      '&:hover': { color: '#ef4444' },
+                    },
+                  }}
+                />
+              );
+            })}
           </Box>
         </Box>
       )}
@@ -287,6 +327,7 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
         ) : (
           filteredExercises.map((ex) => {
             const isChecked = selectedExerciseIdsSet.has(ex.exerciseId);
+            const isInactive = ex.status && ex.status.toLowerCase() === 'inactive';
             const diff = DIFFICULTY_LEVELS[ex.difficultyLevel] || {
               label: `Lv.${ex.difficultyLevel}`,
               bg: '#eff6ff',
@@ -350,8 +391,21 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
                   </Box>
                 </Box>
 
-                {/* Badges: Level & Expected Time */}
+                {/* Badges: Status, Level & Expected Time */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0, ml: 1.5 }}>
+                  <Chip
+                    size="small"
+                    label={isInactive ? 'Inactive' : 'Active'}
+                    sx={{
+                      bgcolor: isInactive ? '#f1f5f9' : '#ecfdf5',
+                      color: isInactive ? '#64748b' : '#059669',
+                      border: `1px solid ${isInactive ? '#e2e8f0' : '#a7f3d0'}`,
+                      fontWeight: 700,
+                      fontSize: '10.5px',
+                      height: '22px',
+                      borderRadius: '6px',
+                    }}
+                  />
                   <Chip
                     size="small"
                     label={`Lv.${ex.difficultyLevel}`}

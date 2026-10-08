@@ -64,6 +64,7 @@ export class ReportsService {
           where: {
             status: { not: 'PENDING' },
             session: { status: 'active' },
+            exercise: { status: 'active' },
             ...(dateRange.start || dateRange.end
               ? {
                   createdAt: {
@@ -85,10 +86,11 @@ export class ReportsService {
       },
     });
 
-    // คำนวณจำนวนภาระงาน/โจทย์ทั้งหมดที่เปิดให้ทำใน Session ที่เปิดใช้งาน (status: 'active')
+    // คำนวณจำนวนภาระงาน/โจทย์ทั้งหมดที่เปิดให้ทำใน Session และ Exercise ที่เปิดใช้งาน (status: 'active')
     const totalExercises = await this.prisma.sessionExercise.count({
       where: {
         session: { status: 'active' },
+        exercise: { status: 'active' },
       },
     });
 
@@ -174,6 +176,7 @@ export class ReportsService {
       where: {
         userId,
         session: { status: 'active' },
+        exercise: { status: 'active' },
       },
       orderBy: { submittedAt: 'desc' },
       include: {
@@ -199,6 +202,7 @@ export class ReportsService {
     const totalExercises = await this.prisma.sessionExercise.count({
       where: {
         session: { status: 'active' },
+        exercise: { status: 'active' },
       },
     });
 
@@ -472,6 +476,7 @@ export class ReportsService {
         title: ex.title,
         topic: ex.topic,
         difficultyLevel: ex.difficultyLevel,
+        status: ex.status,
         attemptedStudents,
         totalStudents,
         passedStudents,

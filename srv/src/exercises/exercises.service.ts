@@ -3,6 +3,7 @@ import {
   Logger,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -18,7 +19,16 @@ export class ExercisesService {
     private readonly prisma: PrismaService,
   ) {}
 
-  async getExerciseById(exerciseId: number | string, userId?: number) {
+  /**
+   * ดึงข้อมูลโจทย์ตาม exerciseId
+   * ป้องกันนักเรียน (roleId === 1) เข้าถึงโจทย์ที่มีสถานะ Inactive ผ่าน Direct URL หรือ Bookmark
+   * แต่อาจารย์และแอดมินยังสามารถเข้าดูเพื่อพรีวิวและทดสอบได้ตามปกติ
+   */
+  async getExerciseById(
+    exerciseId: number | string,
+    userId?: number,
+    userRoleId?: number,
+  ) {
     const id = Number(exerciseId);
     if (isNaN(id)) {
       throw new BadRequestException('Invalid exercise ID');
@@ -28,6 +38,13 @@ export class ExercisesService {
     });
     if (!exercise) {
       throw new NotFoundException('Exercise not found');
+    }
+
+    // ป้องกันนักเรียนเข้าถึงโจทย์ที่ปิดใช้งาน
+    if (userRoleId === 1 && exercise.status !== 'active') {
+      throw new ForbiddenException(
+        'แบบฝึกหัดนี้ยังไม่เปิดให้เข้าใช้งานหรือถูกปิดใช้งานชั่วคราว',
+      );
     }
 
     // ป้องกันกรณี userId เป็น undefined หรือ NaN เพื่อไม่ให้ระบบค้าง/Error ตอน Query Database
@@ -87,6 +104,7 @@ export class ExercisesService {
     hintUsed: boolean,
     sessionIdParam?: number,
     runCountParam?: number,
+    userRoleId?: number,
   ) {
     try {
       const exercise = await this.prisma.exercise.findUnique({
@@ -94,6 +112,13 @@ export class ExercisesService {
       });
       if (!exercise) {
         throw new NotFoundException('Exercise not found');
+      }
+
+      // ป้องกันนักเรียนรันหรือส่งตรวจโจทย์ที่ปิดใช้งาน
+      if (userRoleId === 1 && exercise.status !== 'active') {
+        throw new ForbiddenException(
+          'ไม่สามารถรันหรือส่งตรวจได้ เนื่องจากแบบฝึกหัดนี้ถูกปิดใช้งานชั่วคราว',
+        );
       }
 
       const previousRuns = await this.prisma.activity.count({
@@ -300,7 +325,8 @@ export class ExercisesService {
     } catch (error: any) {
       if (
         error instanceof NotFoundException ||
-        error instanceof BadRequestException
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
       ) {
         throw error;
       }
@@ -389,8 +415,29 @@ export class ExercisesService {
       where: { exerciseId },
     });
     if (!existing) {
-      throw new NotFoundException(`Exercise ID ${exerciseId} not found`);
+      throw new NotFoundException(`ไม่พบโจทย์รหัส ${exerciseId}`);
     }
+
+    // 1. ตรวจสอบประวัติการเข้าทำหรือการส่งงานของนักเรียน
+    const activityCount = await this.prisma.activity.count({
+      where: { exerciseId },
+    });
+    if (activityCount > 0) {
+      throw new BadRequestException(
+        `ไม่สามารถลบโจทย์นี้ได้ เนื่องจากมีประวัติการเข้าทำหรือการส่งงานของนักเรียนแล้ว (${activityCount} รายการ) แนะนำให้เปลี่ยนสถานะเป็น Inactive แทน`,
+      );
+    }
+
+    // 2. ตรวจสอบว่าโจทย์นี้ถูกผูกเข้ากับชุดบทเรียนใดอยู่หรือไม่
+    const sessionExerciseCount = await this.prisma.sessionExercise.count({
+      where: { exerciseId },
+    });
+    if (sessionExerciseCount > 0) {
+      throw new BadRequestException(
+        `ไม่สามารถลบโจทย์นี้ได้ เนื่องจากถูกใช้งานอยู่ในชุดบทเรียน (${sessionExerciseCount} บทเรียน) กรุณานำโจทย์ออกจากบทเรียนก่อน หรือเปลี่ยนสถานะเป็น Inactive แทน`,
+      );
+    }
+
     return await this.prisma.exercise.delete({
       where: { exerciseId },
     });
