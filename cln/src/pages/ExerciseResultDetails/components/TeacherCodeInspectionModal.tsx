@@ -88,6 +88,7 @@ export const TeacherCodeInspectionModal: React.FC<TeacherCodeInspectionModalProp
                 <> • สถาบัน: <span style={{ color: '#334155', fontWeight: 600 }}>{student.university}</span></>
               )}
               {' '}• เวลาส่ง: <span style={{ color: '#334155', fontWeight: 600 }}>{formatThaiDateTime(activity.submittedAt || student.lastSubmittedAt || undefined)}</span>
+              {' '}• คำใบ้: <span style={{ color: student.hasUsedHint || activity.hintUsed ? '#0f172a' : '#64748b', fontWeight: 600 }}>{student.hasUsedHint || activity.hintUsed ? 'ใช้ (1 ครั้ง)' : 'ไม่ใช้'}</span>
             </Typography>
           </Box>
 

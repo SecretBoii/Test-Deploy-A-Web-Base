@@ -116,6 +116,57 @@ export class ExercisesService {
     };
   }
 
+  async recordHintUsage(userId: number, exerciseId: number) {
+    const exercise = await this.prisma.exercise.findUnique({
+      where: { exerciseId: Number(exerciseId) },
+    });
+    if (!exercise) {
+      throw new NotFoundException('ไม่พบแบบฝึกหัดที่ระบุ');
+    }
+
+    // ตรวจสอบว่าเคยมีประวัติเปิดคำใบ้ในข้อนี้แล้วหรือไม่ หากมีแล้วไม่ต้องสร้างซ้ำซ้อน
+    const existingHint = await this.prisma.activity.findFirst({
+      where: {
+        userId: Number(userId),
+        exerciseId: Number(exerciseId),
+        hintUsed: true,
+      },
+      select: { activityId: true },
+    });
+
+    if (existingHint) {
+      return { success: true, message: 'เคยบันทึกการใช้คำใบ้ไปแล้ว' };
+    }
+
+    // ดึง sessionId จาก sessionExercise ที่เกี่ยวข้อง หรือ fallback เป็น 1
+    const sessionExercise = await this.prisma.sessionExercise.findFirst({
+      where: { exerciseId: Number(exerciseId) },
+    });
+    const sessionId = sessionExercise?.sessionId ?? 1;
+
+    const activity = await this.prisma.activity.create({
+      data: {
+        userId: Number(userId),
+        exerciseId: Number(exerciseId),
+        sessionId,
+        startedAt: new Date(),
+        submittedAt: new Date(),
+        hintUsed: true,
+        answer: '',
+        score: 0,
+        status: 'HINT_USED',
+        eventType: 'hint',
+        runCount: 0,
+      },
+    });
+
+    return {
+      success: true,
+      activityId: activity.activityId,
+      message: 'บันทึกการใช้งานคำใบ้สำเร็จ',
+    };
+  }
+
   async submitExercise(
     userId: number,
     exerciseId: number,

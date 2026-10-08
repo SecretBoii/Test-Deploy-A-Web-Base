@@ -210,6 +210,27 @@ export class ExercisesController {
     return deleted;
   }
 
+  @Post(':id/hint')
+  async recordHintUsage(
+    @Param('id') id: string,
+    @CurrentUser() user: any,
+    @Req() req: any,
+  ) {
+    const exerciseId = Number(id);
+    const result = await this.exercisesService.recordHintUsage(
+      user.userId,
+      exerciseId,
+    );
+    // บันทึก Audit Log เพื่อตรวจสอบประวัติการเปิดดูคำใบ้
+    await this.auditLogService.logFromRequest(req, {
+      action: 'VIEW_HINT',
+      entity: 'Exercise',
+      entityId: exerciseId,
+      details: { hintUsed: true },
+    });
+    return result;
+  }
+
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
   @Get(':id')
   async getExerciseById(@Param('id') id: string, @CurrentUser() user: any) {

@@ -359,7 +359,10 @@ export class ExercisesProgressService {
     try {
       if (limit === undefined) {
         return await this.prisma.activity.findMany({
-          where: { userId },
+          where: {
+            userId,
+            eventType: { in: ['run', 'submit'] },
+          },
           orderBy: { submittedAt: 'desc' },
           include: {
             exercise: true,
@@ -371,7 +374,10 @@ export class ExercisesProgressService {
       const skip = (page - 1) * limit;
       const [item, total] = await Promise.all([
         this.prisma.activity.findMany({
-          where: { userId },
+          where: {
+            userId,
+            eventType: { in: ['run', 'submit'] },
+          },
           orderBy: { submittedAt: 'desc' },
           take: limit,
           skip,
@@ -381,7 +387,10 @@ export class ExercisesProgressService {
           },
         }),
         this.prisma.activity.count({
-          where: { userId },
+          where: {
+            userId,
+            eventType: { in: ['run', 'submit'] },
+          },
         }),
       ]);
 

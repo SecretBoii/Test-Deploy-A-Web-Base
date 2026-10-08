@@ -144,29 +144,17 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                         </Box>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 4: การใช้คำใบ้ (แสดงขีด - สีเทาเมื่อไม่ใช้ และแสดงป้ายส้มเมื่อใช้ ตามมาตรฐานตาราง) */}
+                      {/* คอลัมน์ที่ 4: การใช้คำใบ้ (แสดงข้อความธรรมดา ไม่มีกรอบหรือสีพื้นหลังตามคำขอ) */}
                       <TableCell align="center" sx={{ py: 1.5 }}>
-                        {row.hintUsed ? (
-                          <Box
-                            sx={{
-                              display: 'inline-block',
-                              px: 1.2,
-                              py: 0.3,
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              bgcolor: '#fffbeb',
-                              color: '#b45309',
-                              border: '1px solid #fde68a',
-                            }}
-                          >
-                            ใช้คำใบ้
-                          </Box>
-                        ) : (
-                          <Typography sx={{ color: '#94a3b8', fontSize: '13px' }}>
-                            -
-                          </Typography>
-                        )}
+                        <Typography
+                          sx={{
+                            fontSize: '13px',
+                            fontWeight: row.hintUsed ? 600 : 500,
+                            color: row.hintUsed ? '#0f172a' : '#94a3b8',
+                          }}
+                        >
+                          {row.hintUsed ? 'ใช้คำใบ้' : '-'}
+                        </Typography>
                       </TableCell>
 
                       {/* คอลัมน์ที่ 5: ผลการประเมิน (ชิปมน Passed / Failed ขอบ 8px ตามแบบ StudentExerciseTable) */}

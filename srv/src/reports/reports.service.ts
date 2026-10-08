@@ -177,6 +177,7 @@ export class ReportsService {
         userId,
         session: { status: 'active' },
         exercise: { status: 'active' },
+        eventType: { in: ['run', 'submit'] },
       },
       orderBy: { submittedAt: 'desc' },
       include: {
@@ -439,11 +440,14 @@ export class ReportsService {
       const avgSubmits =
         attemptedStudents > 0 ? totalSubmits / attemptedStudents : 0;
 
-      // อัตราการขอคำใบ้
-      const hintUsedCount = ex.activities.filter((a) => a.hintUsed).length;
+      // อัตราการขอคำใบ้ (คำนวณจากจำนวนนักศึกษาที่ไม่ซ้ำที่เปิดใช้คำใบ้)
+      const hintUsedUserIds = new Set(
+        ex.activities.filter((a) => a.hintUsed).map((a) => a.userId),
+      );
+      const hintUsedCount = hintUsedUserIds.size;
       const hintUsageRate =
-        ex.activities.length > 0
-          ? (hintUsedCount / ex.activities.length) * 100
+        attemptedStudents > 0
+          ? (hintUsedCount / attemptedStudents) * 100
           : 0;
 
       // เวลาเฉลี่ยที่ใช้จริง (นาที) กรองเฉพาะช่วงเวลาที่ทำต่อเนื่องจริง (ไม่เกิน 120 นาที)
@@ -515,7 +519,7 @@ export class ReportsService {
         activities: {
           some: {
             exerciseId,
-            eventType: { in: ['run', 'submit'] },
+            eventType: { in: ['run', 'submit', 'hint'] },
           },
         },
         education: filters?.education
@@ -539,7 +543,7 @@ export class ReportsService {
         activities: {
           where: {
             exerciseId,
-            eventType: { in: ['run', 'submit'] },
+            eventType: { in: ['run', 'submit', 'hint'] },
           },
           orderBy: { submittedAt: 'desc' },
         },
@@ -554,6 +558,7 @@ export class ReportsService {
     let passedCount = 0;
     let attemptedCount = 0;
     let bestScoreSum = 0;
+    let hintUsedStudentsCount = 0;
 
     const studentList = students.map((student) => {
       const acts = student.activities;
@@ -565,6 +570,7 @@ export class ReportsService {
 
       // ตรวจสอบว่าผู้เรียนเคยเปิดดูคำใบ้ (Hint) ในโจทย์ข้อนี้หรือไม่
       const hasUsedHint = acts.some((a) => a.hintUsed === true);
+      if (hasUsedHint) hintUsedStudentsCount += 1;
 
       let bestScore = 0;
       const hasSubmit = submits.length > 0;
@@ -580,10 +586,10 @@ export class ReportsService {
       totalSubmitsSum += submits.length;
 
       // ค้นหารอบที่ทำได้คะแนนสูงสุด (Best Submit) เพื่อให้ผลการตรวจโค้ดตรงกับคะแนนสูงสุด 100 ในตาราง
-      // หากยังไม่เคย Submit (รันอย่างเดียว) ให้ดึงรอบกิจกรรมล่าสุด
+      // หากยังไม่เคย Submit (รันอย่างเดียว) ให้ดึงรอบกิจกรรมรันล่าสุด (หลีกเลี่ยงกิจกรรมประเภท hint)
       const bestSubmit = hasSubmit
         ? submits.find((s) => s.score === bestScore) || submits[0]
-        : acts[0] || null;
+        : runs[0] || null;
 
       return {
         userId: student.userId,
@@ -597,7 +603,7 @@ export class ReportsService {
         hasUsedHint,
         runCount: runs.length,
         submitCount: submits.length,
-        totalAttempts: acts.length,
+        totalAttempts: runs.length + submits.length,
         lastSubmittedAt:
           hasSubmit && submits[0] ? submits[0].submittedAt : null,
         latestActivity: bestSubmit
@@ -647,6 +653,11 @@ export class ReportsService {
         avgRuns: attemptedCount > 0 ? totalRunsSum / attemptedCount : 0,
         avgSubmits: attemptedCount > 0 ? totalSubmitsSum / attemptedCount : 0,
         avgScore,
+        hintUsedCount: hintUsedStudentsCount,
+        hintUsageRate:
+          attemptedCount > 0
+            ? (hintUsedStudentsCount / attemptedCount) * 100
+            : 0,
       },
       students: studentList,
     };

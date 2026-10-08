@@ -289,7 +289,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
         </Box>
       ) : (
         <TableContainer sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 950 }}>
+          <Table sx={{ minWidth: 1050 }}>
             <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
               <TableRow
                 sx={{
@@ -306,8 +306,9 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
               >
                 <TableCell>นักศึกษา</TableCell>
                 <TableCell>มหาวิทยาลัย / คณะ</TableCell>
-                <TableCell align="center">คะแนนสูงสุดที่่ส่ง</TableCell>
+                <TableCell align="center">คะแนนสูงสุดที่ส่ง</TableCell>
                 <TableCell align="center">สถานะ</TableCell>
+                <TableCell align="center">คำใบ้ (Hint)</TableCell>
                 <TableCell align="center">Run (ครั้ง)</TableCell>
                 <TableCell align="center">Submit (ครั้ง)</TableCell>
                 <TableCell align="center">ส่งตรวจล่าสุด</TableCell>
@@ -422,7 +423,20 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                     )}
                   </TableCell>
 
-                  {/* 5. Run */}
+                  {/* 5. คำใบ้ (Hint) - รูปแบบข้อความธรรมดา ไม่ใช้กรอบหรือไอคอนตามคำขอ */}
+                  <TableCell align="center">
+                    <Typography
+                      sx={{
+                        fontSize: '13px',
+                        fontWeight: st.hasUsedHint ? 600 : 500,
+                        color: st.hasUsedHint ? '#0f172a' : '#94a3b8',
+                      }}
+                    >
+                      {st.hasUsedHint ? 'ใช้ (1 ครั้ง)' : 'ไม่ใช้'}
+                    </Typography>
+                  </TableCell>
+
+                  {/* 6. Run */}
                   <TableCell align="center">
                     <Typography sx={{ fontSize: '13px', fontWeight: 600, color: '#334155' }}>
                       {st.runCount}
