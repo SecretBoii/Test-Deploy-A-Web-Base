@@ -74,7 +74,7 @@ export class ReportsAnalyticsService {
         eventType:
           filters.eventType && filters.eventType !== 'all'
             ? filters.eventType
-            : undefined,
+            : { in: ['run', 'submit'] },
         createdAt:
           dateRange.start || dateRange.end
             ? {

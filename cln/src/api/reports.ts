@@ -116,6 +116,8 @@ export interface ExerciseStudentBreakdownResponse {
     avgRuns: number;
     avgSubmits: number;
     avgScore: number;
+    hintUsedCount?: number;
+    hintUsageRate?: number;
   };
   students: ExerciseStudentItem[];
 }

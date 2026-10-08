@@ -269,6 +269,17 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
     )
   }
 
+  // บันทึกการเปิดคำใบ้ลงฐานข้อมูลทันทีแบบ Real-time เพื่อป้องกันข้อมูลสูญหายเมื่อรีเฟรชหน้าเว็บ
+  const handleUseHint = async () => {
+    setHintUsed(true)
+    if (!exerciseId) return
+    try {
+      await apiClient.post(`/exercises/${exerciseId}/hint`)
+    } catch (err) {
+      console.error('ไม่สามารถบันทึกสถานะการเปิดดูคำใบ้ได้:', err)
+    }
+  }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, height: '85vh' }}>
       {/* 1. Header Toolbar */}
@@ -292,7 +303,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
             hint={exerciseData?.hint} 
             loading={loadingExercise} 
             hintUsed={hintUsed}
-            onUseHint={() => setHintUsed(true)}
+            onUseHint={handleUseHint}
           />
           <ConsoleOutput output={output} />
           <GemmaFeedback response={gemmaResponse} score={score} />

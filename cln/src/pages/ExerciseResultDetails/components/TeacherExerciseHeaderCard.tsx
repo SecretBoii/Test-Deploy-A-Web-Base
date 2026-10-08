@@ -28,7 +28,18 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
     );
     if (activeStudents.length === 0) return;
 
-    const headers = ['รหัสนักศึกษา', 'ชื่อ-นามสกุล', 'มหาวิทยาลัย', 'คณะ', 'สถานะ', 'คะแนนสูงสุดที่ส่ง', 'จำนวน Run', 'จำนวน Submit', 'ส่งล่าสุด'];
+    const headers = [
+      'รหัสนักศึกษา',
+      'ชื่อ-นามสกุล',
+      'มหาวิทยาลัย',
+      'คณะ',
+      'สถานะ',
+      'คำใบ้',
+      'คะแนนสูงสุดที่ส่ง',
+      'จำนวน Run',
+      'จำนวน Submit',
+      'ส่งล่าสุด',
+    ];
     const rows = activeStudents.map((st) => [
       st.username,
       `"${st.fullName}"`,
@@ -39,6 +50,7 @@ export const TeacherExerciseHeaderCard: React.FC<TeacherExerciseHeaderCardProps>
         : st.status === 'FAILED'
           ? 'ไม่ผ่าน (Failed)'
           : 'ยังไม่ส่งตรวจ (Not Submitted)',
+      st.hasUsedHint ? 'ใช้ (1 ครั้ง)' : 'ไม่ใช้',
       st.bestScore !== null ? st.bestScore : '-',
       st.runCount,
       st.submitCount,
