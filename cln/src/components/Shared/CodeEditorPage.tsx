@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
-import { Box } from '@mui/material'
+import { Box, Card, Typography, Button } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { Lock, ArrowLeft } from 'lucide-react'
 import { WorkspaceHeader } from '../CodeWorkspace/WorkspaceHeader'
 import { CodeEditor } from '../CodeWorkspace/CodeEditor'
 import { ConsoleOutput } from '../CodeWorkspace/ConsoleOutput'
@@ -37,6 +38,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   const [runCount, setRunCount] = useState<number>(0)
   const [isRunning, setIsRunning] = useState(false)
   const [exerciseData, setExerciseData] = useState<ExerciseDetail | null>(null)
+  const [exerciseError, setExerciseError] = useState<string | null>(null)
   const [loadingExercise, setLoadingExercise] = useState(false)
   const [hintUsed, setHintUsed] = useState(false)
   const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
@@ -57,6 +59,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         .get(`/exercises/${exerciseId}`)
         .then((res) => {
           setExerciseData(res.data)
+          setExerciseError(null)
           // หากผู้เรียนเคยเปิดดูคำใบ้ในข้อนี้มาก่อน ให้เปิดค้างไว้ตามเดิมแม้จะมีการรีเฟรชหน้าเว็บ
           if (res.data?.hasUsedHint) {
             setHintUsed(true)
@@ -66,6 +69,9 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
         })
         .catch((err) => {
           console.error('Failed to load exercise:', err)
+          const message =
+            err.response?.data?.message || 'ไม่สามารถโหลดข้อมูลแบบฝึกหัดได้'
+          setExerciseError(message)
         })
         .finally(() => {
           setLoadingExercise(false)
@@ -183,6 +189,84 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
       setOutput(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการรันโค้ด')
       setGemmaResponse('เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI')
     }
+  }
+
+  if (exerciseError && !loadingExercise) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '75vh',
+          p: 3,
+        }}
+      >
+        <Card
+          sx={{
+            maxWidth: 480,
+            width: '100%',
+            p: 4,
+            borderRadius: '24px',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 8px 30px rgba(15, 23, 42, 0.05)',
+            textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 2,
+            bgcolor: '#ffffff',
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '20px',
+              bgcolor: '#fef2f2',
+              color: '#ef4444',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 1,
+            }}
+          >
+            <Lock size={32} />
+          </Box>
+          <Typography
+            variant="h6"
+            sx={{ fontWeight: 800, color: '#0f172a', fontSize: '1.2rem' }}
+          >
+            ไม่สามารถเข้าถึงแบบฝึกหัดได้
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: '#64748b', lineHeight: 1.6, fontSize: '14px' }}
+          >
+            {exerciseError}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => navigate('/sessions')}
+            startIcon={<ArrowLeft size={16} />}
+            sx={{
+              mt: 2,
+              bgcolor: '#4f46e5',
+              borderRadius: '10px',
+              px: 3,
+              py: 1.2,
+              fontWeight: 700,
+              textTransform: 'none',
+              boxShadow: 'none',
+              '&:hover': { bgcolor: '#4338ca', boxShadow: 'none' },
+            }}
+          >
+            กลับสู่หน้ารวมบทเรียน
+          </Button>
+        </Card>
+      </Box>
+    )
   }
 
   return (

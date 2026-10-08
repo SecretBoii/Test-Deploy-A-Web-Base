@@ -3,7 +3,10 @@ import {
   Box,
   Card,
   Pagination,
+  Snackbar,
+  Alert,
 } from '@mui/material'
+import axios from 'axios'
 import { MainLayout } from '../../components/Layout/MainLayout'
 import { apiClient } from '../../api/client'
 import { ExerciseDialog } from './components/ExerciseDialog'
@@ -37,6 +40,16 @@ export function ExercisesPage() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
   const [exerciseToDelete, setExerciseToDelete] = useState<number | null>(null)
 
+  // Notification Snackbar state
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean
+    message: string
+    severity: 'success' | 'error' | 'info' | 'warning'
+  }>({
+    open: false,
+    message: '',
+    severity: 'info',
+  })
 
   useEffect(() => {
     fetchExercises()
@@ -133,14 +146,32 @@ export function ExercisesPage() {
       if (selectedExercise) {
         // แก้ไขโจทย์เดิม
         await apiClient.put(`/exercises/${selectedExercise.exerciseId}`, formData)
+        setSnackbar({
+          open: true,
+          message: 'บันทึกการแก้ไขโจทย์เรียบร้อยแล้ว',
+          severity: 'success',
+        })
       } else {
         // สร้างโจทย์ใหม่
         await apiClient.post('/exercises', formData)
+        setSnackbar({
+          open: true,
+          message: 'สร้างแบบฝึกหัดใหม่เรียบร้อยแล้ว',
+          severity: 'success',
+        })
       }
       setDialogOpen(false)
       fetchExercises()
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('ไม่สามารถบันทึกข้อมูลโจทย์ได้:', err)
+      const message = axios.isAxiosError(err)
+        ? (err.response?.data as { message?: string })?.message
+        : undefined
+      setSnackbar({
+        open: true,
+        message: message || 'เกิดข้อผิดพลาดในการบันทึกข้อมูลโจทย์',
+        severity: 'error',
+      })
     }
   }
 
@@ -155,9 +186,23 @@ export function ExercisesPage() {
         await apiClient.delete(`/exercises/${exerciseToDelete}`)
         setDeleteConfirmOpen(false)
         setExerciseToDelete(null)
+        setSnackbar({
+          open: true,
+          message: 'ลบแบบฝึกหัดออกจากระบบเรียบร้อยแล้ว',
+          severity: 'success',
+        })
         fetchExercises()
-      } catch (err) {
+      } catch (err: unknown) {
         console.error('ไม่สามารถลบโจทย์ได้:', err)
+        setDeleteConfirmOpen(false)
+        const message = axios.isAxiosError(err)
+          ? (err.response?.data as { message?: string })?.message
+          : undefined
+        setSnackbar({
+          open: true,
+          message: message || 'เกิดข้อผิดพลาดในการลบแบบฝึกหัด',
+          severity: 'error',
+        })
       }
     }
   }
@@ -288,6 +333,29 @@ export function ExercisesPage() {
         message={`คุณแน่ใจหรือไม่ว่าต้องการลบโจทย์รหัส #${exerciseToDelete} นี้ออกจากคลัง? การกระทำนี้ไม่สามารถย้อนกลับได้`}
         confirmColor="error"
       />
+
+      {/* แจ้งเตือนสถานะการทำงาน (Toast Notification) */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{
+            width: '100%',
+            borderRadius: '12px',
+            fontWeight: 600,
+            fontSize: '13.5px',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.15)',
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
 
     </MainLayout>
   )

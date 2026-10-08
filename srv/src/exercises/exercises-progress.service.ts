@@ -22,9 +22,14 @@ export class ExercisesProgressService {
 
       const results = await Promise.all(
         levels.map(async (lvl) => {
+          // ดึงเฉพาะ Session และโจทย์ที่ active เพื่อไม่นำข้อ Inactive มาคิดเป็นตัวหารรวมของระดับ
           const sessions = await this.prisma.session.findMany({
             where: { targetLevel: lvl, status: 'active' },
-            include: { sessionExercises: true },
+            include: {
+              sessionExercises: {
+                where: { exercise: { status: 'active' } },
+              },
+            },
           });
 
           const totalSessions = sessions.length;
@@ -74,12 +79,17 @@ export class ExercisesProgressService {
     }
   }
 
+  /**
+   * ดึงรายการ Session และโจทย์ในระดับที่เลือก สำหรับมุมมองนักเรียน
+   * กรองเฉพาะโจทย์ที่ active (Dynamic Auto-Hide) เพื่อไม่ให้นักเรียนเห็นหรือติดค้างข้อที่ปิดใช้งาน
+   */
   async getLevelSessions(level: number, userId: number = 1) {
     const sessions = await this.prisma.session.findMany({
       where: { targetLevel: level, status: 'active' },
       orderBy: { sessionId: 'asc' },
       include: {
         sessionExercises: {
+          where: { exercise: { status: 'active' } },
           orderBy: { sequenceOrder: 'asc' },
           include: { exercise: true },
         },
@@ -136,10 +146,13 @@ export class ExercisesProgressService {
     userId: number,
     sessionId: number,
   ): Promise<boolean> {
+    // คำนวณความสำเร็จเฉพาะโจทย์ที่ Active เพื่อไม่ให้นักเรียนติดค้างกับข้อที่อาจารย์ยกเลิกไป
     const session = await this.prisma.session.findUnique({
       where: { sessionId },
       include: {
-        sessionExercises: true,
+        sessionExercises: {
+          where: { exercise: { status: 'active' } },
+        },
       },
     });
     if (
@@ -238,6 +251,7 @@ export class ExercisesProgressService {
           where: { sessionId: targetSessionId },
           include: {
             sessionExercises: {
+              where: { exercise: { status: 'active' } },
               orderBy: { sequenceOrder: 'asc' },
               include: { exercise: true },
             },
@@ -298,6 +312,11 @@ export class ExercisesProgressService {
     }
   }
 
+  /**
+   * คำนวณสถิติภาพรวมหน้า Dashboard ของผู้เรียน
+   * ปรับแต่งแบบ Active-only Alignment: ทั้งตัวหาร (totalExercises) และตัวเศษ (completedExercises)
+   * จะคิดเฉพาะโจทย์ที่เปิดใช้งาน (status: 'active') ป้องกันปัญหาสถิติเกิน 100% เมื่อมีข้อถูกปรับเป็น Inactive
+   */
   async getDashboardStats(userId: number) {
     try {
       const totalExercises = await this.prisma.exercise.count({
@@ -308,11 +327,15 @@ export class ExercisesProgressService {
         where: {
           userId,
           score: { gte: 80 },
+          exercise: { status: 'active' },
         },
         select: { exerciseId: true },
         distinct: ['exerciseId'],
       });
-      const completedExercises = completedActivities.length;
+      const completedExercises = Math.min(
+        completedActivities.length,
+        totalExercises,
+      );
 
       const submissions = await this.prisma.activity.aggregate({
         where: { userId, eventType: 'submit' },
