@@ -19,11 +19,7 @@ export class ExercisesService {
     private readonly prisma: PrismaService,
   ) {}
 
-  /**
-   * ดึงข้อมูลโจทย์ตาม exerciseId
-   * ป้องกันนักเรียน (roleId === 1) เข้าถึงโจทย์ที่มีสถานะ Inactive ผ่าน Direct URL หรือ Bookmark
-   * แต่อาจารย์และแอดมินยังสามารถเข้าดูเพื่อพรีวิวและทดสอบได้ตามปกติ
-   */
+
   async getExerciseById(
     exerciseId: number | string,
     userId?: number,
@@ -35,6 +31,20 @@ export class ExercisesService {
     }
     const exercise = await this.prisma.exercise.findUnique({
       where: { exerciseId: id },
+      include: {
+        sessionExercises: {
+          include: {
+            session: {
+              select: {
+                sessionId: true,
+                sessionName: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { sequenceOrder: 'asc' },
+        },
+      },
     });
     if (!exercise) {
       throw new NotFoundException('Exercise not found');
@@ -47,9 +57,18 @@ export class ExercisesService {
       );
     }
 
+    const { sessionExercises, ...exerciseData } = exercise;
+    const sessions = (sessionExercises || [])
+      .filter((se) => se.session)
+      .map((se) => ({
+        sessionId: se.session.sessionId,
+        sessionName: se.session.sessionName,
+        status: se.session.status,
+      }));
+
     // ป้องกันกรณี userId เป็น undefined หรือ NaN เพื่อไม่ให้ระบบค้าง/Error ตอน Query Database
     if (!userId || isNaN(userId)) {
-      return { ...exercise, runCount: 0, hasUsedHint: false };
+      return { ...exerciseData, sessions, runCount: 0, hasUsedHint: false };
     }
 
     const latestSubmit = await this.prisma.activity.findFirst({
@@ -90,7 +109,8 @@ export class ExercisesService {
     });
 
     return {
-      ...exercise,
+      ...exerciseData,
+      sessions,
       runCount,
       hasUsedHint: Boolean(hintActivity),
     };
@@ -376,9 +396,42 @@ export class ExercisesService {
     };
   }
 
+  /**
+   * ดึงรายการแบบฝึกหัดทั้งหมดสำหรับมุมมองอาจารย์และแอดมิน (จัดการคลังโจทย์)
+   * ทำการ include ความสัมพันธ์ sessionExercises และ session เพื่อให้หน้าพรีวิวโจทย์ (ExercisePreviewDialog)
+   * และหน้าจัดการแบบฝึกหัดทราบว่าโจทย์แต่ละข้อถูกนำไปบรรจุไว้ในบทเรียน (Session) ใดบ้าง
+   */
   async getAllExercisesForManage() {
-    return await this.prisma.exercise.findMany({
+    const exercises = await this.prisma.exercise.findMany({
       orderBy: { exerciseId: 'desc' },
+      include: {
+        sessionExercises: {
+          include: {
+            session: {
+              select: {
+                sessionId: true,
+                sessionName: true,
+                status: true,
+              },
+            },
+          },
+          orderBy: { sequenceOrder: 'asc' },
+        },
+      },
+    });
+
+    return exercises.map((ex) => {
+      const { sessionExercises, ...rest } = ex;
+      return {
+        ...rest,
+        sessions: (sessionExercises || [])
+          .filter((se) => se.session)
+          .map((se) => ({
+            sessionId: se.session.sessionId,
+            sessionName: se.session.sessionName,
+            status: se.session.status,
+          })),
+      };
     });
   }
 
