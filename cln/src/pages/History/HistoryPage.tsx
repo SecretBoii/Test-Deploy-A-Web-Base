@@ -163,7 +163,8 @@ export function HistoryPage() {
 
   return (
     <MainLayout activeItem="History">
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, maxWidth: '1280px', mx: 'auto' }}>
+      {/* ปรับขนาดความกว้างตามมาตรฐานระบบ 1440px และจัดกึ่งกลาง (พร้อม width: 100%) */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4, width: '100%', maxWidth: '1440px', margin: '0 auto' }}>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
             <CircularProgress />

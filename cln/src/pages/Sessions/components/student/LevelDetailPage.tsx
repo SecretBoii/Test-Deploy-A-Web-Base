@@ -74,7 +74,8 @@ export const LevelDetailPage: React.FC = () => {
 
   return (
     <MainLayout activeItem="Sessions">
-      <Box sx={{ p: 2.5, maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 3.5, width: '100%', color: '#0f172a' }}>
+      {/* ปรับขนาดความกว้างตามมาตรฐานระบบ 1440px และตัด inner padding ซ้ำซ้อนออกเนื่องจาก MainLayout มีการเว้น padding ไว้อยู่แล้ว */}
+      <Box sx={{ maxWidth: '1440px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 3.5, width: '100%', color: '#0f172a' }}>
         {/* 1. Header Bar ด้านบน */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {/* Breadcrumbs & Back link */}

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
-import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
 import { TeacherProfileCard } from './components/teacher/TeacherProfileCard';
 
@@ -60,17 +59,14 @@ export function TeacherProfile() {
   // แสดงตัวโหลดหมุน (Spinner) ขณะดึงข้อมูล
   if (loading) {
     return (
-      <MainLayout activeItem="Profile">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <CircularProgress sx={{ color: '#2563eb' }} />
-        </Box>
-      </MainLayout>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress sx={{ color: '#2563eb' }} />
+      </Box>
     );
   }
 
   return (
-    <MainLayout activeItem="Profile">
-      <Box
+    <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -124,8 +120,7 @@ export function TeacherProfile() {
           />
         )}
       </Box>
-    </MainLayout>
-  );
+    );
 }
 
 export default TeacherProfile;

@@ -70,7 +70,8 @@ export function StudentHome({ username = 'Alex', onSelectExercise }: StudentHome
   }, [page])
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a', maxWidth: '1280px', margin: '0 auto', width: '100%' }}>
+    // ปรับโครงสร้าง Layout มาตรฐานเดียวกับหน้า Dashboard และ Session (ความกว้างสูงสุด 1440px กึ่งกลางจอ)
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3.5, color: '#0f172a', maxWidth: '1440px', margin: '0 auto', width: '100%' }}>
       {/* 1. Header Greeting & Stats Cards Row */}
       <StatsRow username={username} stats={stats} />
 
