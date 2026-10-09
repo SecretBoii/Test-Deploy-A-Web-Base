@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { Box, Typography, Button, Paper, Divider, Checkbox, LinearProgress } from '@mui/material'
+import { Box, Typography, Button, Paper, Divider, LinearProgress } from '@mui/material'
 import { 
   CheckCircle2, 
   XCircle, 
@@ -71,33 +71,19 @@ export function ScoreSummaryCard({
     return `${diffMins} นาที`
   }
 
+  // กำหนดรายการข้อมูลสรุปผล โดยปรับโทนสีไอคอนทั้งหมดเป็นสีเทากลาง (#64748b) 
+  // และปรับสถานะ Hint เป็นสีปกติ เพื่อลดความรบกวนสายตาและให้สอดคล้องกับภาพรวมของการแสดงผล
   const items = [
     { 
       label: 'ผลตรวจ', 
-      value: isPassed ? 'Passed	' : 'Failed', 
+      value: isPassed ? 'Passed' : 'Failed', 
       valueColor: isPassed ? '#10b981' : '#ef4444', 
-      icon: isPassed ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" /> 
+      icon: isPassed ? <CheckCircle2 size={16} color="#64748b" /> : <XCircle size={16} color="#64748b" /> 
     },
     { 
       label: 'ใช้ Hint', 
-      value: (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end', color: hintUsed ? '#eab308' : '#94a3b8' }}>
-          <Checkbox 
-            checked={hintUsed} 
-            disabled 
-            size="small" 
-            sx={{ 
-              p: 0, 
-              color: '#cbd5e1', 
-              '&.Mui-checked': { color: '#eab308' } 
-            }} 
-          />
-          <Typography variant="body2" sx={{ fontWeight: 700, fontSize: '13px' }}>
-            {hintUsed ? 'ใช้แล้ว' : 'ไม่ได้ใช้'}
-          </Typography>
-        </Box>
-      ),
-      icon: <Lightbulb size={16} color={hintUsed ? '#eab308' : '#64748b'} />
+      value: hintUsed ? 'ใช้แล้ว' : 'ไม่ได้ใช้',
+      icon: <Lightbulb size={16} color="#64748b" />
     },
     { label: 'ครั้งที่ Run', value: `${runCount} ครั้ง`, icon: <PlayCircle size={16} color="#64748b" /> },
     { label: 'เริ่มทำเมื่อ', value: formatThaiDate(startedAt), icon: <Calendar size={16} color="#64748b" /> },
