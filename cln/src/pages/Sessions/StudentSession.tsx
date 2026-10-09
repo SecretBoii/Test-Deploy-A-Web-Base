@@ -10,7 +10,6 @@ interface StudentSessionProps {
 }
 
 export const StudentSession: React.FC<StudentSessionProps> = ({
-  userId = 1,
   onSelectLevel,
 }) => {
   const [levelsSummary, setLevelsSummary] = useState<LevelSummary[]>([]);
@@ -18,14 +17,12 @@ export const StudentSession: React.FC<StudentSessionProps> = ({
 
   useEffect(() => {
     fetchLevelsSummary();
-  }, [userId]);
+  }, []);
 
   const fetchLevelsSummary = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get("/exercises/levels-summary", {
-        params: { userId },
-      });
+      const res = await apiClient.get<LevelSummary[]>("/exercises/levels-summary");
       setLevelsSummary(res.data);
     } catch (err) {
       console.error("Failed to fetch levels summary:", err);

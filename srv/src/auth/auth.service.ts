@@ -105,34 +105,42 @@ export class AuthService {
       throw new NotFoundException('ไม่พบผู้ใช้งานในระบบ');
     }
 
-    const solvedCount = await this.prisma.activity
-      .groupBy({
-        by: ['exerciseId'],
-        where: {
-          userId,
-          eventType: 'submit',
-          score: { gte: 80 },
-        },
-      })
-      .then((res) => res.length);
-
-    const activeSessions = await this.prisma.session.findMany({
-      where: { status: 'active' },
-      include: { sessionExercises: true },
+    // 1. ดึงรายการโจทย์ที่ไม่ซ้ำซึ่งผูกอยู่ใน Session ที่เปิดใช้งาน (status: 'active') และโจทย์มีสถานะ active
+    const inSessionExercises = await this.prisma.sessionExercise.findMany({
+      where: {
+        session: { status: 'active' },
+        exercise: { status: 'active' },
+      },
+      select: { exerciseId: true },
+      distinct: ['exerciseId'],
     });
-    const activeExerciseIds = Array.from(
-      new Set(
-        activeSessions.flatMap((s) =>
-          s.sessionExercises.map((se) => se.exerciseId),
-        ),
-      ),
-    );
+
+    const activeExerciseIds = inSessionExercises.map((se) => se.exerciseId);
     const totalExercises = activeExerciseIds.length;
 
+    // 2. คำนวณจำนวนโจทย์ในบทเรียนที่ผู้เรียนทำคะแนนผ่านเกณฑ์ (>= 80 คะแนน)
+    let solvedCount = 0;
+    if (activeExerciseIds.length > 0) {
+      const passedActivities = await this.prisma.activity.findMany({
+        where: {
+          userId,
+          exerciseId: { in: activeExerciseIds },
+          score: { gte: 80 },
+        },
+        select: { exerciseId: true },
+        distinct: ['exerciseId'],
+      });
+      solvedCount = Math.min(passedActivities.length, totalExercises);
+    }
+
+    // 3. คำนวณคะแนนเฉลี่ยจากการส่งตรวจ (Submit) เฉพาะโจทย์ในหลักสูตร
     const submissions = await this.prisma.activity.findMany({
       where: {
         userId,
         eventType: 'submit',
+        ...(activeExerciseIds.length > 0
+          ? { exerciseId: { in: activeExerciseIds } }
+          : {}),
       },
       select: { score: true },
     });
@@ -150,12 +158,20 @@ export class AuthService {
         userId,
         eventType: 'submit',
         score: { gte: 80 },
+        ...(activeExerciseIds.length > 0
+          ? { exerciseId: { in: activeExerciseIds } }
+          : {}),
       },
     });
 
     const userRuns = await this.prisma.activity.groupBy({
       by: ['exerciseId'],
-      where: { userId },
+      where: {
+        userId,
+        ...(activeExerciseIds.length > 0
+          ? { exerciseId: { in: activeExerciseIds } }
+          : {}),
+      },
       _max: {
         runCount: true,
       },

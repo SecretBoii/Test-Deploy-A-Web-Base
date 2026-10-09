@@ -1,15 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
-// แมปตัวเลข Level จาก Frontend (1-5) ไปยังข้อความระดับความยากในฐานข้อมูล
-const LEVEL_MAP: Record<number, string> = {
-  1: 'Basic',
-  2: 'Intermediate',
-  3: 'Advanced',
-  4: 'Advanced',
-  5: 'Advanced',
-};
-
 @Injectable()
 export class ExercisesProgressService {
   private readonly logger = new Logger(ExercisesProgressService.name);
@@ -18,71 +9,93 @@ export class ExercisesProgressService {
 
   async getLevelsSummary(userId: number = 1) {
     try {
-      const levels = [1, 2, 3, 4, 5];
+      // 1. ดึงข้อมูล Session ที่มีสถานะ active ทุกระดับ (1-5) พร้อมโจทย์ active ในคำสั่งเดียว (Query 1)
+      const sessions = await this.prisma.session.findMany({
+        where: {
+          targetLevel: { in: [1, 2, 3, 4, 5] },
+          status: 'active',
+        },
+        include: {
+          sessionExercises: {
+            where: { exercise: { status: 'active' } },
+            select: { exerciseId: true },
+          },
+        },
+      });
 
-      const results = await Promise.all(
-        levels.map(async (lvl) => {
-          // ดึงเฉพาะ Session และโจทย์ที่ active เพื่อไม่นำข้อ Inactive มาคิดเป็นตัวหารรวมของระดับ
-          const sessions = await this.prisma.session.findMany({
-            where: { targetLevel: lvl, status: 'active' },
-            include: {
-              sessionExercises: {
-                where: { exercise: { status: 'active' } },
-              },
-            },
-          });
-
-          const totalSessions = sessions.length;
-          const totalMinutes = sessions.reduce(
-            (sum: number, s: any) => sum + s.duration,
-            0,
-          );
-          const totalHours = Math.round(totalMinutes / 60) || 6;
-
-          const exerciseIds = sessions.flatMap((s: any) =>
-            (s.sessionExercises || []).map((se: any) => se.exerciseId),
-          );
-          const totalExercises = exerciseIds.length;
-
-          let completedExercises = 0;
-          if (exerciseIds.length > 0) {
-            const passedActivities = await this.prisma.activity.findMany({
-              where: {
-                userId: userId,
-                exerciseId: { in: exerciseIds },
-                score: { gte: 80 },
-              },
-              select: { exerciseId: true },
-              distinct: ['exerciseId'],
-            });
-            completedExercises = passedActivities.length;
-          }
-
-          return {
-            level: lvl,
-            totalSessions,
-            totalHours,
-            totalExercises,
-            completedExercises,
-            sessionName:
-              sessions.length > 0 ? sessions[0].sessionName : undefined,
-            sessionObjective:
-              sessions.length > 0 ? sessions[0].sessionObjective : undefined,
-          };
-        }),
+      // 2. รวบรวมรหัสโจทย์แบบไม่ซ้ำ (Unique Exercise IDs) ทั้งหมด
+      const allExerciseIds = Array.from(
+        new Set(
+          sessions.flatMap((s) =>
+            (s.sessionExercises || []).map((se) => se.exerciseId),
+          ),
+        ),
       );
 
+      // 3. ดึงเฉพาะโจทย์ที่นักเรียนทำผ่านเกณฑ์ (score >= 80) ในคำสั่งเดียว (Query 2)
+      let passedExerciseIdSet = new Set<number>();
+      if (allExerciseIds.length > 0) {
+        const passedActivities = await this.prisma.activity.findMany({
+          where: {
+            userId,
+            exerciseId: { in: allExerciseIds },
+            score: { gte: 80 },
+          },
+          select: { exerciseId: true },
+          distinct: ['exerciseId'],
+        });
+        passedExerciseIdSet = new Set(passedActivities.map((a) => a.exerciseId));
+      }
+
+      // 4. คำนวณสรุปผลรายระดับ (Level 1-5) ภายในหน่วยความจำ (In-Memory Processing)
+      const levels = [1, 2, 3, 4, 5];
+      const results = levels.map((lvl) => {
+        const levelSessions = sessions.filter((s) => s.targetLevel === lvl);
+        const totalSessions = levelSessions.length;
+        const totalMinutes = levelSessions.reduce(
+          (sum, s) => sum + s.duration,
+          0,
+        );
+        const totalHours = Math.round(totalMinutes / 60) || 6;
+
+        // ดึงรหัสโจทย์แบบไม่ซ้ำในระดับนี้ เพื่อไม่ให้นับซ้ำหากโจทย์ถูกจัดอยู่ในหลาย Session
+        const uniqueLevelExerciseIds = Array.from(
+          new Set(
+            levelSessions.flatMap((s) =>
+              (s.sessionExercises || []).map((se) => se.exerciseId),
+            ),
+          ),
+        );
+        const totalExercises = uniqueLevelExerciseIds.length;
+        const completedExercises = uniqueLevelExerciseIds.filter((id) =>
+          passedExerciseIdSet.has(id),
+        ).length;
+
+        return {
+          level: lvl,
+          totalSessions,
+          totalHours,
+          totalExercises,
+          completedExercises,
+          sessionName:
+            levelSessions.length > 0 ? levelSessions[0].sessionName : undefined,
+          sessionObjective:
+            levelSessions.length > 0
+              ? levelSessions[0].sessionObjective
+              : undefined,
+        };
+      });
+
       return results;
-    } catch (err: any) {
-      this.logger.error('Error in getLevelsSummary:', err);
+    } catch (err: unknown) {
+      this.logger.error(
+        'Error in getLevelsSummary:',
+        err instanceof Error ? err.stack : String(err),
+      );
       throw err;
     }
   }
 
-  /**
-   * ดึงรายการ Session และโจทย์ในระดับที่เลือก สำหรับมุมมองนักเรียน
-   * กรองเฉพาะโจทย์ที่ active (Dynamic Auto-Hide) เพื่อไม่ให้นักเรียนเห็นหรือติดค้างข้อที่ปิดใช้งาน
-   */
   async getLevelSessions(level: number, userId: number = 1) {
     const sessions = await this.prisma.session.findMany({
       where: { targetLevel: level, status: 'active' },
@@ -102,12 +115,13 @@ export class ExercisesProgressService {
         score: { gte: 80 },
       },
       select: { exerciseId: true },
+      distinct: ['exerciseId'],
     });
     const passedExerciseIds = new Set(userActivities.map((a) => a.exerciseId));
 
-    const result = sessions.map((session: any) => {
+    const result = sessions.map((session) => {
       const exercises = (session.sessionExercises || []).map(
-        (se: any, idx: number) => {
+        (se, idx: number) => {
           const isPassed = passedExerciseIds.has(se.exerciseId);
           return {
             exerciseId: se.exerciseId,
@@ -120,9 +134,9 @@ export class ExercisesProgressService {
         },
       );
 
-      const completedCount = exercises.filter((e: any) => e.isPassed).length;
+      const completedCount = exercises.filter((e) => e.isPassed).length;
       const totalExpectedTime = exercises.reduce(
-        (sum: number, e: any) => sum + e.expectedTime,
+        (sum, e) => sum + e.expectedTime,
         0,
       );
 
@@ -142,203 +156,216 @@ export class ExercisesProgressService {
     return result;
   }
 
-  private async isSessionCompleted(
-    userId: number,
-    sessionId: number,
-  ): Promise<boolean> {
-    // คำนวณความสำเร็จเฉพาะโจทย์ที่ Active เพื่อไม่ให้นักเรียนติดค้างกับข้อที่อาจารย์ยกเลิกไป
-    const session = await this.prisma.session.findUnique({
-      where: { sessionId },
-      include: {
-        sessionExercises: {
-          where: { exercise: { status: 'active' } },
-        },
-      },
-    });
-    if (
-      !session ||
-      !session.sessionExercises ||
-      session.sessionExercises.length === 0
-    ) {
-      return true;
-    }
-
-    const exerciseIds = session.sessionExercises.map((se) => se.exerciseId);
-    const passedActivitiesCount = await this.prisma.activity
-      .findMany({
-        where: {
-          userId,
-          exerciseId: { in: exerciseIds },
-          score: { gte: 80 },
-        },
-        select: { exerciseId: true },
-        distinct: ['exerciseId'],
-      })
-      .then((res) => res.length);
-
-    return passedActivitiesCount === exerciseIds.length;
-  }
-
   async getRecentSession(userId: number) {
     try {
-      // 1. หา Sessions ล่าสุดที่ผู้ใช้เคยส่ง Activity (เรียงจากใหม่ไปเก่า)
-      const recentActivities = await this.prisma.activity.findMany({
-        where: { userId },
-        orderBy: { submittedAt: 'desc' },
-        select: { sessionId: true },
+      // 1. ดึงประวัติ Session IDs ที่ผู้ใช้มีปฏิสัมพันธ์ล่าสุดแบบ Parallel ในครั้งเดียว
+      const [recentActivities, recentProgress, activeSessions] =
+        await Promise.all([
+          // 1.1 ดึง Session ล่าสุดที่ผู้เรียนเคยส่งงาน (จำกัด 30 รายการ)
+          this.prisma.activity.findMany({
+            where: { userId },
+            orderBy: { submittedAt: 'desc' },
+            select: { sessionId: true },
+            distinct: ['sessionId'],
+            take: 30,
+          }),
+          // 1.2 ดึง Session ล่าสุดจาก UserSessionProgress (จำกัด 15 รายการ)
+          this.prisma.userSessionProgress.findMany({
+            where: { userId },
+            orderBy: { updatedAt: 'desc' },
+            select: { sessionId: true },
+            take: 15,
+          }),
+          // 1.3 ดึง Session ที่สถานะ active ทั้งหมดเพื่อใช้เป็น Fallback
+          this.prisma.session.findMany({
+            where: { status: 'active' },
+            orderBy: [{ targetLevel: 'asc' }, { sessionId: 'asc' }],
+            select: { sessionId: true },
+          }),
+        ]);
+
+      // รวม Candidate Session IDs ตามลำดับความสำคัญ (Recent Activities -> Recent Progress -> Active Sessions)
+      const candidateSessionIds: number[] = [];
+      const seenSessionIds = new Set<number>();
+
+      for (const act of recentActivities) {
+        if (act.sessionId && !seenSessionIds.has(act.sessionId)) {
+          seenSessionIds.add(act.sessionId);
+          candidateSessionIds.push(act.sessionId);
+        }
+      }
+
+      for (const prog of recentProgress) {
+        if (prog.sessionId && !seenSessionIds.has(prog.sessionId)) {
+          seenSessionIds.add(prog.sessionId);
+          candidateSessionIds.push(prog.sessionId);
+        }
+      }
+
+      for (const sess of activeSessions) {
+        if (!seenSessionIds.has(sess.sessionId)) {
+          seenSessionIds.add(sess.sessionId);
+          candidateSessionIds.push(sess.sessionId);
+        }
+      }
+
+      if (candidateSessionIds.length === 0) {
+        return [];
+      }
+
+      // 2. ดึงรายละเอียด Sessions + Exercises ของ Candidate (จำกัด 30 รายการแรก) ใน Single Batch Query
+      const targetQueryIds = candidateSessionIds.slice(0, 30);
+      const sessions = await this.prisma.session.findMany({
+        where: {
+          sessionId: { in: targetQueryIds },
+          status: 'active',
+        },
+        include: {
+          sessionExercises: {
+            where: { exercise: { status: 'active' } },
+            orderBy: { sequenceOrder: 'asc' },
+            include: { exercise: true },
+          },
+        },
       });
 
-      const targetSessionIds: number[] = [];
-      for (const act of recentActivities) {
-        if (act.sessionId && !targetSessionIds.includes(act.sessionId)) {
-          const isCompleted = await this.isSessionCompleted(
-            userId,
-            act.sessionId,
-          );
-          if (!isCompleted) {
-            targetSessionIds.push(act.sessionId);
-            if (targetSessionIds.length >= 3) break;
-          }
-        }
-      }
+      const sessionMap = new Map(sessions.map((s) => [s.sessionId, s]));
 
-      // 2. ถ้ายังไม่ครบ 3 ให้หาจาก UserSessionProgress
-      if (targetSessionIds.length < 3) {
-        const recentProgress = await this.prisma.userSessionProgress.findMany({
-          where: { userId },
-          orderBy: { updatedAt: 'desc' },
-          select: { sessionId: true },
-        });
-        for (const prog of recentProgress) {
-          if (prog.sessionId && !targetSessionIds.includes(prog.sessionId)) {
-            const isCompleted = await this.isSessionCompleted(
-              userId,
-              prog.sessionId,
-            );
-            if (!isCompleted) {
-              targetSessionIds.push(prog.sessionId);
-              if (targetSessionIds.length >= 3) break;
-            }
-          }
-        }
-      }
+      // 3. รวบรวม Exercise IDs ทั้งหมดที่เกี่ยวข้อง เพื่อดึงสถานะผ่านของผู้เรียนใน Single Batch Query
+      const allExerciseIds = Array.from(
+        new Set(
+          sessions.flatMap((s) =>
+            (s.sessionExercises || []).map((se) => se.exerciseId),
+          ),
+        ),
+      );
 
-      // 3. ถ้ายังไม่ครบ 3 ให้ backfill จาก Session ทั้งหมดที่มีสถานะ active
-      if (targetSessionIds.length < 3) {
-        const activeSessions = await this.prisma.session.findMany({
-          where: { status: 'active' },
-          orderBy: [{ targetLevel: 'asc' }, { sessionId: 'asc' }],
-          select: { sessionId: true },
-        });
-        for (const sess of activeSessions) {
-          if (sess.sessionId && !targetSessionIds.includes(sess.sessionId)) {
-            const isCompleted = await this.isSessionCompleted(
-              userId,
-              sess.sessionId,
-            );
-            if (!isCompleted) {
-              targetSessionIds.push(sess.sessionId);
-              if (targetSessionIds.length >= 3) break;
-            }
-          }
-        }
-      }
-
-      // 4. ดึงข้อมูลรายละเอียดของแต่ละ Session และหาความก้าวหน้า
-      const result = [];
-      for (const targetSessionId of targetSessionIds) {
-        const session = await this.prisma.session.findUnique({
-          where: { sessionId: targetSessionId },
-          include: {
-            sessionExercises: {
-              where: { exercise: { status: 'active' } },
-              orderBy: { sequenceOrder: 'asc' },
-              include: { exercise: true },
-            },
-          },
-        });
-
-        if (!session) continue;
-
-        // หาโจทย์ที่ผ่านแล้วของ User ใน session นี้
-        const userActivities = await this.prisma.activity.findMany({
+      let passedExerciseIdSet = new Set<number>();
+      if (allExerciseIds.length > 0) {
+        const passedActivities = await this.prisma.activity.findMany({
           where: {
             userId,
-            sessionId: targetSessionId,
+            exerciseId: { in: allExerciseIds },
             score: { gte: 80 },
           },
           select: { exerciseId: true },
+          distinct: ['exerciseId'],
         });
-        const passedExerciseIds = new Set(
-          userActivities.map((a) => a.exerciseId),
+        passedExerciseIdSet = new Set(
+          passedActivities.map((a) => a.exerciseId),
         );
+      }
 
-        const exercises = (session.sessionExercises || []).map(
-          (se: any, idx: number) => {
-            const isPassed = passedExerciseIds.has(se.exerciseId);
-            return {
-              exerciseId: se.exerciseId,
-              orderNumber: idx + 1,
-              title: se.exercise?.title || '',
-              description: se.exercise?.description || '',
-              expectedTime: se.exercise?.expectedTime || 5,
-              isPassed,
-            };
-          },
-        );
+      // 4. ประมวลผลและคัดเลือก 3 Session ที่ยังทำไม่เสร็จ (Incomplete) ใน Memory
+      const result = [];
+      for (const sessId of targetQueryIds) {
+        const session = sessionMap.get(sessId);
+        if (!session) continue;
 
-        const completedCount = exercises.filter((e: any) => e.isPassed).length;
-        const totalExpectedTime = exercises.reduce(
-          (sum: number, e: any) => sum + e.expectedTime,
-          0,
-        );
+        const sessionExercises = session.sessionExercises || [];
+        if (sessionExercises.length === 0) continue;
 
-        result.push({
-          sessionId: session.sessionId,
-          sessionName: session.sessionName,
-          sessionObjective: session.sessionObjective,
-          duration: totalExpectedTime || session.duration,
-          totalExercises: exercises.length,
-          completedExercises: completedCount,
-          targetLevel: session.targetLevel,
-          exercises,
+        const exercises = sessionExercises.map((se, idx) => {
+          const isPassed = passedExerciseIdSet.has(se.exerciseId);
+          return {
+            exerciseId: se.exerciseId,
+            orderNumber: idx + 1,
+            title: se.exercise?.title || '',
+            description: se.exercise?.description || '',
+            expectedTime: se.exercise?.expectedTime || 5,
+            isPassed,
+          };
         });
+
+        const completedCount = exercises.filter((e) => e.isPassed).length;
+        const isCompleted = completedCount === exercises.length;
+
+        // ดึงเฉพาะ Session ที่ผู้เรียนยังทำไม่ครบทุกข้อ
+        if (!isCompleted) {
+          const totalExpectedTime = exercises.reduce(
+            (sum, e) => sum + e.expectedTime,
+            0,
+          );
+
+          result.push({
+            sessionId: session.sessionId,
+            sessionName: session.sessionName,
+            sessionObjective: session.sessionObjective,
+            duration: totalExpectedTime || session.duration,
+            totalExercises: exercises.length,
+            completedExercises: completedCount,
+            targetLevel: session.targetLevel,
+            exercises,
+          });
+
+          if (result.length >= 3) {
+            break;
+          }
+        }
       }
 
       return result;
-    } catch (err: any) {
-      this.logger.error('Error in getRecentSession:', err);
+    } catch (err: unknown) {
+      this.logger.error(
+        'Error in getRecentSession:',
+        err instanceof Error ? err.stack : String(err),
+      );
       throw err;
     }
   }
 
-  /**
-   * คำนวณสถิติภาพรวมหน้า Dashboard ของผู้เรียน
-   * ปรับแต่งแบบ Active-only Alignment: ทั้งตัวหาร (totalExercises) และตัวเศษ (completedExercises)
-   * จะคิดเฉพาะโจทย์ที่เปิดใช้งาน (status: 'active') ป้องกันปัญหาสถิติเกิน 100% เมื่อมีข้อถูกปรับเป็น Inactive
-   */
-  async getDashboardStats(userId: number) {
+  async getDashboardStats(userId: number, roleId?: number) {
     try {
-      const totalExercises = await this.prisma.exercise.count({
-        where: { status: 'active' },
-      });
-
-      const completedActivities = await this.prisma.activity.findMany({
+      // 1. ดึงรายการโจทย์ที่ไม่ซ้ำซึ่งผูกอยู่ใน Session ที่เปิดใช้งาน (status: 'active')
+      const inSessionExercises = await this.prisma.sessionExercise.findMany({
         where: {
-          userId,
-          score: { gte: 80 },
+          session: { status: 'active' },
           exercise: { status: 'active' },
         },
         select: { exerciseId: true },
         distinct: ['exerciseId'],
       });
-      const completedExercises = Math.min(
-        completedActivities.length,
-        totalExercises,
-      );
 
+      const inSessionExerciseIds = inSessionExercises.map((se) => se.exerciseId);
+      const inSessionCount = inSessionExerciseIds.length;
+
+      // 2. ดึงจำนวนโจทย์ active ทั้งหมดในระบบ (ใช้สำหรับมุมมอง Admin)
+      const totalSystemExercises = await this.prisma.exercise.count({
+        where: { status: 'active' },
+      });
+
+      // หากเป็น Admin (roleId === 3) ให้นับจำนวนโจทย์ทั้งหมดในระบบ
+      // สำหรับผู้เรียน (Student) หรือบทบาททั่วไป ให้นับเฉพาะโจทย์ใน Session ที่เปิดสอนจริง
+      const totalExercises =
+        roleId === 3 ? totalSystemExercises : inSessionCount;
+
+      // 3. นับจำนวนโจทย์ใน Session ที่ผู้เรียนทำคะแนนผ่านเกณฑ์ (>= 80 คะแนน)
+      let completedExercises = 0;
+      if (inSessionExerciseIds.length > 0) {
+        const completedActivities = await this.prisma.activity.findMany({
+          where: {
+            userId,
+            exerciseId: { in: inSessionExerciseIds },
+            score: { gte: 80 },
+          },
+          select: { exerciseId: true },
+          distinct: ['exerciseId'],
+        });
+        completedExercises = Math.min(
+          completedActivities.length,
+          totalExercises,
+        );
+      }
+
+      // 4. คำนวณคะแนนเฉลี่ยจากการส่งตรวจ (Submit) ของโจทย์ในหลักสูตร
       const submissions = await this.prisma.activity.aggregate({
-        where: { userId, eventType: 'submit' },
+        where: {
+          userId,
+          eventType: 'submit',
+          ...(inSessionExerciseIds.length > 0
+            ? { exerciseId: { in: inSessionExerciseIds } }
+            : {}),
+        },
         _avg: { score: true },
       });
       const averageScore = Math.round(submissions._avg.score || 0);
@@ -347,10 +374,14 @@ export class ExercisesProgressService {
         totalExercises,
         completedExercises,
         averageScore,
-        streakDays: 5,
+        totalSystemExercises,
+        inSessionExercisesCount: inSessionCount,
       };
-    } catch (err: any) {
-      this.logger.error('Error in getDashboardStats:', err);
+    } catch (err: unknown) {
+      this.logger.error(
+        'Error in getDashboardStats:',
+        err instanceof Error ? err.stack : String(err),
+      );
       throw err;
     }
   }
@@ -401,8 +432,11 @@ export class ExercisesProgressService {
         limit,
         totalPage: Math.ceil(total / limit),
       };
-    } catch (err: any) {
-      this.logger.error('Error in getHistory:', err);
+    } catch (err: unknown) {
+      this.logger.error(
+        'Error in getHistory:',
+        err instanceof Error ? err.stack : String(err),
+      );
       throw err;
     }
   }
