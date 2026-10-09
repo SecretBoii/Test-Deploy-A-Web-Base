@@ -440,4 +440,85 @@ export class ExercisesProgressService {
       throw err;
     }
   }
+
+  async updateUserSessionProgress(
+    userId: number,
+    sessionId: number,
+  ): Promise<void> {
+    if (!userId || !sessionId) return;
+
+    try {
+      // 1. ตรวจสอบว่า Session มีอยู่จริง และดึงรายการแบบฝึกหัดที่สถานะ active ใน Session นี้
+      const session = await this.prisma.session.findUnique({
+        where: { sessionId: Number(sessionId) },
+        include: {
+          sessionExercises: {
+            where: { exercise: { status: 'active' } },
+            select: { exerciseId: true },
+          },
+        },
+      });
+
+      if (!session) return;
+
+      const exerciseIds = session.sessionExercises.map((se) => se.exerciseId);
+      const totalExercises = exerciseIds.length;
+
+      // 2. ดึงจำนวนแบบฝึกหัดที่ผู้เรียนทำผ่านเกณฑ์ (คะแนน >= 80) ใน Session นี้
+      let passedCount = 0;
+      if (totalExercises > 0) {
+        const passedActivities = await this.prisma.activity.findMany({
+          where: {
+            userId: Number(userId),
+            exerciseId: { in: exerciseIds },
+            score: { gte: 80 },
+          },
+          select: { exerciseId: true },
+          distinct: ['exerciseId'],
+        });
+        passedCount = passedActivities.length;
+      }
+
+      const isAllCompleted =
+        totalExercises > 0 && passedCount >= totalExercises;
+      const now = new Date();
+
+      // 3. ตรวจสอบประวัติเดิมเพื่อคงค่า startedAt และ completedAt เดิม
+      const existing = await this.prisma.userSessionProgress.findUnique({
+        where: {
+          userId_sessionId: {
+            userId: Number(userId),
+            sessionId: Number(sessionId),
+          },
+        },
+      });
+
+      await this.prisma.userSessionProgress.upsert({
+        where: {
+          userId_sessionId: {
+            userId: Number(userId),
+            sessionId: Number(sessionId),
+          },
+        },
+        create: {
+          userId: Number(userId),
+          sessionId: Number(sessionId),
+          status: isAllCompleted ? 'COMPLETED' : 'IN_PROGRESS',
+          startedAt: now,
+          completedAt: isAllCompleted ? now : null,
+          updatedAt: now,
+        },
+        update: {
+          status: isAllCompleted ? 'COMPLETED' : 'IN_PROGRESS',
+          completedAt: isAllCompleted ? (existing?.completedAt ?? now) : null,
+          updatedAt: now,
+        },
+      });
+    } catch (err: unknown) {
+      this.logger.error(
+        `Failed to update UserSessionProgress for userId=${userId}, sessionId=${sessionId}:`,
+        err instanceof Error ? err.stack : String(err),
+      );
+    }
+  }
 }

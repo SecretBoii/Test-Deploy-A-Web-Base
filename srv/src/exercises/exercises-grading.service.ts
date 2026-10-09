@@ -10,6 +10,7 @@ import {
   parseAiResponse,
   GemmaRunResult,
 } from './utils/exercises-prompt.util';
+import { ExercisesProgressService } from './exercises-progress.service';
 
 @Injectable()
 export class ExercisesGradingService implements OnModuleInit {
@@ -20,6 +21,7 @@ export class ExercisesGradingService implements OnModuleInit {
     private readonly httpService: HttpService,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly progressService: ExercisesProgressService,
   ) {}
 
   onModuleInit() {
@@ -206,7 +208,7 @@ export class ExercisesGradingService implements OnModuleInit {
 
       const finalScore = runResult.status === 'Accepted' ? aiReview.score : 0;
 
-      await this.prisma.activity.update({
+      const updatedActivity = await this.prisma.activity.update({
         where: { activityId },
         data: {
           score: finalScore,
@@ -215,7 +217,19 @@ export class ExercisesGradingService implements OnModuleInit {
           aiFeedback: aiReview.ai_feedback,
           status: 'SUCCESS',
         },
+        select: {
+          userId: true,
+          sessionId: true,
+        },
       });
+
+      // หากมีคะแนนบันทึกเรียบร้อย ให้อัปเดตสถานะความก้าวหน้าของ Session (หากผ่านครบทุกข้อจะปรับเป็น COMPLETED)
+      if (updatedActivity?.userId && updatedActivity?.sessionId) {
+        await this.progressService.updateUserSessionProgress(
+          updatedActivity.userId,
+          updatedActivity.sessionId,
+        );
+      }
     } catch (error: any) {
       this.logger.error(
         `completeGrading Error for Activity ID ${activityId}:`,

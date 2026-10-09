@@ -144,12 +144,16 @@ export function RecentSessions({ loadingRecent, recentSessions }: RecentSessions
                   </Typography>
                 </Box>
 
-                {/* ปุ่มลัดเข้าเรียนต่อ */}
+                {/* ปุ่มลัดเข้าทำโจทย์ข้อถัดไปใน Editor ทันที พร้อมส่ง sessionId ไปกับ Query Param */}
                 {nextExercise && (
                   <Button
                     variant="outlined"
                     size="small"
-                    onClick={() => navigate(`/sessions/level${session.targetLevel}`)}
+                    onClick={() =>
+                      navigate(
+                        `/editor/${nextExercise.exerciseId}?sessionId=${session.sessionId}`,
+                      )
+                    }
                     endIcon={<ArrowForwardIcon sx={{ fontSize: '16px !important' }} />}
                     sx={{
                       borderRadius: '8px',
@@ -166,7 +170,10 @@ export function RecentSessions({ loadingRecent, recentSessions }: RecentSessions
                       '&:hover': { bgcolor: '#eff6ff', borderColor: '#93c5fd' },
                     }}
                   >
-                    เรียนต่อ
+                    {session.totalExercises > 0 &&
+                    session.completedExercises === session.totalExercises
+                      ? 'ทบทวน'
+                      : 'เรียนต่อ'}
                   </Button>
                 )}
               </Box>
