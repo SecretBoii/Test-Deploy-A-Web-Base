@@ -8,7 +8,6 @@ import { useAuth } from '../../context/AuthContext'
 interface MainLayoutProps {
   children?: React.ReactNode
   activeItem?: string
-  onItemClick?: (name: string) => void
 }
 
 const MENU_ROUTE_MAP: Record<string, string> = {

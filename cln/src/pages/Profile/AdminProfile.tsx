@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography, Alert, Button } from '@mui/material';
-import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
 import { AdminProfileCard } from './components/admin/AdminProfileCard';
 
@@ -63,17 +62,14 @@ export function AdminProfile() {
   // แสดงตัวโหลดหมุน (Spinner) ขณะดึงข้อมูล
   if (loading) {
     return (
-      <MainLayout activeItem="Profile">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <CircularProgress sx={{ color: '#0F4A38' }} />
-        </Box>
-      </MainLayout>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress sx={{ color: '#0F4A38' }} />
+      </Box>
     );
   }
 
   return (
-    <MainLayout activeItem="Profile">
-      <Box
+    <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -127,8 +123,7 @@ export function AdminProfile() {
           />
         )}
       </Box>
-    </MainLayout>
-  );
+    );
 }
 
 export default AdminProfile;

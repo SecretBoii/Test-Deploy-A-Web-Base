@@ -121,7 +121,8 @@ export function ResultPage() {
 
   return (
     <MainLayout activeItem="Sessions">
-      <Box sx={{ maxWidth: '1280px', margin: '0 auto', p: 3, minHeight: '90vh', width: '100%' }}>
+      {/* ปรับขนาดความกว้างตามมาตรฐานระบบ 1440px และตัด inner padding ซ้ำซ้อนออก */}
+      <Box sx={{ width: '100%', maxWidth: '1440px', margin: '0 auto', minHeight: '90vh' }}>
         
         {/* Header Section */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>

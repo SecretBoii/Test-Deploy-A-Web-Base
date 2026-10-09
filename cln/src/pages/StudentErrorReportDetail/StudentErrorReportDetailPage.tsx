@@ -186,7 +186,8 @@ export default function StudentErrorReportDetailPage() {
 
   return (
     <MainLayout activeItem="Reports">
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, maxWidth: '1440px', margin: '0 auto', pb: 6 }}>
+      {/* ปรับขนาดความกว้างเต็ม 100% ตามมาตรฐานระบบ 1440px กึ่งกลางจอ */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, width: '100%', maxWidth: '1440px', margin: '0 auto', pb: 6 }}>
         {/* 1. ปุ่มย้อนกลับไปหน้ารายงานสรุปภาพรวม */}
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <Button

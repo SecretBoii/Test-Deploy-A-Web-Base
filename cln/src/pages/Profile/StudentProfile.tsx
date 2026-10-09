@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { MainLayout } from '../../components/Layout/MainLayout';
 import { apiClient } from '../../api/client';
 import { ProfileForm } from './components/student/ProfileForm';
 import { ProfileStats } from './components/student/ProfileStats';
@@ -108,23 +107,21 @@ export function StudentProfile() {
 
   if (loading) {
     return (
-      <MainLayout activeItem="Profile">
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-          <CircularProgress />
-        </Box>
-      </MainLayout>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <MainLayout activeItem="Profile">
-      <Box
+    <Box
+        // ปรับความกว้างให้ได้มาตรฐาน 1440px สอดคล้องกับหน้า TeacherProfile และ AdminProfile
         sx={{
           display: 'flex',
           flexDirection: 'column',
           gap: 3.5,
           color: '#0f172a',
-          maxWidth: '1280px',
+          maxWidth: '1440px',
           margin: '0 auto',
           width: '100%',
         }}
@@ -167,8 +164,7 @@ export function StudentProfile() {
           <ProfileProgress progress={levelsProgress} />
         </Box>
       </Box>
-    </MainLayout>
-  );
+    );
 }
 
 export default StudentProfile;
