@@ -74,39 +74,32 @@ export const LevelDetailPage: React.FC = () => {
     <MainLayout activeItem="Sessions">
       {/* ปรับขนาดความกว้างตามมาตรฐานระบบ 1440px และตัด inner padding ซ้ำซ้อนออกเนื่องจาก MainLayout มีการเว้น padding ไว้อยู่แล้ว */}
       <Box sx={{ maxWidth: '1440px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 3.5, width: '100%', color: '#0f172a' }}>
-        {/* 1. Header Bar ด้านบน */}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          {/* Breadcrumbs & Back link */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              onClick={() => navigate('/sessions')}
-              startIcon={<ArrowLeft size={16} />}
-              sx={{
-                color: '#64748b',
-                textTransform: 'none',
-                fontWeight: 600,
-                fontSize: '0.85rem',
-                p: 0,
-                minWidth: 'auto',
-                '&:hover': { color: '#0f172a', bgcolor: 'transparent' },
-              }}
-            >
-              ย้อนกลับ
-            </Button>
-            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600, fontSize: '0.85rem' }}>
-              / ระดับ {level}
-            </Typography>
-          </Box>
-
-          {/* Level Header Title & Description */}
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', fontFamily: 'inherit' }}>
-              {currentMeta.label}
-            </Typography>
-            <Typography variant="body1" sx={{ color: '#64748b', fontSize: '0.95rem', fontFamily: 'inherit' }}>
-              {currentMeta.description}
-            </Typography>
-          </Box>
+        {/* แถบย้อนกลับสู่หน้ารวมระดับบทเรียน (Back Navigation) ป้องกันการแสดงผลชื่อและคำอธิบายซ้ำซ้อนกับ LevelSummaryCard */}
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Button
+            onClick={() => navigate('/sessions')}
+            startIcon={<ArrowLeft size={16} />}
+            sx={{
+              color: '#475569',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              textTransform: 'none',
+              px: 1.75,
+              py: 0.65,
+              borderRadius: '8px',
+              bgcolor: '#ffffff',
+              border: '1px solid #e2e8f0',
+              boxShadow: 'none',
+              transition: 'all 0.15s ease',
+              '&:hover': {
+                bgcolor: '#f8fafc',
+                color: '#0f172a',
+                borderColor: '#cbd5e1',
+              },
+            }}
+          >
+            ย้อนกลับไปเลือกระดับ
+          </Button>
         </Box>
 
         {loading ? (
@@ -142,8 +135,13 @@ export const LevelDetailPage: React.FC = () => {
                     key={session.sessionId}
                     session={session}
                     levelColor={currentMeta.color}
-                    onSelectExercise={(exerciseId) => {
-                      navigate(`/editor/${exerciseId}`);
+                    onSelectExercise={(exerciseId, sessionId) => {
+                      // ส่งต่อ sessionId ไปกับ Query Param เพื่อให้หน้า Editor และการส่งโค้ดบันทึก Activity ผูกกับ Session ที่ถูกต้อง
+                      const targetSessionId = sessionId || session.sessionId;
+                      const url = targetSessionId
+                        ? `/editor/${exerciseId}?sessionId=${targetSessionId}`
+                        : `/editor/${exerciseId}`;
+                      navigate(url);
                     }}
                   />
                 ))}

@@ -95,25 +95,32 @@ export const LevelSummaryCard: React.FC<LevelSummaryCardProps> = ({
         >
           {`Lv${level}`}
         </Box>
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Box
-              component="span"
-              sx={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: meta.color || '#2563eb',
-                bgcolor: meta.bg || '#eff6ff',
-                px: 1.25,
-                py: 0.35,
-                borderRadius: '6px',
-                border: `1px solid ${meta.border || '#bfdbfe'}`,
-              }}
-            >
-              {meta.label}
-            </Box>
-          </Box>
-          <Typography variant="body2" sx={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 500, fontFamily: 'inherit' }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* หัวข้อระดับความยากหลัก (Hero Title) ชัดเจนระดับบนสุด ไม่ซ้ำซ้อน */}
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 800,
+              color: '#0f172a',
+              fontSize: { xs: '1.25rem', sm: '1.45rem' },
+              fontFamily: 'inherit',
+              letterSpacing: '-0.3px',
+              lineHeight: 1.25,
+            }}
+          >
+            {meta.label}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              color: '#64748b',
+              fontSize: '0.925rem',
+              fontWeight: 500,
+              fontFamily: 'inherit',
+              mt: 0.5,
+              lineHeight: 1.5,
+            }}
+          >
             {meta.description}
           </Typography>
         </Box>

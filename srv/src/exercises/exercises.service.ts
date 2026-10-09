@@ -10,6 +10,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateExerciseDto, UpdateExerciseDto } from './dto';
+import { ExercisesProgressService } from './exercises-progress.service';
 
 @Injectable()
 export class ExercisesService {
@@ -18,6 +19,7 @@ export class ExercisesService {
   constructor(
     @InjectQueue('code-execution') private readonly codeQueue: Queue,
     private readonly prisma: PrismaService,
+    private readonly progressService: ExercisesProgressService,
   ) {}
 
 
@@ -329,6 +331,9 @@ export class ExercisesService {
           },
         });
 
+        // อัปเดตความก้าวหน้าระดับ Session ของผู้เรียนทันทีหลังส่งงานจริง
+        await this.progressService.updateUserSessionProgress(userId, sessionId);
+
         return {
           success: true,
           activityId: activity.activityId,
@@ -367,6 +372,9 @@ export class ExercisesService {
           runCount: run_count,
         },
       });
+
+      // อัปเดตความก้าวหน้าระดับ Session เป็น IN_PROGRESS ทันทีที่มีการเริ่มรันโค้ด
+      await this.progressService.updateUserSessionProgress(userId, sessionId);
 
       const testInputs = '5\n10\n15\n20\nstudent\n';
 
