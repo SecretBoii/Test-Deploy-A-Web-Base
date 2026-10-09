@@ -73,10 +73,10 @@ export function HistoryStats({
               <Typography variant="body2" sx={{ color: '#64748b', fontWeight: 600, mb: 0.5 }}>
                 คะแนนสูงสุด
               </Typography>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: '#10b981', lineHeight: 1 }}>
+              <Typography variant="h4" sx={{ fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
                 {maxScore}
               </Typography>
-              <Typography variant="caption" sx={{ color: '#10b981', display: 'block', mt: 0.5, fontWeight: 600 }}>
+              <Typography variant="caption" sx={{ color: '#64748b', display: 'block', mt: 0.5 }}>
                 คะแนน
               </Typography>
             </Box>
