@@ -29,9 +29,7 @@ export const LevelDetailPage: React.FC = () => {
     const fetchLevelSessions = async () => {
       try {
         setLoading(true);
-        const res = await apiClient.get(`/exercises/level-sessions/${level}`, {
-          params: { userId: user.userId },
-        });
+        const res = await apiClient.get<SessionDetail[]>(`/exercises/level-sessions/${level}`);
         setSessionDetails(res.data);
       } catch (err) {
         console.error('Failed to fetch level sessions:', err);
@@ -40,7 +38,7 @@ export const LevelDetailPage: React.FC = () => {
       }
     };
     fetchLevelSessions();
-  }, [level, user?.userId]);
+  }, [level]);
 
   if (level === null || isNaN(level)) {
     return <Navigate to="/sessions" replace />;

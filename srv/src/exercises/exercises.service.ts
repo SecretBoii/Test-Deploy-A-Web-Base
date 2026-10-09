@@ -9,6 +9,7 @@ import {
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateExerciseDto, UpdateExerciseDto } from './dto';
 
 @Injectable()
 export class ExercisesService {
@@ -192,20 +193,20 @@ export class ExercisesService {
         );
       }
 
-      const previousRuns = await this.prisma.activity.count({
-        where: {
-          userId,
-          exerciseId,
-          eventType: 'run',
-        },
-      });
-
-      const run_count =
-        typeof runCountParam === 'number'
-          ? runCountParam
-          : event_type === 'run'
-            ? previousRuns + 1
-            : previousRuns;
+      // หาก Frontend ส่ง runCountParam มาให้แล้ว ให้ใช้ค่านั้นทันทีเพื่อประหยัด Database I/O
+      let run_count: number;
+      if (typeof runCountParam === 'number') {
+        run_count = runCountParam;
+      } else {
+        const previousRuns = await this.prisma.activity.count({
+          where: {
+            userId,
+            exerciseId,
+            eventType: 'run',
+          },
+        });
+        run_count = event_type === 'run' ? previousRuns + 1 : previousRuns;
+      }
 
       let sessionId = sessionIdParam ? sessionIdParam : 1;
 
@@ -367,12 +368,7 @@ export class ExercisesService {
         },
       });
 
-      const inputMap: Record<number, string> = {
-        101: '5\n10\n',
-        102: '1\n2\n0\n',
-      };
-
-      const testInputs = inputMap[exerciseId] ?? '5\n10\n15\n20\nstudent\n';
+      const testInputs = '5\n10\n15\n20\nstudent\n';
 
       await this.codeQueue.add('execute', {
         activityId: activity.activityId,
@@ -393,7 +389,7 @@ export class ExercisesService {
         eventType: activity.eventType,
         status: 'pending',
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (
         error instanceof NotFoundException ||
         error instanceof BadRequestException ||
@@ -401,8 +397,10 @@ export class ExercisesService {
       ) {
         throw error;
       }
+      const message =
+        error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
-        `Code submission failed: ${error.response?.data?.error?.message || error.message}`,
+        `Code submission failed: ${message}`,
       );
     }
   }
@@ -486,7 +484,7 @@ export class ExercisesService {
     });
   }
 
-  async createExercise(dto: any) {
+  async createExercise(dto: CreateExerciseDto) {
     return await this.prisma.exercise.create({
       data: {
         title: dto.title,
@@ -501,7 +499,7 @@ export class ExercisesService {
     });
   }
 
-  async updateExercise(exerciseId: number, dto: any) {
+  async updateExercise(exerciseId: number, dto: UpdateExerciseDto) {
     const existing = await this.prisma.exercise.findUnique({
       where: { exerciseId },
     });

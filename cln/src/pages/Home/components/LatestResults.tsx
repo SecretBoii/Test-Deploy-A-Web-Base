@@ -1,20 +1,67 @@
-import { Box, Card, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Pagination } from '@mui/material';
+import { 
+  Box, 
+  Card, 
+  Typography, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Button, 
+  Pagination, 
+  Chip,
+  Skeleton
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { DIFFICULTY_LEVELS } from '../../../constants/difficulty';
+import { formatThaiDateTime } from '../../../utils/dateUtils';
+
+// กำหนด Type ป้องกันการใช้ any ตาม Rule 4 และรองรับโครงสร้างข้อมูลเดิม
+export interface LatestActivityHistoryItem {
+  activityId: number;
+  exerciseId: number;
+  sessionId?: number;
+  submittedAt: string;
+  score: number;
+  status?: string;
+  eventType?: 'run' | 'submit' | string;
+  runCount: number;
+  targetLevel?: number;
+  exercise?: {
+    exerciseId?: number;
+    title: string;
+    difficultyLevel?: number;
+  };
+  session?: {
+    sessionId?: number;
+    sessionName: string;
+    targetLevel?: number;
+  };
+}
 
 interface LatestResultsProps {
-  history: any[];
+  history: LatestActivityHistoryItem[];
+  isLoading?: boolean;
   onSelectExercise: (exerciseId: number, sessionId?: number) => void;
   page: number;
   totalPages: number;
-  onPageChange: (event: React.ChangeEvent<unknown>, value:number) => void;
+  onPageChange: (event: React.ChangeEvent<unknown>, value: number) => void;
 }
 
-export function LatestResults({ history, onSelectExercise, page, totalPages, onPageChange }: LatestResultsProps) {
+export function LatestResults({ 
+  history, 
+  isLoading = false,
+  onSelectExercise, 
+  page, 
+  totalPages, 
+  onPageChange 
+}: LatestResultsProps) {
   const navigate = useNavigate();
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      {/* ส่วนหัวการ์ดและปุ่มไปหน้าดูทั้งหมด */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a' }}>
           ผลล่าสุด
@@ -28,114 +75,200 @@ export function LatestResults({ history, onSelectExercise, page, totalPages, onP
         </Button>
       </Box>
 
-      <Card sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', boxShadow: 'none', overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead sx={{ bgcolor: '#eff6ff' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '280px' }}>EXERCISE</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '210px'  }}>SESSION</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '235px' }}>LEVEL</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>RUN COUNT</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '100px' }}>SCORE</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: '115px' }}>EVENT</TableCell>
-                <TableCell align="center" sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>STATUS</TableCell>
-                <TableCell align="center"sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>DATE & TIME</TableCell>
-                <TableCell sx={{ fontWeight: 700, color: '#475569', fontSize: '0.8rem', minWidth: '100px'  }}></TableCell>
+      {/* กรอบการ์ดตารางสไตล์เดียวกับตารางใน Teacher/Admin Dashboard */}
+      <Card 
+        sx={{ 
+          borderRadius: '16px', 
+          border: '1px solid #e2e8f0', 
+          bgcolor: '#ffffff',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)', 
+          overflow: 'hidden' 
+        }}
+      >
+        <TableContainer sx={{ overflowX: 'auto' }}>
+          <Table sx={{ minWidth: 1040 }}>
+            {/* หัวตารางพื้นหลัง #f8fafc คุมโทนเหมือน Teacher & Admin */}
+            <TableHead sx={{ bgcolor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+              <TableRow
+                sx={{
+                  '& th': {
+                    fontWeight: 700,
+                    color: '#475569',
+                    fontSize: '13px',
+                    py: 1.8,
+                    whiteSpace: 'nowrap',
+                  },
+                }}
+              >
+                <TableCell sx={{ minWidth: '220px' }}>ชื่อโจทย์ / แบบฝึกหัด</TableCell>
+                <TableCell sx={{ minWidth: '180px' }}>บทเรียน (Session)</TableCell>
+                <TableCell align="center" sx={{ minWidth: '130px' }}>ระดับความยาก</TableCell>
+                <TableCell align="center" sx={{ minWidth: '110px' }}>จำนวนครั้งที่รัน</TableCell>
+                <TableCell align="center" sx={{ minWidth: '80px' }}>คะแนน</TableCell>
+                <TableCell align="center" sx={{ minWidth: '110px' }}>ประเภทกิจกรรม</TableCell>
+                <TableCell align="center" sx={{ minWidth: '110px' }}>ผลการประเมิน</TableCell>
+                <TableCell align="center" sx={{ minWidth: '150px' }}>วันและเวลาที่ทำ</TableCell>
+                <TableCell align="center" sx={{ minWidth: '100px' }}>การจัดการ</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {history.length > 0 ? (
+              {isLoading ? (
+                [1, 2, 3, 4, 5].map((idx) => (
+                  <TableRow key={idx}>
+                    <TableCell sx={{ py: 1.6 }}><Skeleton width="75%" height={20} animation="wave" /></TableCell>
+                    <TableCell sx={{ py: 1.6 }}><Skeleton width="60%" height={20} animation="wave" /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={55} height={22} animation="wave" sx={{ mx: 'auto', borderRadius: '6px' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={28} height={20} animation="wave" sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={36} height={20} animation="wave" sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={45} height={20} animation="wave" sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={68} height={22} animation="wave" sx={{ mx: 'auto', borderRadius: '12px' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={90} height={20} animation="wave" sx={{ mx: 'auto' }} /></TableCell>
+                    <TableCell align="center" sx={{ py: 1.6 }}><Skeleton width={62} height={26} animation="wave" sx={{ mx: 'auto', borderRadius: '8px' }} /></TableCell>
+                  </TableRow>
+                ))
+              ) : history.length > 0 ? (
                 history.map((row) => {
-                  const targetLevel = row.targetLevel || row.session?.targetLevel || 1;
-                  const diffColor = DIFFICULTY_LEVELS[targetLevel]?.color || '#0284c7';
-                  const levelLabel = DIFFICULTY_LEVELS[targetLevel]?.label || `Level ${targetLevel}`;
-                  const formattedDate = new Date(row.submittedAt).toLocaleString('th-TH', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  });
+                  const targetLevel = row.targetLevel || row.session?.targetLevel || row.exercise?.difficultyLevel || 1;
+                  const diffMeta = DIFFICULTY_LEVELS[targetLevel] || {
+                    label: `Level ${targetLevel}`,
+                    color: '#0284c7',
+                    bg: '#eff6ff',
+                    border: '#bfdbfe',
+                  };
+                  const formattedDate = formatThaiDateTime(row.submittedAt);
                   const isAccepted = row.score >= 80;
                   
                   return (
-                    <TableRow key={row.activityId} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                      <TableCell sx={{ fontWeight: 700, color: '#334155', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                        {row.exercise?.title}
+                    <TableRow 
+                      key={row.activityId} 
+                      hover
+                      sx={{ 
+                        '&:hover': { bgcolor: '#f8fafc' },
+                        transition: 'background-color 0.15s ease',
+                        '&:last-child td, &:last-child th': { border: 0 } 
+                      }}
+                    >
+                      {/* 1. ชื่อโจทย์ / แบบฝึกหัด */}
+                      <TableCell sx={{ py: 1.6, whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ fontWeight: 700, color: '#0f172a', fontSize: '13.5px' }}>
+                          {row.exercise?.title || 'แบบฝึกหัดทั่วไป'}
+                        </Typography>
                       </TableCell>
-                      <TableCell sx={{ color: '#64748b', fontSize: '0.85rem' }}>
-                        {row.session?.sessionName || '-'}
+
+                      {/* 2. บทเรียน (Session) */}
+                      <TableCell sx={{ py: 1.6, whiteSpace: 'nowrap' }}>
+                        <Typography sx={{ color: '#64748b', fontSize: '13px' }}>
+                          {row.session?.sessionName || '-'}
+                        </Typography>
                       </TableCell>
-                      <TableCell sx={{ color: diffColor, fontWeight: 600, fontSize: '0.85rem' }}>
-                        {levelLabel}
-                      </TableCell>
-                      <TableCell align="center" sx={{ color: '#334155', fontWeight: 600, fontSize: '0.85rem' }}>
+
+                      {/* 3. ระดับความยาก (แสดงเป็น Badge ตามสไตล์ระบบ) */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
                         <Box
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 24,
-                            height: 24,
-                            borderRadius: '50%',
-                            border: row.eventType === 'submit' ? '1px solid #cbd5e1' : '1px solid #fdba74',
-                            bgcolor: row.eventType === 'submit' ? '#f8fafc' : '#fff7ed',
-                            color: row.eventType === 'submit' ? '#475569' : '#ea580c',
-                            fontSize: '0.75rem',
+                            display: 'inline-block',
+                            px: 1.2,
+                            py: 0.3,
+                            borderRadius: '6px',
+                            fontSize: '12px',
                             fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            bgcolor: diffMeta.bg || '#f1f5f9',
+                            color: diffMeta.color || '#475569',
+                            border: `1px solid ${diffMeta.border || '#e2e8f0'}`,
                           }}
                         >
-                          {row.runCount}
+                          {diffMeta.label}
                         </Box>
                       </TableCell>
-                      <TableCell align="center" sx={{ color: isAccepted ? '#10b981' : '#d97706', fontWeight: 700, fontSize: '0.85rem' }}>
-                        {row.score}
+
+                      {/* 4. จำนวนครั้งที่รัน */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
+                        <Typography sx={{ fontWeight: 600, fontSize: '13px', color: '#64748b' }}>
+                          {row.runCount} ครั้ง
+                        </Typography>
                       </TableCell>
-                      <TableCell align="center">
+
+                      {/* 5. คะแนน */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
+                        <Typography 
+                          sx={{ 
+                            fontWeight: 700, 
+                            fontSize: '13.5px', 
+                            color: isAccepted ? '#059669' : '#d97706' 
+                          }}
+                        >
+                          {row.score}
+                        </Typography>
+                      </TableCell>
+
+                      {/* 6. ประเภทกิจกรรม (Submit / Run Code แคปซูลสไตล์ Slate) */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
                         <Box
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: '50px',
-                            fontSize: '0.75rem',
-                            fontWeight: 700,
-                            bgcolor: row.eventType === 'submit' ? '#eff6ff' : '#f1f5f9',
-                            color: row.eventType === 'submit' ? '#2563eb' : '#64748b',
-                            border: row.eventType === 'submit' ? '1px solid #bfdbfe' : '1px solid #cbd5e1',
+                            display: 'inline-block',
+                            px: 1.2,
+                            py: 0.3,
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            whiteSpace: 'nowrap',
+                            bgcolor: row.eventType === 'submit' ? '#f1f5f9' : '#f8fafc',
+                            color: row.eventType === 'submit' ? '#0f172a' : '#64748b',
+                            border: '1px solid #e2e8f0',
                           }}
                         >
                           {row.eventType === 'submit' ? 'Submit' : 'Run Code'}
                         </Box>
                       </TableCell>
-                      <TableCell align="center">
-                        <Box
+
+                      {/* 7. ผลการประเมิน (Chip ขอบมน 8px มาตรฐานเดียวกับ Teacher/Admin) */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
+                        <Chip
+                          label={isAccepted ? 'Passed' : 'Failed'}
+                          size="small"
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            px: 1.5,
-                            py: 0.5,
-                            borderRadius: '50px',
-                            fontSize: '0.75rem',
+                            bgcolor: isAccepted ? '#ecfdf5' : '#fef2f2',
+                            color: isAccepted ? '#059669' : '#dc2626',
+                            border: `1px solid ${isAccepted ? '#a7f3d0' : '#fecaca'}`,
                             fontWeight: 700,
-                            bgcolor: isAccepted ? '#ecfdf5' : '#fff1f2',
-                            color: isAccepted ? '#10b981' : '#f43f5e',
-                            border: isAccepted ? '1px solid #a7f3d0' : '1px solid #fecdd3',
+                            fontSize: '12px',
+                            borderRadius: '8px',
+                            height: '24px',
+                            px: 0.8,
                           }}
-                        >
-                          {isAccepted ? 'Passed' : 'Failed'}
-                        </Box>
+                        />
                       </TableCell>
-                      <TableCell align="center" sx={{ color: '#64748b', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                        {formattedDate}
+
+                      {/* 8. วันและเวลาที่ทำ */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
+                        <Typography sx={{ fontSize: '12.5px', color: '#64748b', whiteSpace: 'nowrap' }}>
+                          {formattedDate}
+                        </Typography>
                       </TableCell>
-                      <TableCell>
+
+                      {/* 9. การจัดการ (ปุ่มทำอีกครั้ง) */}
+                      <TableCell align="center" sx={{ py: 1.6 }}>
                         <Button
+                          variant="outlined"
                           size="small"
                           onClick={() => onSelectExercise(row.exerciseId, row.sessionId)}
-                          sx={{ color: '#2563eb', textTransform: 'none', fontWeight: 600, fontSize: '0.8rem' }}
+                          sx={{
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            fontSize: '12px',
+                            borderColor: '#cbd5e1',
+                            color: '#2563eb',
+                            bgcolor: '#ffffff',
+                            whiteSpace: 'nowrap',
+                            py: 0.4,
+                            px: 1.5,
+                            '&:hover': {
+                              bgcolor: '#eff6ff',
+                              borderColor: '#93c5fd',
+                            },
+                          }}
                         >
                           ทำอีกครั้ง
                         </Button>
@@ -145,7 +278,7 @@ export function LatestResults({ history, onSelectExercise, page, totalPages, onP
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={9} align="center" sx={{ py: 3, color: '#64748b' }}>
+                  <TableCell colSpan={9} align="center" sx={{ py: 6, color: '#94a3b8', fontSize: '14px', fontWeight: 500 }}>
                     ยังไม่มีประวัติการทำแบบฝึกหัด
                   </TableCell>
                 </TableRow>
@@ -155,14 +288,15 @@ export function LatestResults({ history, onSelectExercise, page, totalPages, onP
         </TableContainer>
 
         {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid #e2e8f0' }}>
-          <Pagination 
-          count={totalPages} 
-          page={page} 
-          onChange={onPageChange} 
-          color="primary" 
-          size="medium"/>
-        </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2, borderTop: '1px solid #e2e8f0' }}>
+            <Pagination 
+              count={totalPages} 
+              page={page} 
+              onChange={onPageChange} 
+              color="primary" 
+              size="medium"
+            />
+          </Box>
         )}
       </Card>
     </Box>

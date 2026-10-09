@@ -11,12 +11,13 @@ import {
   ForbiddenException,
   Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { ExercisesService } from './exercises.service';
 import { ExercisesGradingService } from './exercises-grading.service';
 import { ExercisesProgressService } from './exercises-progress.service';
 import { SubmitExerciseDto, CreateExerciseDto, UpdateExerciseDto } from './dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { CurrentUser } from '../auth/current-user-decorator';
+import { CurrentUser, type AuthenticatedUser } from '../auth/current-user-decorator';
 import { AuditLogService } from '../audit-log/audit-log.service';
 
 @UseGuards(JwtAuthGuard)
@@ -32,8 +33,8 @@ export class ExercisesController {
   @Post('run')
   async runCode(
     @Body() submitExerciseDto: SubmitExerciseDto,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     const { exerciseId, sourceCode, hintUsed, sessionId, runCount } =
       submitExerciseDto;
@@ -60,8 +61,8 @@ export class ExercisesController {
   @Post('submit')
   async submitCode(
     @Body() submitExerciseDto: SubmitExerciseDto,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     const { exerciseId, sourceCode, hintUsed, sessionId, runCount } =
       submitExerciseDto;
@@ -96,24 +97,24 @@ export class ExercisesController {
   }
 
   @Get('recent-session')
-  async getRecentSession(@CurrentUser() user: any) {
+  async getRecentSession(@CurrentUser() user: AuthenticatedUser) {
     return await this.progressService.getRecentSession(user.userId);
   }
 
   // API ดึงความก้าวหน้าสรุปของแต่ละ Level (ต้องวางก่อน :id)
   @Get('levels-summary')
-  async getLevelsSummary(@CurrentUser() user: any) {
+  async getLevelsSummary(@CurrentUser() user: AuthenticatedUser) {
     return await this.progressService.getLevelsSummary(user.userId);
   }
 
   @Get('dashboard-stats')
-  async getDashboardStats(@CurrentUser() user: any) {
-    return await this.progressService.getDashboardStats(user.userId);
+  async getDashboardStats(@CurrentUser() user: AuthenticatedUser) {
+    return await this.progressService.getDashboardStats(user.userId, user.roleId);
   }
 
   @Get('history')
   async getHistory(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('limit') limit?: string,
     @Query('page') page?: string,
   ) {
@@ -130,7 +131,7 @@ export class ExercisesController {
   @Get('level-sessions/:level')
   async getLevelSessions(
     @Param('level') level: string,
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
   ) {
     return await this.progressService.getLevelSessions(
       Number(level),
@@ -139,7 +140,7 @@ export class ExercisesController {
   }
 
   @Get('manage/all')
-  async getAllExercises(@CurrentUser() user: any) {
+  async getAllExercises(@CurrentUser() user: AuthenticatedUser) {
     if (user.roleId !== 2 && user.roleId !== 3) {
       throw new ForbiddenException(
         'Only teachers and admins can view all exercises.',
@@ -151,8 +152,8 @@ export class ExercisesController {
   @Post()
   async create(
     @Body() dto: CreateExerciseDto,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     if (user.roleId !== 2) {
       throw new ForbiddenException('Only teachers can create exercises.');
@@ -175,8 +176,8 @@ export class ExercisesController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateExerciseDto,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     if (user.roleId !== 2) {
       throw new ForbiddenException('Only teachers can update exercises.');
@@ -194,8 +195,8 @@ export class ExercisesController {
   @Delete(':id')
   async delete(
     @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     if (user.roleId !== 2) {
       throw new ForbiddenException('Only teachers can delete exercises.');
@@ -213,8 +214,8 @@ export class ExercisesController {
   @Post(':id/hint')
   async recordHintUsage(
     @Param('id') id: string,
-    @CurrentUser() user: any,
-    @Req() req: any,
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
   ) {
     const exerciseId = Number(id);
     const result = await this.exercisesService.recordHintUsage(
@@ -233,7 +234,10 @@ export class ExercisesController {
 
   // API ดึงโจทย์ตาม ID (ต้องวางหลัง static routes)
   @Get(':id')
-  async getExerciseById(@Param('id') id: string, @CurrentUser() user: any) {
+  async getExerciseById(
+    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
     return await this.exercisesService.getExerciseById(
       Number(id),
       user.userId,
