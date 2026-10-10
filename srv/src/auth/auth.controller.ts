@@ -47,9 +47,14 @@ export class AuthController {
 
     const token = this.authService.login(user);
 
+    // ตรวจสอบว่าคำขอส่งผ่าน HTTPS หรือไม่ (รองรับ Header X-Forwarded-Proto จาก Nginx Reverse Proxy)
+    // เพื่อเปิด Secure Cookie บน Production ขณะที่ยังอนุญาตให้ทดสอบผ่าน HTTP ใน Local ได้โดยไม่บล็อกคุกกี้
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.COOKIE_SECURE === 'true';
+
     response.cookie('access_token', token, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: isHttps,
       maxAge: 24 * 60 * 60 * 1000,
     });
 
@@ -89,7 +94,12 @@ export class AuthController {
         currentUser = null;
       }
     }
-    response.clearCookie('access_token');
+    const isHttps = req.secure || req.headers['x-forwarded-proto'] === 'https' || process.env.COOKIE_SECURE === 'true';
+    response.clearCookie('access_token', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: isHttps,
+    });
 
     // บันทึก Audit Log เมื่อผู้ใช้ออกจากระบบ (ป้องกัน Runtime Error หากไม่มี Token หรือผู้ใช้ไม่ได้ล็อกอินอยู่)
     if (currentUser) {
