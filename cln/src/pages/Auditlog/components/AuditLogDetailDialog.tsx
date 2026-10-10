@@ -268,13 +268,13 @@ export const AuditLogDetailDialog: React.FC<AuditLogDetailDialogProps> = ({ sele
           onClick={onClose}
           variant="contained"
           sx={{
-            bgcolor: '#0f172a',
+            bgcolor: '#2563eb',
             color: '#ffffff',
             borderRadius: '8px',
             textTransform: 'none',
             fontWeight: 600,
             px: 2.5,
-            '&:hover': { bgcolor: '#1e293b' },
+            '&:hover': { bgcolor: '#1d4ed8' },
           }}
         >
           ปิดหน้าต่าง

@@ -196,14 +196,14 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                         </Typography>
                       </TableCell>
 
-                      {/* คอลัมน์ที่ 9: ปุ่มดูรายละเอียดโค้ด (สไตล์ Dark Navy มน 8px ถอดแบบรูปที่ 2) */}
+                      {/* คอลัมน์ที่ 9: ปุ่มดูรายละเอียดโค้ด (สไตล์ Royal Blue มน 8px) */}
                       <TableCell align="center" sx={{ py: 1.5 }}>
                         <Button
                           variant="contained"
                           size="small"
                           onClick={() => setSelectedSubmission(row)}
                           sx={{
-                            bgcolor: '#0f172a',
+                            bgcolor: '#2563eb',
                             color: '#ffffff',
                             borderRadius: '8px',
                             textTransform: 'none',
@@ -214,7 +214,7 @@ export const TeacherRecentSubmissions: React.FC<TeacherRecentSubmissionsProps> =
                             boxShadow: 'none',
                             whiteSpace: 'nowrap',
                             '&:hover': {
-                              bgcolor: '#1e293b',
+                              bgcolor: '#1d4ed8',
                               boxShadow: 'none',
                             },
                           }}

@@ -184,11 +184,11 @@ export function StudentActivityTable({ activities, onSelectActivity }: StudentAc
                         whiteSpace: 'nowrap',
                         px: 1.6,
                         py: 0.6,
-                        bgcolor: '#0f172a',
+                        bgcolor: '#2563eb',
                         color: '#ffffff',
                         boxShadow: 'none',
                         '&:hover': {
-                          bgcolor: '#1e293b',
+                          bgcolor: '#1d4ed8',
                           boxShadow: 'none',
                         }
                       }}

@@ -138,7 +138,7 @@ export function ExerciseErrorHistoryDialog({
               onClick={handleClose}
               variant="contained"
               sx={{
-                bgcolor: '#0f172a',
+                bgcolor: '#2563eb',
                 color: '#ffffff',
                 borderRadius: '8px',
                 textTransform: 'none',
@@ -147,7 +147,7 @@ export function ExerciseErrorHistoryDialog({
                 boxShadow: 'none',
                 px: 2.5,
                 py: 0.7,
-                '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
+                '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' },
               }}
             >
               ปิดหน้าต่าง

@@ -254,13 +254,13 @@ export const TeacherCodeInspectionModal: React.FC<TeacherCodeInspectionModalProp
         )}
       </DialogContent>
 
-      {/* ส่วนท้าย Dialog: ปุ่มปิดหน้าต่างสีดำเข้มตามแบบดีไซน์ระบบ */}
+      {/* ส่วนท้าย Dialog: ปุ่มปิดหน้าต่างสีน้ำเงิน Royal Blue */}
       <DialogActions sx={{ px: 3, py: 2, bgcolor: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
         <Button
           variant="contained"
           onClick={onClose}
           sx={{
-            bgcolor: '#0f172a',
+            bgcolor: '#2563eb',
             color: '#ffffff',
             borderRadius: '8px',
             px: 2.5,
@@ -270,7 +270,7 @@ export const TeacherCodeInspectionModal: React.FC<TeacherCodeInspectionModalProp
             textTransform: 'none',
             boxShadow: 'none',
             '&:hover': {
-              bgcolor: '#1e293b',
+              bgcolor: '#1d4ed8',
               boxShadow: 'none',
             },
           }}

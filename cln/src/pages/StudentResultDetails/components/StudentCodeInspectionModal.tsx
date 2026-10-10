@@ -387,7 +387,7 @@ export const StudentCodeInspectionModal: React.FC<StudentCodeInspectionModalProp
           variant="contained"
           onClick={onClose}
           sx={{
-            bgcolor: '#0f172a',
+            bgcolor: '#2563eb',
             color: '#ffffff',
             borderRadius: '8px',
             px: 2.5,
@@ -397,7 +397,7 @@ export const StudentCodeInspectionModal: React.FC<StudentCodeInspectionModalProp
             textTransform: 'none',
             boxShadow: 'none',
             '&:hover': {
-              bgcolor: '#1e293b',
+              bgcolor: '#1d4ed8',
               boxShadow: 'none',
             },
           }}

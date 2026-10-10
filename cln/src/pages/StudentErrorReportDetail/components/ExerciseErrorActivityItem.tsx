@@ -52,14 +52,14 @@ export function ExerciseErrorActivityItem({
           sx={{
             fontSize: '11.5px',
             textTransform: 'none',
-            bgcolor: '#0f172a',
+            bgcolor: '#2563eb',
             color: '#ffffff',
             fontWeight: 600,
             borderRadius: '8px',
             boxShadow: 'none',
             py: 0.4,
             px: 1.4,
-            '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
+            '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' },
           }}
         >
           ตรวจโค้ดละเอียด

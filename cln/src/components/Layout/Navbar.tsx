@@ -40,30 +40,11 @@ export function Navbar({ onMenuClick, user, activeItem }: NavbarProps) {
           <Menu size={22} />
         </IconButton>
 
+        {/* แสดงชื่อหน้าปัจจุบันบน Top Navbar (ตัดชื่อระบบ Python Exercise ออกเพื่อไม่ให้ซ้ำซ้อนกับ Sidebar Logo) */}
         <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center' }}>
           <Typography
             sx={{
-              fontSize: '14px',
-              fontWeight: 500,
-              color: '#64748b',
-              letterSpacing: '-0.1px',
-            }}
-          >
-            Python Exercise
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '14px',
-              color: '#cbd5e1',
-              mx: 1.25,
-              userSelect: 'none',
-            }}
-          >
-            /
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: '14px',
+              fontSize: '15px',
               fontWeight: 600,
               color: '#0f172a',
               letterSpacing: '-0.1px',
@@ -75,7 +56,37 @@ export function Navbar({ onMenuClick, user, activeItem }: NavbarProps) {
       </Box>
 
       {/* Right action items */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, ml: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, ml: 3 }}>
+        {/* ข้อมูลบัญชีผู้ใช้ (Username & Role) จัดวางหน้า Avatar ตามมาตรฐานแดชบอร์ด */}
+        <Box
+          sx={{
+            display: { xs: 'none', sm: 'flex' },
+            flexDirection: 'column',
+            alignItems: 'flex-end',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '13px',
+              fontWeight: 600,
+              color: '#0f172a',
+              lineHeight: 1.2,
+            }}
+          >
+            {user.username}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '11px',
+              fontWeight: 500,
+              color: '#64748b',
+              lineHeight: 1.2,
+            }}
+          >
+            {user.roleId === 1 ? 'Student' : user.roleId === 2 ? 'Teacher' : 'Admin'}
+          </Typography>
+        </Box>
+
         <Avatar
           alt={user.username}
           sx={{

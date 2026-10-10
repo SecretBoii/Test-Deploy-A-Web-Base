@@ -153,7 +153,7 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                     onClick={() => onSelectLog(log)}
                     sx={{
                       borderRadius: '8px',
-                      bgcolor: '#0f172a',
+                      bgcolor: '#2563eb',
                       color: '#ffffff',
                       fontWeight: 600,
                       fontSize: '12px',
@@ -163,7 +163,7 @@ export const AuditLogTable: React.FC<AuditLogTableProps> = ({
                       px: 1.5,
                       whiteSpace: 'nowrap',
                       '&:hover': {
-                        bgcolor: '#1e293b',
+                        bgcolor: '#1d4ed8',
                         boxShadow: 'none',
                       },
                     }}

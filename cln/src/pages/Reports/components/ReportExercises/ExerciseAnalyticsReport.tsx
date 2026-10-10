@@ -438,7 +438,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                       )}
                     </TableCell>
 
-                    {/* ปุ่มดูรายละเอียด: Solid Dark-Navy คมชัด หนักแน่น ไม่ใช้สีอ่อน */}
+                    {/* ปุ่มดูรายละเอียด: Solid Royal Blue คมชัด หนักแน่น */}
                     <TableCell align="center">
                       <Button
                         variant="contained"
@@ -446,7 +446,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                         onClick={() => navigate(`/reports/exercises/${exercise.exerciseId}`)}
                         sx={{
                           borderRadius: '8px',
-                          bgcolor: '#0f172a',
+                          bgcolor: '#2563eb',
                           color: '#ffffff',
                           fontWeight: 600,
                           fontSize: '12px',
@@ -456,7 +456,7 @@ export function ExerciseAnalyticsReport({ data, isLoading }: ExerciseAnalyticsRe
                           px: 1.6,
                           whiteSpace: 'nowrap',
                           '&:hover': {
-                            bgcolor: '#1e293b',
+                            bgcolor: '#1d4ed8',
                             boxShadow: 'none',
                           }
                         }}

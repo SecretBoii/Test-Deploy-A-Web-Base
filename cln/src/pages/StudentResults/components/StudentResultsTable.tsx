@@ -236,14 +236,14 @@ export const StudentResultsTable: React.FC<StudentResultsTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* 6. รายละเอียด (ปุ่ม Solid Dark Navy มน 8px ถอดแบบรูปที่ 1) */}
+                  {/* 6. รายละเอียด (ปุ่ม Solid Royal Blue มน 8px) */}
                   <TableCell align="center">
                     <Button
                       variant="contained"
                       size="small"
                       onClick={() => navigate(`/student-results/${student.userId}`)}
                       sx={{
-                        bgcolor: '#0f172a',
+                        bgcolor: '#2563eb',
                         color: '#ffffff',
                         borderRadius: '8px',
                         textTransform: 'none',
@@ -253,7 +253,7 @@ export const StudentResultsTable: React.FC<StudentResultsTableProps> = ({
                         py: 0.7,
                         boxShadow: 'none',
                         '&:hover': {
-                          bgcolor: '#1e293b',
+                          bgcolor: '#1d4ed8',
                           boxShadow: 'none',
                         },
                       }}

@@ -198,14 +198,14 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
                     </Box>
                   </Stack>
 
-                  {/* Right Section: ปุ่มดูประวัติการทำ สไตล์ Solid Dark-Navy ตามรูปที่ 1 */}
+                  {/* Right Section: ปุ่มดูประวัติการทำ สไตล์ Solid Royal Blue */}
                   <Button
                     variant="contained"
                     size="small"
                     onClick={() => onSelectLog(log)}
                     sx={{
                       borderRadius: '8px',
-                      bgcolor: '#0f172a',
+                      bgcolor: '#2563eb',
                       color: '#ffffff',
                       fontWeight: 600,
                       fontSize: '12px',
@@ -216,7 +216,7 @@ export const AuditLogTimelineFeed: React.FC<AuditLogTimelineFeedProps> = ({
                       whiteSpace: 'nowrap',
                       alignSelf: { xs: 'flex-start', sm: 'center' },
                       '&:hover': {
-                        bgcolor: '#1e293b',
+                        bgcolor: '#1d4ed8',
                         boxShadow: 'none',
                       },
                     }}

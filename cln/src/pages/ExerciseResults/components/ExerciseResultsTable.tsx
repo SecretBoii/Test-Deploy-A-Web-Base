@@ -252,14 +252,14 @@ export const ExerciseResultsTable: React.FC<ExerciseResultsTableProps> = ({
                     </Typography>
                   </TableCell>
 
-                  {/* 8. รายละเอียด / การจัดการ (สไตล์รูปที่ 1 & รูปที่ 3: ปุ่ม Solid Dark Navy มน 8px) */}
+                  {/* 8. รายละเอียด / การจัดการ (ปุ่ม Solid Royal Blue มน 8px) */}
                   <TableCell align="center">
                     <Button
                       variant="contained"
                       size="small"
                       onClick={() => navigate(`/exercise-results/${row.exerciseId}`)}
                       sx={{
-                        bgcolor: '#0f172a',
+                        bgcolor: '#2563eb',
                         color: '#ffffff',
                         borderRadius: '8px',
                         textTransform: 'none',
@@ -269,7 +269,7 @@ export const ExerciseResultsTable: React.FC<ExerciseResultsTableProps> = ({
                         py: 0.7,
                         boxShadow: 'none',
                         '&:hover': {
-                          bgcolor: '#1e293b',
+                          bgcolor: '#1d4ed8',
                           boxShadow: 'none',
                         },
                       }}
