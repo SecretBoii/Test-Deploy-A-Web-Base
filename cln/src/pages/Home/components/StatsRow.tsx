@@ -172,7 +172,7 @@ export function StatsRow({ username, stats, isLoading = false }: StatsRowProps) 
               <Skeleton width={110} height={18} animation="wave" sx={{ mt: 1.2 }} />
             ) : (
               <Typography variant="caption" sx={{ color: '#059669', fontWeight: 700, display: 'block', mt: 1.2 }}>
-                ✓ ส่งสำเร็จตามเกณฑ์
+                ส่งสำเร็จตามเกณฑ์
               </Typography>
             )}
           </Box>

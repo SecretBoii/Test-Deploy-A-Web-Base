@@ -96,14 +96,22 @@ async function main() {
     }
     console.log('Userprofiles seeded.');
 
-    // 4. Seed Exercises (เช็คว่ามีไฟล์ไหมก่อนอ่าน เพื่อไม่ให้ Script พัง)
-    const sqlPath = path.join(__dirname, '../../python-exercises.sql');
-    if (fs.existsSync(sqlPath)) {
-      console.log('Seeding exercises from python-exercises.sql...');
-      const sqlContent = fs.readFileSync(sqlPath, 'utf-8');
+    // 4. Seed Exercises (รองรับไฟล์ชุดโจทย์ exercise_rows.sql และ python-exercises.sql เพื่อให้การ seed มีความยืดหยุ่น)
+    const exerciseRowsPath = path.join(__dirname, '../../exercise_rows.sql');
+    const legacyExercisesPath = path.join(__dirname, '../../python-exercises.sql');
+    const activeExercisePath = fs.existsSync(exerciseRowsPath)
+      ? exerciseRowsPath
+      : fs.existsSync(legacyExercisesPath)
+        ? legacyExercisesPath
+        : null;
+
+    if (activeExercisePath) {
+      console.log(`Seeding exercises from ${path.basename(activeExercisePath)}...`);
+      const sqlContent = fs.readFileSync(activeExercisePath, 'utf-8');
       await prisma.$executeRawUnsafe(sqlContent);
       console.log('Exercises seeded.');
     }
+
 
     // 5. Seed Custom Sessions
     const customSessionsPath = path.join(__dirname, '../../custom-sessions.sql');

@@ -36,15 +36,15 @@ export function buildGemmaPrompt(
   let hintLevelInstruction = '';
   if (runCount <= 2) {
     hintLevelInstruction = `
-      - Provide only high-level conceptual hints. Do not specify line numbers or point to the exact errors. Do not write any code solutions or code snippets under any circumstances.
+      - Level 1 Conceptual Hint: Ask an open-ended question or give a high-level conceptual hint. Strictly DO NOT specify line numbers, do NOT point directly to errors, and NEVER write any code solutions or snippets.
     `;
   } else if (runCount <= 4) {
     hintLevelInstruction = `
-      - Identify the general category of the logical error and narrow down the scope of the erroneous code block. Still, do not write code solutions for the user.
+      - Level 2 Scoped Hint: Guide the student to inspect the specific logical block, variable state, or output discrepancy through thought-provoking questions. Strictly do NOT provide code solutions or fixes.
     `;
   } else {
     hintLevelInstruction = `
-      - Point to the exact line numbers of the errors. Explain the root causes of the bugs clearly. You are allowed to provide code examples or refactoring suggestions to guide them.
+      - Level 3 Logical Insight: Explain why the current logic behaves unexpectedly, or highlight the discrepancy between the code behavior and requirements. You may point to the general area of logic, but you are STRICTLY PROHIBITED from providing direct code solutions, corrected code snippets, or explicit answers. Guide them to solve it themselves.
     `;
   }
 
@@ -64,7 +64,7 @@ export function buildGemmaPrompt(
     - Error: ${runResult.stderr || 'None'}
 
     Additional rules to evaluate (use these criteria):
-    [Correctness Check] Evaluate the student's code and execution output based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic is completely correct, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch such as printing "Hello Python" or "hello python" instead of "Welcome to Python", or slightly incorrect output format), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and explain in the feedback what is slightly incorrect. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
+    [Correctness Check] Evaluate the student's code and execution output based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic is completely correct, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch such as printing "Hello Python" or "hello python" instead of "Welcome to Python", or slightly incorrect output format), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and provide guiding questions for the student to notice the difference. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
     [Security Check] ${securityRules}
     [Complexity/Big-O Check] ${complexityRules}
     [PEP 8 Cleanliness Check] ${pep8Rules}
@@ -75,23 +75,62 @@ export function buildGemmaPrompt(
     ${hintLevelInstruction}
 
     ====================================================
+    [FEW-SHOT EXAMPLES OF DESIRED SOCRATIC HINTS VS PROHIBITED RESPONSES]
+    Example 1 (Data Type mismatch / Input string conversion):
+      - [PROHIBITED] (Direct answer): "ต้องใช้ int(input()) แปลงตัวเลขก่อนนำมาบวกกันครับ"
+      - [DESIRED] (Socratic Hint): "ลองตรวจสอบชนิดข้อมูลของตัวแปรที่รับเข้ามาก่อนนำไปคำนวณดูครับ ว่าพร้อมสำหรับการคำนวณทางคณิตศาสตร์แล้วหรือยัง?"
+
+    Example 2 (Typo or slight mismatch in terminal output):
+      - [PROHIBITED] (Direct answer): "ต้อง print คำว่า 'Total: ' ไม่ใช่ 'Sum: ' ครับ"
+      - [DESIRED] (Socratic Hint): "ลองเปรียบเทียบข้อความที่แสดงใน Terminal กับรูปแบบผลลัพธ์ที่โจทย์กำหนดดูครับ ว่ามีคำใดที่ยังไม่ตรงกัน?"
+
+    Example 3 (Loop condition or Off-by-one error):
+      - [PROHIBITED] (Direct answer): "ลูปขาดไปหนึ่งรอบ ให้แก้เป็น range(1, n + 1) ครับ"
+      - [DESIRED] (Socratic Hint): "ลองสังเกตรอบสุดท้ายของการวนลูปดูครับ ว่าค่าตัวนับไปถึงตัวเลขเป้าหมายตามที่โจทย์ต้องการครบถ้วนแล้วหรือยัง?"
+
+    Example 4 (Runtime Error / Exception occurred):
+      - [PROHIBITED] (Direct answer): "เกิด ZeroDivisionError ให้ใส่ if b != 0: ดักไว้ก่อนหาร"
+      - [DESIRED] (Socratic Hint): "ลองตรวจสอบสาเหตุของข้อผิดพลาดที่เกิดขึ้นใน Console ดูครับ ว่ามีตัวหารหรือค่าใดที่ทำให้โปรแกรมไม่สามารถคำนวณต่อได้?"
+    ====================================================
+
+    ====================================================
     CRITICAL INSTRUCTIONS FOR RESPONSE (JSON ONLY):
     Return a JSON object ONLY. Do not write any conversational intro, greetings, warnings, markdown wrappers, or outros.
     
     - For "score": <overall evaluation score as an integer from 0 to 100>,
     - For "exception_message": If a compilation or runtime error occurred, provide only the short name/type of the exception (e.g. "ValueError" or "SyntaxError"). Do not explain the exception. If no error occurred, use null.
-    - For "ai_feedback": ให้ตอบเป็นข้อความประโยคภาษาไทยปกติที่เป็นธรรมชาติและกระชับในการแนะนำผู้เรียน (ห้ามตอบเป็นหัวข้อขีดลบภาษาอังกฤษเด็ดขาด)
-      * หากโค้ดยังไม่ผ่านเกณฑ์ หรือทำเงื่อนไขไม่ครบตามโจทย์: ให้ระบุจุดที่บกพร่องตรงๆ โดยขึ้นต้นประโยคทำนองว่า "ยังทำไม่ครบตามโจทย์..." หรือ "ควรปรับปรุงโค้ดส่วน..." แล้วตามด้วยคำแนะนำที่สั้นและกระชับ
-      * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมสั้นๆ และเสนอแนะจุดที่พัฒนาเพิ่มเติมได้ เช่น "โค้ดถูกต้องและทำงานได้ดีครับ แต่ควรเพิ่ม comment เพื่อความอ่านง่ายขึ้น"
-      * ให้ควบคุมความยาวใหอยูในช่วง 1-2 ประโยคสั้นๆ กระชับและได้ใจความที่สุด
+    - For "ai_feedback": ให้ตอบเป็นข้อความภาษาไทยปกติที่เป็นธรรมชาติ สุภาพ กระชับ (1-2 ประโยค ไม่เกิน 40 คำ) โดยใช้เทคนิค Socratic Method (ถามนำกระตุ้นคิด ไม่เฉลยคำตอบ):
+      * [กฎเหล็กเด็ดขาด] ห้ามเฉลยคำตอบ ห้ามบอกโค้ดที่ถูกต้อง ห้ามเขียนโค้ดตัวอย่าง และห้ามบอกวิธีแก้ตรงๆ (เช่น ห้ามพูดว่า "ควรเปลี่ยน X เป็น Y" หรือ "ให้ใช้ฟังก์ชัน Z")
+      * หากโค้ดยังไม่ผ่านเกณฑ์: ให้บอกใบ้แบบอ้อมๆ โดยตั้งคำถามชี้นำ (Guiding Question) หรือชวนให้นักเรียนกลับไปสังเกตจุดที่ต้องวิเคราะห์ด้วยตนเอง เช่น:
+        - กรณีข้อความหรือผลลัพธ์ไม่ตรง: "ลองตรวจสอบและเปรียบเทียบข้อความที่แสดงใน Output กับรูปแบบที่โจทย์ระบุดูครับว่ามีจุดใดที่ต่างกันบ้าง?"
+        - กรณีชนิดข้อมูลหรือตัวแปรผิด: "ลองสังเกตชนิดข้อมูลของตัวแปรที่รับเข้ามาก่อนนำไปประมวลผลดูครับว่าพร้อมใช้คำนวณแล้วหรือยัง?"
+        - กรณีตรรกะหรือลูปไม่ครบ: "ลองสังเกตรอบสุดท้ายของการทำงานหรือเงื่อนไขตรวจสอบดูครับว่าครอบคลุมกรณีที่โจทย์ต้องการครบถ้วนหรือไม่?"
+      * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมสั้นๆ และชวนคิดต่อยอด เช่น "โค้ดทำงานได้ถูกต้องเรียบร้อยครับ ลองคิดดูว่ามีแนวทางใดที่ช่วยให้โค้ดอ่านง่ายหรือกระชับขึ้นได้อีกบ้าง"
+      * เน้นประโยคคำถามชี้นำที่กระตุ้นการคิดวิเคราะห์ ความยาว 1-2 ประโยคกระชับที่สุด
 
     The response must exactly follow this JSON schema:
     {
       "score": <overall evaluation score as an integer from 0 to 100>,
       "exception_message": "<extremely short exception type or null>",
-      "ai_feedback": "<highly concise, friendly Thai feedback sentence (max 30 words)>"
+      "ai_feedback": "<highly concise, Socratic Thai hint sentence (max 40 words)>"
     }
   `;
+}
+
+export function sanitizeAiFeedback(feedback: string | null): string | null {
+  if (!feedback) return null;
+
+  let sanitized = feedback;
+
+  // ลบบล็อกโค้ด markdown (```...``` หรือ `...`) ออก เพื่อการันตีว่าไม่มี snippet โค้ดหลุดไป
+  sanitized = sanitized.replace(/```[\s\S]*?```/g, '').trim();
+
+  // ตัดคำนำหน้าที่ชี้นำเฉลยตรงๆ ออก
+  sanitized = sanitized
+    .replace(/^(เฉลยคือ|คำตอบที่ถูกต้องคือ|โค้ดที่ถูกต้องคือ)[\s:]*/i, '')
+    .trim();
+
+  return sanitized || null;
 }
 
 export function parseAiResponse(
@@ -114,7 +153,7 @@ export function parseAiResponse(
       return {
         score: typeof parsed.score === 'number' ? parsed.score : defaultScore,
         exception_message: parsed.exception_message ?? null,
-        ai_feedback: parsed.ai_feedback ?? null,
+        ai_feedback: sanitizeAiFeedback(parsed.ai_feedback ?? null),
         event_type: parsed.event_type ?? safe_event_type,
         run_count:
           typeof parsed.run_count === 'number'
@@ -150,7 +189,7 @@ export function parseAiResponse(
       return {
         score,
         exception_message: exception_message || null,
-        ai_feedback: ai_feedback || null,
+        ai_feedback: sanitizeAiFeedback(ai_feedback),
         event_type: safe_event_type,
         run_count: safe_run_count,
       };
