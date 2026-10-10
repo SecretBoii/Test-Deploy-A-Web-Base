@@ -6,7 +6,6 @@ services:
     image: redis:6.0-alpine
     command: redis-server --save "" --appendonly no
     restart: always
-    # ไม่จำเป็นต้องเปิดพอร์ตออกสู่ภายนอกเพื่อความปลอดภัย ให้ backend สื่อสารภายใน docker network
 
   # 2. Backend NestJS Service (Production Target) 
   backend:
