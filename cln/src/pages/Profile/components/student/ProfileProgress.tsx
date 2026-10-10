@@ -1,5 +1,4 @@
 import { Box, Card, Typography, LinearProgress } from '@mui/material';
-import { Star } from 'lucide-react';
 
 interface LevelProgress {
   level: number;
@@ -30,8 +29,7 @@ const LEVEL_COLORS: Record<number, string> = {
 export function ProfileProgress({ progress }: ProfileProgressProps) {
   return (
     <Card sx={{ borderRadius: '16px', border: '1px solid #e2e8f0', p: 3, boxShadow: 'none' }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-        <Star size={22} color="#f59e0b" />
+      <Box sx={{ mb: 3 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, color: '#0f172a' }}>
           ความก้าวหน้า
         </Typography>
