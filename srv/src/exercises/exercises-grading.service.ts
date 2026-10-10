@@ -147,12 +147,15 @@ export class ExercisesGradingService implements OnModuleInit {
         this.logger.log(
           `[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`,
         );
+        // ส่ง prompt ไปยัง Gemma API โดยกำหนด temperature ต่ำเพื่อเน้นความแม่นยำในการทำตามเกณฑ์ Socratic Method
         gemmaResponse = await firstValueFrom(
           this.httpService.post(
             gemmaUrl,
             {
               model: model,
               messages: [{ role: 'user', content: prompt }],
+              temperature: 0.2,
+              max_tokens: 300,
               stream: false,
             },
             {

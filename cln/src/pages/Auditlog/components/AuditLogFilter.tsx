@@ -49,7 +49,7 @@ export const AuditLogFilter: React.FC<AuditLogFilterProps> = ({
   const isFiltered = Boolean(search || actionFilter || startDate || endDate);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
-  // ดักจับคีย์ลัด Ctrl + F หรือ ⌘ + F เพื่อ auto-focus ที่ช่องค้นหาของหน้า Audit Log
+  // ดักจับคีย์ลัด Ctrl + F หรือ Cmd + F เพื่อ auto-focus ที่ช่องค้นหาของหน้า Audit Log
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
