@@ -129,6 +129,7 @@ interface FormFieldProps {
   icon?: ReactNode;
   endAdornment?: ReactNode;
   maxDate?: string;
+  autoComplete?: string;
 }
 
 function FormField({
@@ -143,6 +144,7 @@ function FormField({
   icon,
   endAdornment,
   maxDate,
+  autoComplete = 'off',
 }: FormFieldProps) {
   return (
     <Box>
@@ -160,8 +162,12 @@ function FormField({
         error={!!error}
         helperText={error}
         placeholder={placeholder}
+        autoComplete={autoComplete}
         slotProps={{
-          htmlInput: maxDate ? { max: maxDate } : undefined,
+          htmlInput: {
+            ...(maxDate ? { max: maxDate } : {}),
+            autoComplete,
+          },
           input: {
             sx: inputSx,
             startAdornment: icon ? <InputAdornment position="start">{icon}</InputAdornment> : undefined,
@@ -293,7 +299,7 @@ export function UserDialog({ open, onClose, onSubmit, user }: UserDialogProps) {
         },
       }}
     >
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate autoComplete="off">
         {/* Header สไตล์มาตรฐานระบบ */}
         <Box sx={{ px: 3, py: 2.25, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -334,6 +340,7 @@ export function UserDialog({ open, onClose, onSubmit, user }: UserDialogProps) {
                   error={errors.username}
                   placeholder="เช่น student01"
                   icon={<Key size={16} color="#94a3b8" />}
+                  autoComplete="off"
                 />
               </Grid>
               <Grid size={{ xs: 12, sm: 4 }}>
@@ -344,6 +351,7 @@ export function UserDialog({ open, onClose, onSubmit, user }: UserDialogProps) {
                   type={showPassword ? 'text' : 'password'}
                   placeholder={user ? 'เว้นว่างไว้หากไม่เปลี่ยน' : 'เว้นว่างไว้จะเป็น 1234'}
                   icon={<Lock size={16} color="#94a3b8" />}
+                  autoComplete="new-password"
                   endAdornment={
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => setShowPassword((p) => !p)} edge="end" sx={{ color: '#94a3b8', '&:hover': { color: '#4f46e5' } }}>
