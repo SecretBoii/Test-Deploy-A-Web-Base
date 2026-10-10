@@ -254,13 +254,13 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
         )}
       </DialogContent>
 
-      {/* ส่วนท้าย Dialog: ปุ่มปิดคุมธีม Dark-Navy */}
+      {/* ส่วนท้าย Dialog: ปุ่มปิดคุมธีม Royal Blue */}
       <DialogActions sx={{ px: 3, py: 2, bgcolor: '#ffffff', borderTop: '1px solid #e2e8f0', justifyContent: 'flex-end' }}>
         <Button
           onClick={onClose}
           variant="contained"
           sx={{
-            bgcolor: '#0f172a',
+            bgcolor: '#2563eb',
             color: '#ffffff',
             fontWeight: 700,
             fontSize: '13px',
@@ -269,7 +269,7 @@ export function CodeInspectionDialog({ open, onClose, activity }: CodeInspection
             py: 0.8,
             textTransform: 'none',
             boxShadow: 'none',
-            '&:hover': { bgcolor: '#1e293b', boxShadow: 'none' },
+            '&:hover': { bgcolor: '#1d4ed8', boxShadow: 'none' },
           }}
         >
           ปิดหน้าต่าง

@@ -341,7 +341,7 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
                       onClick={() => navigate(`/reports/students/${st.userId}/errors`)}
                       sx={{
                         borderRadius: '8px',
-                        bgcolor: '#0f172a',
+                        bgcolor: '#2563eb',
                         color: '#ffffff',
                         fontWeight: 600,
                         fontSize: '12px',
@@ -351,7 +351,7 @@ export function ErrorAnalyticsReport({ data, isLoading }: ErrorAnalyticsReportPr
                         px: 1.6,
                         whiteSpace: 'nowrap',
                         '&:hover': {
-                          bgcolor: '#1e293b',
+                          bgcolor: '#1d4ed8',
                           boxShadow: 'none',
                         },
                       }}

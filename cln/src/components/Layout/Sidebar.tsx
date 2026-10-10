@@ -63,53 +63,18 @@ export function Sidebar({ activeItem, onItemClick, user, onLogout }: SidebarProp
           borderBottom: '1px solid #e2e8f0',
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          {/* Logo Circle */}
-          <Box
-            sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '50%',
-              border: '3px solid #4f46e5',
-              position: 'relative',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: '5px',
-                left: '5px',
-                width: '12px',
-                height: '12px',
-                borderRadius: '50%',
-                border: '2px solid #4f46e5',
-              },
-            }}
-          />
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            <Box
-              component="span"
-              sx={{
-                fontSize: '15px',
-                fontWeight: 800,
-                color: '#0f172a',
-                letterSpacing: '-0.2px',
-                lineHeight: 1.2,
-              }}
-            >
-              Python Exercise
-            </Box>
-            <Box
-              component="span"
-              sx={{
-                fontSize: '10px',
-                fontWeight: 600,
-                color: '#94a3b8',
-                letterSpacing: '0.1px',
-              }}
-            >
-              {user.username} ({user.roleId === 1 ? 'Student' : user.roleId === 2 ? 'Teacher' : 'Admin'})
-            </Box>
-          </Box>
-        </Box>
+        {/* โลโก้แบรนด์ Python Exercise แนวนอนรูปที่ 2 (ไอคอน PE พร้อมชื่อโครงการ) สร้างภาพลักษณ์ที่คมชัด */}
+        <Box
+          component="img"
+          src="/logo-brand.png"
+          alt="Python Exercise"
+          sx={{
+            height: 36,
+            maxWidth: '100%',
+            objectFit: 'contain',
+            display: 'block',
+          }}
+        />
       </Box>
 
       {/* Navigation Menu */}

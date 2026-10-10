@@ -176,10 +176,10 @@ export function ExerciseStudentTable({
                         px: 1.6,
                         py: 0.6,
                         color: '#ffffff',
-                        bgcolor: '#0f172a',
+                        bgcolor: '#2563eb',
                         boxShadow: 'none',
                         '&:hover': {
-                          bgcolor: '#1e293b',
+                          bgcolor: '#1d4ed8',
                           boxShadow: 'none',
                         },
                         '&.Mui-disabled': {

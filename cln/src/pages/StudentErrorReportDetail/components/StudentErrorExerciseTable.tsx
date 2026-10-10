@@ -154,7 +154,7 @@ export function StudentErrorExerciseTable({
                   </Typography>
                 </TableCell>
 
-                {/* 6. ปุ่มตรวจประวัติโค้ด (Solid Dark-Navy) */}
+                {/* 6. ปุ่มตรวจประวัติโค้ด (Solid Royal Blue) */}
                 <TableCell align="center">
                   <Button
                     variant="contained"
@@ -162,7 +162,7 @@ export function StudentErrorExerciseTable({
                     onClick={() => onInspectExercise(ex)}
                     sx={{
                       borderRadius: '8px',
-                      bgcolor: '#0f172a',
+                      bgcolor: '#2563eb',
                       color: '#ffffff',
                       fontWeight: 600,
                       fontSize: '12px',
@@ -172,7 +172,7 @@ export function StudentErrorExerciseTable({
                       px: 1.6,
                       whiteSpace: 'nowrap',
                       '&:hover': {
-                        bgcolor: '#1e293b',
+                        bgcolor: '#1d4ed8',
                         boxShadow: 'none',
                       },
                     }}

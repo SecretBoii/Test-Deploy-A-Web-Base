@@ -21,43 +21,19 @@ export function LoginRegisterMockupPane() {
         },
       }}
     >
-      {/* Concentric Logo */}
+      {/* โลโก้แบรนด์ Python Exercise แนวนอนรูปที่ 2 (ไอคอน PE พร้อมชื่อโครงการ) สร้างอัตลักษณ์ที่สอดคล้องกับ Sidebar */}
       <Box
+        component="img"
+        src="/logo-brand.png"
+        alt="Python Exercise"
         sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1.5,
-          fontWeight: 800,
-          fontSize: '22px',
-          color: '#0f172a',
-          letterSpacing: '0.5px',
+          height: 42,
+          maxWidth: '100%',
+          objectFit: 'contain',
+          display: 'block',
           alignSelf: 'flex-start',
-          '@media (prefers-color-scheme: dark)': {
-            color: '#f3f4f6',
-          },
         }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            border: '3px solid #4f46e5',
-            position: 'relative',
-            '&::after': {
-              content: '""',
-              width: '16px',
-              height: '16px',
-              borderRadius: '50%',
-              border: '2px solid #4f46e5',
-            },
-          }}
-        />
-        <Box component="span">Python Exercise</Box>
-      </Box>
+      />
 
       {/* Mockup Cards Section */}
       <Box
@@ -380,30 +356,7 @@ export function LoginRegisterMockupPane() {
           </Box>
         </Box>
 
-        {/* Presentation Welcome text */}
-        <Box sx={{ textAlign: 'center', maxWidth: '340px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-          <Box
-            component="h2"
-            sx={{
-              fontSize: '28px',
-              fontWeight: 800,
-              color: '#0f172a',
-              lineHeight: 1.25,
-              margin: 0,
-              letterSpacing: '-0.5px',
-              '@media (prefers-color-scheme: dark)': {
-                color: '#f3f4f6',
-              },
-            }}
-          >
-            Welcome back!
-          </Box>
-          <Box component="p" sx={{ fontSize: '14px', color: '#64748b', fontWeight: 500, lineHeight: 1.5, margin: 0 }}>
-            Elevate your programming skills
-            <br />
-            through interactive practice
-          </Box>
-        </Box>
+
       </Box>
     </Box>
   )

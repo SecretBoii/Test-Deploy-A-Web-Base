@@ -465,7 +465,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                         size="small"
                         onClick={() => onInspectCode(st)}
                         sx={{
-                          bgcolor: '#0f172a',
+                          bgcolor: '#2563eb',
                           color: '#ffffff',
                           borderRadius: '8px',
                           textTransform: 'none',
@@ -475,7 +475,7 @@ export const TeacherStudentTable: React.FC<TeacherStudentTableProps> = ({ studen
                           py: 0.6,
                           boxShadow: 'none',
                           '&:hover': {
-                            bgcolor: '#1e293b',
+                            bgcolor: '#1d4ed8',
                             boxShadow: 'none',
                           },
                         }}
