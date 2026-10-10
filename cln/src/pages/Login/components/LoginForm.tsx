@@ -95,6 +95,7 @@ export function LoginForm({
             onClick={() => navigate('/register')}
             sx={{
               color: '#4f46e5',
+              cursor: 'pointer',
               textDecoration: 'none',
               fontWeight: 700,
               transition: 'color 0.2s',

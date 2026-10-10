@@ -1,10 +1,21 @@
-### Dynamic Skill & Rubric Guidelines
+### Dynamic Skill & Rubric Guidelines (เกณฑ์การตรวจแบบพลวัตและการคำนวณคะแนน)
 
 Evaluate the student's code strictly against the specific learning objectives and criteria defined for this particular exercise:
 
-1. **Alignment with Objectives:**
-   - Review the custom `Learning Topic` and `Core Objective` queried for this exercise.
-   - Verify if the student's solution fulfills the specific architectural or algorithmic requirements stated in the objective (e.g., using recursion, preventing the use of built-in functions, or implementing a specific formula).
-2. **Topic Competency:**
-   - Ensure the student demonstrates basic competency in the specified topic.
-   - Provide feedback if they miss the primary intent of the exercise, even if the code runs successfully.
+1. **Alignment with Learning Objectives:**
+   - ตรวจสอบ `Topic` และ `Objective` ของโจทย์ข้อนั้นๆ อย่างเคร่งครัด
+   - **Constraint Verification:** หากโจทย์ระบุข้อจำกัดเฉพาะเจาะจง (เช่น "ห้ามใช้ฟังก์ชัน `sum()`", "ต้องใช้การวนลูปแบบ `while`", หรือ "ต้องสร้างฟังก์ชันแบบ Recursion") ตรวจสอบว่าผู้เรียนทำตามเงื่อนไขหรือไม่ แม้โค้ดจะให้ผลลัพธ์ถูกต้องแต่ถ้าฝ่าฝืนเงื่อนไขหลัก ให้หักคะแนนตามสัดส่วนและแนะนำให้ปรับปรุงตามหัวข้อการเรียนรู้
+
+2. **Weighted Scoring Matrix (สัดส่วนคะแนน 100 คะแนน):**
+   - **Functional Correctness & Logic (70%):** โค้ดทำงานได้ผลลัพธ์ถูกต้องตรงตามที่โจทย์กำหนด ครอบคลุมเคสหลัก
+   - **Edge Cases & Resilience (15%):** รองรับค่าขอบเขต เช่น ค่า 0, ข้อมูลว่าง, หรือเงื่อนไขพิเศษโดยไม่เกิด Error
+   - **Coding Style & PEP 8 Cleanliness (15%):** การตั้งชื่อตัวแปรสื่อความหมาย การจัดย่อหน้า และความสะอาดของโค้ด
+
+3. **Partial Credit Policy (เกณฑ์การให้คะแนนตามสัดส่วน):**
+   - **100 คะแนน (Full Score):** ผลลัพธ์ถูกต้องสมบูรณ์ ตรรกะครบถ้วน เป็นไปตามข้อกำหนดทุกประการ
+   - **70 - 85 คะแนน (Minor Discrepancy):** ตรรกะการคำนวณถูกต้องทั้งหมด แต่มีความคลาดเคลื่อนเล็กน้อยในเรื่อง Output Format เช่น ตัวพิมพ์เล็ก-ใหญ่ผิด ("hello" แทน "Hello"), เว้นวรรคผิดตำแหน่ง หรือข้อความตกหล่นเล็กน้อย
+   - **50 - 65 คะแนน (Partial Logic):** ตรรกะถูกต้องบางส่วนหรือผ่านเฉพาะเคสเบื้องต้น แต่ยังไม่ครอบคลุมเงื่อนไขพิเศษบางข้อ
+   - **0 คะแนน (Failed/Non-functional):** โค้ดไม่สามารถรันได้ เกิด SyntaxError / Crash, เขียนไม่ตรงประเด็นของโจทย์เลย, หรือละเมิดกฎความปลอดภัย (Security Violation)
+
+4. **Educational Competency Assessment:**
+   - มุ่งเน้นการวัดความเข้าใจในหัวข้อหลัก (Core Topic) ของบทเรียน หากนักเรียนพยายามแก้ปัญหาในแนวทางที่ถูกต้อง ให้คำชมและคำถามกระตุ้นความคิดต่อยอด
