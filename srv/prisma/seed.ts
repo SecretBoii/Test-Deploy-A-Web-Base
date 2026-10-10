@@ -28,15 +28,15 @@ async function main() {
 
     // 2. Seed Education dynamically
     let defaultEdu = await prisma.education.findFirst({
-      where: { university: 'Default University', faculty: 'Default Faculty' }
+      where: { university: 'ไม่ระบุ', faculty: 'ไม่ระบุ' }
     });
 
     if (!defaultEdu) {
       defaultEdu = await prisma.education.create({
         data: {
-          university: 'Default University',
-          faculty: 'Default Faculty',
-          major: 'Default Major',
+          university: 'ไม่ระบุ',
+          faculty: 'ไม่ระบุ',
+          major: 'ไม่ระบุ',
         }
       });
     }

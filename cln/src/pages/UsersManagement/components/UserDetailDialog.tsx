@@ -409,7 +409,9 @@ export function UserDetailDialog({
                 <School size={16} color="#2563eb" /> มหาวิทยาลัย / สถาบันการศึกษา
               </Typography>
               <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', mt: 0.5, fontSize: '15.5px' }}>
-                {user.education?.university || 'ไม่ได้ระบุสถานศึกษา'}
+                {!user.education?.university || user.education.university === 'Default University' || user.education.university === 'ไม่ระบุ'
+                  ? 'ไม่ระบุ'
+                  : user.education.university}
               </Typography>
             </Box>
 
@@ -422,7 +424,9 @@ export function UserDetailDialog({
                   <BookOpen size={15} color="#64748b" /> คณะ
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '15px' }}>
-                  {user.education?.faculty || '-'}
+                  {!user.education?.faculty || user.education.faculty === 'Default Faculty' || user.education.faculty === 'ไม่ระบุ' || user.education.faculty === '-'
+                    ? 'ไม่ระบุ'
+                    : user.education.faculty}
                 </Typography>
               </Grid>
               <Grid size={{ xs: 12, sm: 6 }}>
@@ -433,7 +437,9 @@ export function UserDetailDialog({
                   <GraduationCap size={15} color="#64748b" /> สาขาวิชา
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '15px' }}>
-                  {user.education?.major || '-'}
+                  {!user.education?.major || user.education.major === 'Default Major' || user.education.major === 'ไม่ระบุ' || user.education.major === '-'
+                    ? 'ไม่ระบุ'
+                    : user.education.major}
                 </Typography>
               </Grid>
             </Grid>
