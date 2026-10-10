@@ -1,13 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   Box,
   Typography,
   Avatar,
-  Chip,
   Grid,
   Button,
   IconButton,
@@ -19,12 +17,11 @@ import {
   Mail,
   User as UserIcon,
   Calendar,
-  School,
   BookOpen,
   GraduationCap,
-  Clock,
   Copy,
   Check,
+  Building2,
 } from 'lucide-react';
 import type { User } from '../../../api/users';
 
@@ -35,10 +32,6 @@ interface UserDetailDialogProps {
   onEdit?: (user: User) => void;
 }
 
-/**
- * แปลงวันที่เป็นภาษาไทยแบบระบุวัน เดือน และปี พ.ศ.
- * ใช้สำหรับแสดงวันเกิดของผู้ใช้งาน
- */
 const formatDateOnly = (dateStr?: string): string => {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -51,8 +44,6 @@ const formatDateOnly = (dateStr?: string): string => {
       });
 };
 
-//แปลงวันที่และเวลาเป็นภาษาไทย เพื่อให้แอดมินตรวจสอบ Timestamp ในระบบได้อย่างแม่นยำ
- 
 const formatDateTime = (dateStr?: string): string => {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -68,7 +59,6 @@ const formatDateTime = (dateStr?: string): string => {
   );
 };
 
-// คำนวณอายุจากวันเกิด เพื่อให้แอดมินเห็นช่วงวัยของผู้เรียนได้ทันทีโดยไม่ต้องคำนวณเอง
 const calculateAge = (dobString?: string): number | null => {
   if (!dobString) return null;
   const dob = new Date(dobString);
@@ -88,34 +78,45 @@ const getGenderText = (gender?: string): string => {
       return 'ชาย';
     case 'female':
       return 'หญิง';
+    case 'other':
+      return 'อื่นๆ';
     default:
       return gender || '-';
   }
 };
 
-const getRoleBadge = (roleId: number) => {
-  if (roleId === 3) {
-    return {
-      label: 'Admin (ผู้ดูแลระบบ)',
-      color: '#e11d48',
-      bg: '#ffe4e6',
-      border: '#fecdd3',
-    };
-  }
-  if (roleId === 2) {
-    return {
-      label: 'Teacher (ผู้สอน)',
-      color: '#2563eb',
-      bg: '#eff6ff',
-      border: '#bfdbfe',
-    };
-  }
-  return {
-    label: 'Student (ผู้เรียน)',
-    color: '#059669',
-    bg: '#ecfdf5',
-    border: '#a7f3d0',
-  };
+const getRoleName = (roleId: number): string => {
+  if (roleId === 3) return 'Admin (ผู้ดูแลระบบ)';
+  if (roleId === 2) return 'Teacher (ผู้สอน)';
+  return 'Student (ผู้เรียน)';
+};
+
+// สไตล์มาตรฐานสำหรับกล่องแสดงค่าแบบ Read-only ถอดแบบจากช่อง Input ใน UserDialog และ ExercisePreviewDialog
+const readonlyBoxSx = {
+  borderRadius: '10px',
+  bgcolor: '#ffffff',
+  border: '1px solid #cbd5e1',
+  px: 1.75,
+  minHeight: '42px',
+  display: 'flex',
+  alignItems: 'center',
+  fontSize: '13.5px',
+  color: '#0f172a',
+  fontWeight: 500,
+  boxSizing: 'border-box' as const,
+  gap: 1.25,
+  minWidth: 0,
+};
+
+// สไตล์ข้อความหัวข้อกำกับด้านบน (Top Label) ถอดแบบจาก UserDialog
+const labelSx = {
+  fontSize: '13px',
+  fontWeight: 600,
+  color: '#334155',
+  mb: 0.5,
+  display: 'flex',
+  alignItems: 'center',
+  gap: 0.5,
 };
 
 export function UserDetailDialog({
@@ -126,19 +127,61 @@ export function UserDetailDialog({
 }: UserDetailDialogProps) {
   const [copied, setCopied] = useState(false);
 
+  // รีเซ็ตสถานะการคัดลอกอีเมลทุกครั้งที่เปิด Dialog หรือเปลี่ยนผู้ใช้
+  useEffect(() => {
+    if (open) {
+      setCopied(false);
+    }
+  }, [open, user?.userId]);
+
   if (!user) return null;
 
-  const roleInfo = getRoleBadge(user.roleId);
   const userAge = calculateAge(user.dateOfBirth);
+  const fullName =
+    user.firstName || user.lastName
+      ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
+      : user.username;
 
-  // ฟังก์ชันคัดลอกอีเมลลงคลิปบอร์ดเพื่อความสะดวกในการปฏิบัติงานของแอดมิน
+  const roleName = getRoleName(user.roleId);
+  const avatarLetter = (
+    user.firstName?.trim() ||
+    user.username?.trim() ||
+    'U'
+  ).charAt(0).toUpperCase();
+
+  // ฟังก์ชันคัดลอกอีเมลลงคลิปบอร์ด พร้อมดักจับข้อผิดพลาด
   const handleCopyEmail = () => {
     if (user.email) {
-      navigator.clipboard.writeText(user.email);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      navigator.clipboard
+        .writeText(user.email)
+        .then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        })
+        .catch(() => {
+          // ป้องกันข้อผิดพลาดกรณีที่เบราว์เซอร์ไม่อนุญาตการเข้าถึงคลิปบอร์ด
+        });
     }
   };
+
+  // ฟังก์ชันตรวจสอบและจัดรูปแบบค่าสถานศึกษาเพื่อป้องกันค่าว่างหรือค่าเริ่มต้นระบบ
+  const formatEduValue = (val?: string): string => {
+    if (!val) return 'ไม่ระบุ';
+    const trimmed = val.trim();
+    if (
+      !trimmed ||
+      trimmed === '-' ||
+      trimmed === 'ไม่ระบุ' ||
+      trimmed.startsWith('Default ')
+    ) {
+      return 'ไม่ระบุ';
+    }
+    return trimmed;
+  };
+
+  const displayUniversity = formatEduValue(user.education?.university);
+  const displayFaculty = formatEduValue(user.education?.faculty);
+  const displayMajor = formatEduValue(user.education?.major);
 
   return (
     <Dialog
@@ -149,344 +192,386 @@ export function UserDetailDialog({
       slotProps={{
         paper: {
           sx: {
-            width: '100%',
-            maxWidth: '820px',
             borderRadius: '16px',
             border: '1px solid #e2e8f0',
-            boxShadow: '0 25px 35px -5px rgba(15, 23, 42, 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.04)',
+            boxShadow:
+              '0 20px 25px -5px rgba(15, 23, 42, 0.12), 0 10px 10px -5px rgba(15, 23, 42, 0.04)',
             overflow: 'hidden',
           },
         },
       }}
     >
-      {/* 1. ส่วนหัว Header Profile Banner: อวาตาร์ใหญ่ขึ้น, ชื่อ-นามสกุล, User ID, Username, ป้ายบทบาท และสถานะออนไลน์ */}
-      <DialogTitle
+      {/* 1. Modal Header: รวม Avatar, ชื่อ-นามสกุล, ID, @username, สิทธิ์ และวันที่ลงทะเบียน */}
+      <Box
         sx={{
-          px: { xs: 3, sm: 4 },
-          py: 2.75,
-          bgcolor: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-            <Avatar
-              sx={{
-                width: 62,
-                height: 62,
-                bgcolor: '#eff6ff',
-                color: '#2563eb',
-                border: '2.5px solid #bfdbfe',
-                fontSize: '24px',
-                fontWeight: 800,
-              }}
-            >
-              {user.firstName?.charAt(0) ||
-                user.username?.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
-                <Typography
-                  variant="h6"
-                  sx={{ fontWeight: 800, color: '#0f172a', fontSize: '20px', lineHeight: 1.25 }}
-                >
-                  {user.firstName} {user.lastName}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: '#475569',
-                    bgcolor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    px: 1,
-                    py: 0.3,
-                    borderRadius: '5px',
-                    fontWeight: 700,
-                    fontSize: '11.5px',
-                  }}
-                >
-                  ID: #{user.userId}
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.75, flexWrap: 'wrap' }}>
-                <Typography variant="body2" sx={{ color: '#64748b', fontSize: '14px', fontWeight: 500 }}>
-                  @{user.username}
-                </Typography>
-                <Typography variant="caption" sx={{ color: '#cbd5e1' }}>•</Typography>
-                
-                {/* Chip บทบาท */}
-                <Chip
-                  label={roleInfo.label}
-                  size="small"
-                  sx={{
-                    height: '26px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    borderRadius: '6px',
-                    bgcolor: roleInfo.bg,
-                    color: roleInfo.color,
-                    border: `1px solid ${roleInfo.border}`,
-                    px: 0.5,
-                  }}
-                />
-              </Box>
-            </Box>
-          </Box>
-
-          <IconButton
-            onClick={onClose}
-            size="small"
-            sx={{
-              color: '#64748b',
-              border: '1px solid #e2e8f0',
-              borderRadius: '8px',
-              bgcolor: '#ffffff',
-              p: 1,
-              '&:hover': { bgcolor: '#f1f5f9', color: '#0f172a' },
-            }}
-          >
-            <X size={20} />
-          </IconButton>
-        </Box>
-      </DialogTitle>
-
-      {/* 2. Content: สเกลช่องข้อมูล Field Tiles ให้โปร่งและตัวหนังสือใหญ่ขึ้น */}
-      <DialogContent
-        sx={{
-          px: { xs: 3, sm: 4 },
-          pt: { xs: '18px !important', sm: '22px !important' },
-          pb: { xs: '24px !important', sm: '28px !important' },
+          px: 3,
+          py: 2.25,
           display: 'flex',
-          flexDirection: 'column',
-          gap: 3,
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          borderBottom: '1px solid #e2e8f0',
+          bgcolor: '#ffffff',
         }}
       >
-        {/* หมวดที่ 1: ข้อมูลส่วนบุคคล */}
-        <Box>
-          <Typography
-            variant="caption"
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Avatar ประจำตัวผู้ใช้งาน คลีนมินิมอล */}
+          <Avatar
             sx={{
-              fontWeight: 700,
-              color: '#475569',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              mb: 1.5,
-              display: 'block',
-              fontSize: '12.5px',
+              width: 48,
+              height: 48,
+              bgcolor: '#f1f5f9',
+              color: '#0f172a',
+              fontWeight: 800,
+              fontSize: '19px',
+              border: '1.5px solid #e2e8f0',
+              flexShrink: 0,
             }}
           >
-            ข้อมูลส่วนบุคคล (Personal Details)
-          </Typography>
-          <Grid container spacing={2}>
-            {/* อีเมล พร้อมปุ่ม Copy */}
-            <Grid size={{ xs: 12, sm: 5 }}>
-              <Box
+            {avatarLetter}
+          </Avatar>
+
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap' }}>
+              <Typography
+                variant="h6"
                 sx={{
-                  p: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  fontSize: '18px',
+                  lineHeight: 1.25,
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                {fullName}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  bgcolor: '#f8fafc',
+                  color: '#475569',
+                  border: '1px solid #cbd5e1',
+                  px: 0.85,
+                  py: 0.2,
+                  borderRadius: '5px',
+                  fontWeight: 700,
+                  fontSize: '11px',
+                }}
+              >
+                ID: #{user.userId}
+              </Typography>
+            </Box>
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.35, flexWrap: 'wrap' }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#475569', fontSize: '13px', fontWeight: 600 }}
+              >
+                @{user.username}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#cbd5e1' }}>
+                •
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ color: '#334155', fontSize: '13px', fontWeight: 600 }}
+              >
+                {roleName}
+              </Typography>
+              <Typography variant="caption" sx={{ color: '#cbd5e1' }}>
+                •
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{ color: '#64748b', fontSize: '12px', fontWeight: 500 }}
+              >
+                ลงทะเบียนเมื่อ: {formatDateTime(user.registerTimestamp)}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            color: '#94a3b8',
+            borderRadius: '8px',
+            border: '1px solid #e2e8f0',
+            p: 0.8,
+            '&:hover': { color: '#0f172a', bgcolor: '#f1f5f9' },
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <X size={18} />
+        </IconButton>
+      </Box>
+
+      {/* 2. เนื้อหาแบ่ง 2 หมวดหมู่: ข้อมูลส่วนบุคคล และ ข้อมูลสถานศึกษา */}
+      <DialogContent
+        sx={{
+          p: { xs: 2.5, sm: 3 },
+          bgcolor: '#ffffff',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2.5,
+          maxHeight: 'calc(90vh - 140px)',
+          overflowY: 'auto',
+        }}
+      >
+        {/* หมวดที่ 1: ข้อมูลส่วนบุคคล (Personal Details) */}
+        <Box
+          sx={{
+            p: 2.5,
+            bgcolor: '#f8fafc',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+            <Box
+              sx={{
+                p: 0.6,
+                borderRadius: '8px',
+                bgcolor: '#eef2ff',
+                color: '#4f46e5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <UserIcon size={16} />
+            </Box>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}
+            >
+              ข้อมูลส่วนบุคคล (Personal Details)
+            </Typography>
+          </Box>
+
+          <Grid container spacing={2}>
+            {/* ชื่อจริง */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box>
+                <Typography sx={labelSx}>ชื่อจริง</Typography>
+                <Box sx={readonlyBoxSx}>
                   <Typography
-                    variant="caption"
-                    sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
+                    variant="body2"
+                    sx={{ fontWeight: 600, color: '#0f172a', fontSize: '13.5px' }}
                   >
-                    <Mail size={15} color="#2563eb" /> อีเมลติดต่อ
+                    {user.firstName || '-'}
                   </Typography>
-                  <Tooltip title={copied ? 'คัดลอกแล้ว' : 'คัดลอกอีเมล'} arrow>
-                    <IconButton
-                      size="small"
-                      onClick={handleCopyEmail}
-                      sx={{ p: 0.4, color: '#94a3b8', '&:hover': { color: '#2563eb', bgcolor: '#eff6ff' } }}
-                    >
-                      {copied ? <Check size={15} color="#059669" /> : <Copy size={15} />}
-                    </IconButton>
-                  </Tooltip>
                 </Box>
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 600, color: '#0f172a', mt: 0.75, wordBreak: 'break-all', fontSize: '15px' }}
-                >
-                  {user.email || '-'}
-                </Typography>
+              </Box>
+            </Grid>
+
+            {/* นามสกุล */}
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box>
+                <Typography sx={labelSx}>นามสกุล</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontWeight: 600, color: '#0f172a', fontSize: '13.5px' }}
+                  >
+                    {user.lastName || '-'}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* อีเมล พร้อมปุ่มคัดลอก */}
+            <Grid size={{ xs: 12, sm: 5 }}>
+              <Box>
+                <Typography sx={labelSx}>อีเมล</Typography>
+                <Box sx={{ ...readonlyBoxSx, justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+                    <Mail size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#0f172a',
+                        fontWeight: 600,
+                        fontSize: '13px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        minWidth: 0,
+                      }}
+                    >
+                      {user.email || '-'}
+                    </Typography>
+                  </Box>
+                  {user.email && (
+                    <Tooltip title={copied ? 'คัดลอกแล้ว' : 'คัดลอกอีเมล'} arrow>
+                      <IconButton
+                        size="small"
+                        onClick={handleCopyEmail}
+                        sx={{
+                          color: copied ? '#059669' : '#94a3b8',
+                          p: 0.5,
+                          flexShrink: 0,
+                          '&:hover': { color: '#4f46e5', bgcolor: '#eef2ff' },
+                        }}
+                      >
+                        {copied ? <Check size={14} /> : <Copy size={14} />}
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
               </Box>
             </Grid>
 
             {/* เพศ */}
-            <Grid size={{ xs: 6, sm: 3 }}>
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  height: '100%',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <UserIcon size={15} color="#2563eb" /> เพศ
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#0f172a', mt: 0.75, fontSize: '15px' }}>
-                  {getGenderText(user.gender)}
-                </Typography>
+            <Grid size={{ xs: 12, sm: 3 }}>
+              <Box>
+                <Typography sx={labelSx}>เพศ</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <Typography
+                    variant="body2"
+                    sx={{ color: '#0f172a', fontWeight: 600, fontSize: '13.5px' }}
+                  >
+                    {getGenderText(user.gender)}
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
 
-            {/* วันเกิดและอายุ */}
-            <Grid size={{ xs: 6, sm: 4 }}>
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '10px',
-                  height: '100%',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <Calendar size={15} color="#2563eb" /> วันเกิด / อายุ
-                </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontWeight: 600,
-                    color: '#0f172a',
-                    mt: 0.75,
-                    fontSize: '15px',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {user.dateOfBirth
-                    ? `${formatDateOnly(user.dateOfBirth)}${userAge !== null ? ` (${userAge} ปี)` : ''}`
-                    : '-'}
-                </Typography>
+            {/* วันเกิด / อายุ */}
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Box>
+                <Typography sx={labelSx}>วันเกิด / อายุ</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <Calendar size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{ color: '#0f172a', fontWeight: 600, fontSize: '13px' }}
+                  >
+                    {user.dateOfBirth
+                      ? `${formatDateOnly(user.dateOfBirth)}${userAge !== null ? ` (${userAge} ปี)` : ''}`
+                      : '-'}
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
         </Box>
 
-        {/* หมวดที่ 2: สังกัดและการศึกษา */}
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 700,
-              color: '#475569',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              mb: 1.5,
-              display: 'block',
-              fontSize: '12.5px',
-            }}
-          >
-            สังกัดและการศึกษา (Education)
-          </Typography>
-          <Box sx={{ p: 2.5, bgcolor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px' }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography
-                variant="caption"
-                sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-              >
-                <School size={16} color="#2563eb" /> มหาวิทยาลัย / สถาบันการศึกษา
-              </Typography>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: '#0f172a', mt: 0.5, fontSize: '15.5px' }}>
-                {!user.education?.university || user.education.university === 'Default University' || user.education.university === 'ไม่ระบุ'
-                  ? 'ไม่ระบุ'
-                  : user.education.university}
-              </Typography>
+        {/* หมวดที่ 2: ข้อมูลสถานศึกษา (Education Details) */}
+        <Box
+          sx={{
+            p: 2.5,
+            bgcolor: '#f8fafc',
+            borderRadius: '14px',
+            border: '1px solid #e2e8f0',
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+            <Box
+              sx={{
+                p: 0.6,
+                borderRadius: '8px',
+                bgcolor: '#eef2ff',
+                color: '#4f46e5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <GraduationCap size={16} />
             </Box>
-
-            <Grid container spacing={2.5} sx={{ pt: 2, borderTop: '1px solid #e2e8f0' }}>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <BookOpen size={15} color="#64748b" /> คณะ
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '15px' }}>
-                  {!user.education?.faculty || user.education.faculty === 'Default Faculty' || user.education.faculty === 'ไม่ระบุ' || user.education.faculty === '-'
-                    ? 'ไม่ระบุ'
-                    : user.education.faculty}
-                </Typography>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <GraduationCap size={15} color="#64748b" /> สาขาวิชา
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '15px' }}>
-                  {!user.education?.major || user.education.major === 'Default Major' || user.education.major === 'ไม่ระบุ' || user.education.major === '-'
-                    ? 'ไม่ระบุ'
-                    : user.education.major}
-                </Typography>
-              </Grid>
-            </Grid>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 700, color: '#0f172a', fontSize: '14px' }}
+            >
+              ข้อมูลสถานศึกษา (Education Details)
+            </Typography>
           </Box>
-        </Box>
 
-        {/* หมวดที่ 3: ประวัติและสถานะระบบ */}
-        <Box>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 700,
-              color: '#475569',
-              textTransform: 'uppercase',
-              letterSpacing: '0.6px',
-              mb: 1.5,
-              display: 'block',
-              fontSize: '12.5px',
-            }}
-          >
-            ประวัติการใช้งานระบบ (System Logs)
-          </Typography>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12 }}>
-              <Box sx={{ p: 2, bgcolor: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '10px' }}>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#64748b', display: 'flex', alignItems: 'center', gap: 0.9, fontWeight: 600, fontSize: '12.5px' }}
-                >
-                  <Clock size={15} color="#64748b" /> วันที่ลงทะเบียนเข้าระบบ
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#334155', mt: 0.5, fontSize: '14.5px' }}>
-                  {formatDateTime(user.registerTimestamp)}
-                </Typography>
+            {/* มหาวิทยาลัย */}
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Box>
+                <Typography sx={labelSx}>มหาวิทยาลัย</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <Building2 size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: displayUniversity === 'ไม่ระบุ' ? '#94a3b8' : '#0f172a',
+                      fontWeight: displayUniversity === 'ไม่ระบุ' ? 500 : 600,
+                      fontSize: '13px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}
+                  >
+                    {displayUniversity}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* คณะ */}
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Box>
+                <Typography sx={labelSx}>คณะ</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <BookOpen size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: displayFaculty === 'ไม่ระบุ' ? '#94a3b8' : '#0f172a',
+                      fontWeight: displayFaculty === 'ไม่ระบุ' ? 500 : 600,
+                      fontSize: '13px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}
+                  >
+                    {displayFaculty}
+                  </Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            {/* สาขาวิชา */}
+            <Grid size={{ xs: 12, sm: 4 }}>
+              <Box>
+                <Typography sx={labelSx}>สาขาวิชา</Typography>
+                <Box sx={readonlyBoxSx}>
+                  <GraduationCap size={16} color="#94a3b8" style={{ flexShrink: 0 }} />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: displayMajor === 'ไม่ระบุ' ? '#94a3b8' : '#0f172a',
+                      fontWeight: displayMajor === 'ไม่ระบุ' ? 500 : 600,
+                      fontSize: '13px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      minWidth: 0,
+                    }}
+                  >
+                    {displayMajor}
+                  </Typography>
+                </Box>
               </Box>
             </Grid>
           </Grid>
         </Box>
       </DialogContent>
 
-      {/* 3. Actions: ปุ่มปิด และปุ่มแก้ไขตามมาตรฐาน MUI System ขนาดใหญ่ขึ้น */}
+      {/* 3. Footer: สไตล์เดียวกับ UserDialog */}
       <DialogActions
         sx={{
-          px: { xs: 3, sm: 4 },
-          py: 2.5,
-          bgcolor: '#f8fafc',
+          px: 3,
+          py: 2,
           borderTop: '1px solid #e2e8f0',
+          bgcolor: '#ffffff',
           justifyContent: 'space-between',
         }}
       >
@@ -494,38 +579,41 @@ export function UserDetailDialog({
           onClick={onClose}
           variant="outlined"
           sx={{
-            borderRadius: '9px',
-            color: '#475569',
-            borderColor: '#cbd5e1',
+            borderRadius: '10px',
+            height: '40px',
             textTransform: 'none',
             fontWeight: 600,
-            fontSize: '14px',
-            px: 3,
-            py: 0.9,
+            fontSize: '13px',
+            borderColor: '#cbd5e1',
+            color: '#475569',
+            px: 2.75,
             '&:hover': {
-              bgcolor: '#f1f5f9',
+              bgcolor: '#f8fafc',
               borderColor: '#94a3b8',
             },
           }}
         >
           ปิดหน้าต่าง
         </Button>
+
         {onEdit && (
           <Button
             onClick={() => onEdit(user)}
             variant="contained"
             startIcon={<Edit2 size={16} />}
             sx={{
-              borderRadius: '9px',
-              bgcolor: '#2563eb',
+              borderRadius: '10px',
+              height: '40px',
               textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '14px',
+              fontWeight: 700,
+              fontSize: '13px',
+              bgcolor: '#4f46e5',
+              color: '#ffffff',
               px: 3,
-              py: 0.9,
               boxShadow: 'none',
+              transition: 'all 0.15s ease',
               '&:hover': {
-                bgcolor: '#1d4ed8',
+                bgcolor: '#4338ca',
                 boxShadow: 'none',
               },
             }}
