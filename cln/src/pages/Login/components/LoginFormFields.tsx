@@ -67,60 +67,40 @@ export function LoginFormFields({
       />
 
       {/* Password Field */}
-      <Box component="div" sx={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <TextField
-          fullWidth
-          disabled={loading}
-          variant="outlined"
-          placeholder="At least 8 characters"
-          type="password"
-          value={password}
-          onChange={(e) => onChangePassword(e.target.value)}
-          autoComplete="new-password"
-          slotProps={{
-            htmlInput: { 'aria-label': 'Password' },
-            input: {
-              startAdornment: (
-                <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
-                  <Lock size={20} />
-                </InputAdornment>
-              ),
-              style: {
-                borderRadius: 12,
-                height: 52,
-                fontSize: 15,
-              },
+      <TextField
+        fullWidth
+        disabled={loading}
+        variant="outlined"
+        placeholder="At least 8 characters"
+        type="password"
+        value={password}
+        onChange={(e) => onChangePassword(e.target.value)}
+        autoComplete="new-password"
+        slotProps={{
+          htmlInput: { 'aria-label': 'Password' },
+          input: {
+            startAdornment: (
+              <InputAdornment position="start" style={{ color: '#94a3b8', marginRight: 12 }}>
+                <Lock size={20} />
+              </InputAdornment>
+            ),
+            style: {
+              borderRadius: 12,
+              height: 52,
+              fontSize: 15,
             },
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              '@media (prefers-color-scheme: dark)': {
-                '& fieldset': { borderColor: '#1e293b' },
-                '&:hover fieldset': { borderColor: '#334155' },
-                color: '#f3f4f6',
-              },
+          },
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            '@media (prefers-color-scheme: dark)': {
+              '& fieldset': { borderColor: '#1e293b' },
+              '&:hover fieldset': { borderColor: '#334155' },
+              color: '#f3f4f6',
             },
-          }}
-        />
-        <Box
-          component="a"
-          href="#forgot"
-          sx={{
-            alignSelf: 'flex-end',
-            fontSize: '13px',
-            fontWeight: 700,
-            color: '#4f46e5',
-            textDecoration: 'none',
-            transition: 'color 0.2s',
-            '&:hover': {
-              color: '#4338ca',
-              textDecoration: 'underline',
-            },
-          }}
-        >
-          Forgot password?
-        </Box>
-      </Box>
+          },
+        }}
+      />
 
       {/* แจ้งเตือนข้อความ Error สีแดง */}
       {error && (

@@ -32,19 +32,20 @@ export function buildGemmaPrompt(
   const pep8Rules = getSkillGuideline('pep8');
   const edgeCasesRules = getSkillGuideline('edge_cases');
   const dynamicRubricRules = getSkillGuideline('dynamic_rubric');
+  const adaptiveHintsRules = getSkillGuideline('adaptive_hints');
 
   let hintLevelInstruction = '';
   if (runCount <= 2) {
     hintLevelInstruction = `
-      - Level 1 Conceptual Hint: Ask an open-ended question or give a high-level conceptual hint. Strictly DO NOT specify line numbers, do NOT point directly to errors, and NEVER write any code solutions or snippets.
+      - Level 1 Conceptual Hint (รอบที่ ${runCount}): ถามนำกระตุ้นคิดในภาพรวมเชิงแนวคิด (Conceptual Overview) ห้ามระบุเลขบรรทัด และห้ามเขียนโค้ดตัวอย่างหรือ snippet โดยเด็ดขาด
     `;
   } else if (runCount <= 4) {
     hintLevelInstruction = `
-      - Level 2 Scoped Hint: Guide the student to inspect the specific logical block, variable state, or output discrepancy through thought-provoking questions. Strictly do NOT provide code solutions or fixes.
+      - Level 2 Scoped Hint (รอบที่ ${runCount}): ชี้เป้าขอบเขตของตรรกะหรือคำสั่งที่มีปัญหาให้แคบลง (Scoped Logic Block) ถามนำให้นักเรียนวิเคราะห์สาเหตุด้วยตนเอง ห้ามบอกวิธีแก้ตรงๆ
     `;
   } else {
     hintLevelInstruction = `
-      - Level 3 Logical Insight: Explain why the current logic behaves unexpectedly, or highlight the discrepancy between the code behavior and requirements. You may point to the general area of logic, but you are STRICTLY PROHIBITED from providing direct code solutions, corrected code snippets, or explicit answers. Guide them to solve it themselves.
+      - Level 3 Logical Insight (รอบที่ ${runCount}): อธิบายพฤติกรรมของโค้ดว่าทำไมจึงให้ผลลัพธ์ต่างจากโจทย์ (Behavioral Insight) ห้ามพิมพ์โค้ดเฉลยเด็ดขาด กระตุ้นให้นักเรียนแก้ปัญหาด้วยตนเอง
     `;
   }
 
@@ -65,6 +66,7 @@ export function buildGemmaPrompt(
 
     Additional rules to evaluate (use these criteria):
     [Correctness Check] Evaluate the student's code and execution output based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic is completely correct, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch such as printing "Hello Python" or "hello python" instead of "Welcome to Python", or slightly incorrect output format), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and provide guiding questions for the student to notice the difference. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
+    [Adaptive Hints Framework] ${adaptiveHintsRules}
     [Security Check] ${securityRules}
     [Complexity/Big-O Check] ${complexityRules}
     [PEP 8 Cleanliness Check] ${pep8Rules}
@@ -77,20 +79,20 @@ export function buildGemmaPrompt(
     ====================================================
     [FEW-SHOT EXAMPLES OF DESIRED SOCRATIC HINTS VS PROHIBITED RESPONSES]
     Example 1 (Data Type mismatch / Input string conversion):
-      - [PROHIBITED] (Direct answer): "ต้องใช้ int(input()) แปลงตัวเลขก่อนนำมาบวกกันครับ"
-      - [DESIRED] (Socratic Hint): "ลองตรวจสอบชนิดข้อมูลของตัวแปรที่รับเข้ามาก่อนนำไปคำนวณดูครับ ว่าพร้อมสำหรับการคำนวณทางคณิตศาสตร์แล้วหรือยัง?"
+      -  [PROHIBITED] (Direct / Blunt): "ต้องใช้ int(input()) แปลงตัวเลขก่อนนำมาบวกกันครับ"
+      -  [DESIRED] (Polite & Socratic Hint): "เขียนโค้ดได้เป็นระเบียบดีแล้วครับ ลองสังเกตเพิ่มเติมดูนะครับว่าตัวแปรที่รับเข้ามาพร้อมสำหรับการคำนวณทางคณิตศาสตร์แล้วหรือยังครับ?"
 
     Example 2 (Typo or slight mismatch in terminal output):
-      - [PROHIBITED] (Direct answer): "ต้อง print คำว่า 'Total: ' ไม่ใช่ 'Sum: ' ครับ"
-      - [DESIRED] (Socratic Hint): "ลองเปรียบเทียบข้อความที่แสดงใน Terminal กับรูปแบบผลลัพธ์ที่โจทย์กำหนดดูครับ ว่ามีคำใดที่ยังไม่ตรงกัน?"
+      -  [PROHIBITED] (Direct / Blunt): "ยังผิดครับ ต้อง print คำว่า 'Total: ' ไม่ใช่ 'Sum: '"
+      -  [DESIRED] (Polite & Socratic Hint): "เกือบสมบูรณ์แล้วครับ ลองตรวจสอบและเปรียบเทียบข้อความที่แสดงใน Terminal กับรูปแบบผลลัพธ์ที่โจทย์กำหนดดูอีกนิดนะครับว่ามีคำใดที่ยังไม่ตรงกันบ้างครับ"
 
     Example 3 (Loop condition or Off-by-one error):
-      - [PROHIBITED] (Direct answer): "ลูปขาดไปหนึ่งรอบ ให้แก้เป็น range(1, n + 1) ครับ"
-      - [DESIRED] (Socratic Hint): "ลองสังเกตรอบสุดท้ายของการวนลูปดูครับ ว่าค่าตัวนับไปถึงตัวเลขเป้าหมายตามที่โจทย์ต้องการครบถ้วนแล้วหรือยัง?"
+      -  [PROHIBITED] (Direct / Blunt): "ลูปขาดไปหนึ่งรอบ ให้แก้เป็น range(1, n + 1) ครับ"
+      -  [DESIRED] (Polite & Socratic Hint): "มีความพยายามที่ดีมากครับ ลองสังเกตรอบสุดท้ายของการวนลูปดูอีกนิดนะครับว่าค่าตัวนับไปถึงตัวเลขเป้าหมายตามที่โจทย์ต้องการครบถ้วนแล้วหรือยังครับ?"
 
     Example 4 (Runtime Error / Exception occurred):
-      - [PROHIBITED] (Direct answer): "เกิด ZeroDivisionError ให้ใส่ if b != 0: ดักไว้ก่อนหาร"
-      - [DESIRED] (Socratic Hint): "ลองตรวจสอบสาเหตุของข้อผิดพลาดที่เกิดขึ้นใน Console ดูครับ ว่ามีตัวหารหรือค่าใดที่ทำให้โปรแกรมไม่สามารถคำนวณต่อได้?"
+      -  [PROHIBITED] (Direct / Blunt): "เกิด ZeroDivisionError ให้ใส่ if b != 0: ดักไว้ก่อนหาร"
+      -  [DESIRED] (Polite & Socratic Hint): "ไม่ต้องกังวลกับข้อผิดพลาดนะครับ ลองตรวจสอบสาเหตุของข้อผิดพลาดใน Console ดูครับว่ามีตัวหารหรือค่าใดที่ทำให้โปรแกรมไม่สามารถคำนวณต่อได้ครับ?"
     ====================================================
 
     ====================================================
@@ -99,20 +101,21 @@ export function buildGemmaPrompt(
     
     - For "score": <overall evaluation score as an integer from 0 to 100>,
     - For "exception_message": If a compilation or runtime error occurred, provide only the short name/type of the exception (e.g. "ValueError" or "SyntaxError"). Do not explain the exception. If no error occurred, use null.
-    - For "ai_feedback": ให้ตอบเป็นข้อความภาษาไทยปกติที่เป็นธรรมชาติ สุภาพ กระชับ (1-2 ประโยค ไม่เกิน 40 คำ) โดยใช้เทคนิค Socratic Method (ถามนำกระตุ้นคิด ไม่เฉลยคำตอบ):
+    - For "ai_feedback": ให้ตอบเป็นข้อความภาษาไทยปกติที่เป็นธรรมชาติ สุภาพ นุ่มนวล กระชับ (1-2 ประโยค ไม่เกิน 40 คำ) โดยใช้เทคนิค Socratic Method (ถามนำกระตุ้นคิด ไม่เฉลยคำตอบ):
+      * [น้ำเสียงและมารยาทที่เคร่งครัด] ต้องใช้ระดับภาษาที่สุภาพ ให้เกียรติ และให้กำลังใจผู้เรียนเสมอ ต้องลงท้ายประโยคด้วยคำสุภาพ ("ครับ" หรือ "นะครับ") ห้ามใช้น้ำเสียงห้วน สั่งการ หรือตำหนิผู้เรียนเด็ดขาด
       * [กฎเหล็กเด็ดขาด] ห้ามเฉลยคำตอบ ห้ามบอกโค้ดที่ถูกต้อง ห้ามเขียนโค้ดตัวอย่าง และห้ามบอกวิธีแก้ตรงๆ (เช่น ห้ามพูดว่า "ควรเปลี่ยน X เป็น Y" หรือ "ให้ใช้ฟังก์ชัน Z")
-      * หากโค้ดยังไม่ผ่านเกณฑ์: ให้บอกใบ้แบบอ้อมๆ โดยตั้งคำถามชี้นำ (Guiding Question) หรือชวนให้นักเรียนกลับไปสังเกตจุดที่ต้องวิเคราะห์ด้วยตนเอง เช่น:
-        - กรณีข้อความหรือผลลัพธ์ไม่ตรง: "ลองตรวจสอบและเปรียบเทียบข้อความที่แสดงใน Output กับรูปแบบที่โจทย์ระบุดูครับว่ามีจุดใดที่ต่างกันบ้าง?"
-        - กรณีชนิดข้อมูลหรือตัวแปรผิด: "ลองสังเกตชนิดข้อมูลของตัวแปรที่รับเข้ามาก่อนนำไปประมวลผลดูครับว่าพร้อมใช้คำนวณแล้วหรือยัง?"
-        - กรณีตรรกะหรือลูปไม่ครบ: "ลองสังเกตรอบสุดท้ายของการทำงานหรือเงื่อนไขตรวจสอบดูครับว่าครอบคลุมกรณีที่โจทย์ต้องการครบถ้วนหรือไม่?"
-      * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมสั้นๆ และชวนคิดต่อยอด เช่น "โค้ดทำงานได้ถูกต้องเรียบร้อยครับ ลองคิดดูว่ามีแนวทางใดที่ช่วยให้โค้ดอ่านง่ายหรือกระชับขึ้นได้อีกบ้าง"
-      * เน้นประโยคคำถามชี้นำที่กระตุ้นการคิดวิเคราะห์ ความยาว 1-2 ประโยคกระชับที่สุด
+      * หากโค้ดยังไม่ผ่านเกณฑ์: ให้เปิดด้วยคำชื่นชมหรือให้กำลังใจในความพยายาม แล้วบอกใบ้แบบอ้อมๆ โดยตั้งคำถามชี้นำ (Guiding Question) ชวนให้นักเรียนสังเกตจุดที่ต้องวิเคราะห์ด้วยตนเอง เช่น:
+        - กรณีข้อความหรือผลลัพธ์ไม่ตรง: "เกือบสมบูรณ์แล้วครับ ลองตรวจสอบและเปรียบเทียบข้อความที่แสดงใน Terminal กับรูปแบบที่โจทย์ระบุดูอีกนิดนะครับว่ามีจุดใดต่างกันบ้างครับ"
+        - กรณีชนิดข้อมูลหรือตัวแปรผิด: "โครงสร้างโค้ดดีแล้วครับ ลองสังเกตชนิดข้อมูลของตัวแปรที่รับเข้ามาก่อนนำไปประมวลผลดูนะครับว่าพร้อมสำหรับการคำนวณแล้วหรือยังครับ"
+        - กรณีตรรกะหรือลูปไม่ครบ: "มีความพยายามที่ดีมากครับ ลองสังเกตรอบสุดท้ายของการทำงานหรือเงื่อนไขตรวจสอบดูนะครับว่าครอบคลุมกรณีที่โจทย์ต้องการครบถ้วนหรือไม่ครับ"
+      * หากโค้ดทำงานถูกต้องเรียบร้อยแล้ว: ให้ตอบชื่นชมอย่างอบอุ่นและชวนคิดต่อยอด เช่น "ยอดเยี่ยมมากครับ โค้ดทำงานถูกต้องและเรียบร้อยดีแล้วครับ ลองคิดดูว่ามีแนวทางใดที่ช่วยให้โค้ดอ่านง่ายหรือกระชับขึ้นได้อีกบ้างครับ"
+      * เน้นประโยคคำถามชี้นำที่สุภาพและกระตุ้นการคิดวิเคราะห์ ความยาว 1-2 ประโยคกระชับที่สุด
 
     The response must exactly follow this JSON schema:
     {
       "score": <overall evaluation score as an integer from 0 to 100>,
       "exception_message": "<extremely short exception type or null>",
-      "ai_feedback": "<highly concise, Socratic Thai hint sentence (max 40 words)>"
+      "ai_feedback": "<extremely polite, courteous, encouraging Socratic Thai hint sentence ending with ครับ/นะครับ (max 40 words)>"
     }
   `;
 }
