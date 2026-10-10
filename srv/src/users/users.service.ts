@@ -119,9 +119,9 @@ export class UsersService {
 
     const education = await this.prisma.education.create({
       data: {
-        university: dto.university || 'Default University',
-        faculty: dto.faculty || 'Default Faculty',
-        major: dto.major || 'Default Major',
+        university: dto.university || 'ไม่ระบุ',
+        faculty: dto.faculty || 'ไม่ระบุ',
+        major: dto.major || 'ไม่ระบุ',
       },
     });
 
@@ -183,9 +183,9 @@ export class UsersService {
       } else {
         const newEducation = await this.prisma.education.create({
           data: {
-            university: dto.university || 'Default University',
-            faculty: dto.faculty || 'Default Faculty',
-            major: dto.major || 'Default Major',
+            university: dto.university || 'ไม่ระบุ',
+            faculty: dto.faculty || 'ไม่ระบุ',
+            major: dto.major || 'ไม่ระบุ',
           },
         });
         updateData.educationId = newEducation.educationId;

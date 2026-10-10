@@ -109,7 +109,7 @@ export function UserTable({
                 py: 1.8,
               }}
             >
-              Username
+              ชื่อผู้ใช้
             </TableCell>
             <TableCell
               sx={{
@@ -214,20 +214,33 @@ export function UserTable({
                 </TableCell>
                 <TableCell sx={{ py: 2 }}>{getRoleChip(user.roleId)}</TableCell>
                 <TableCell sx={{ py: 2 }}>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontSize: "13px", color: "#0f172a", fontWeight: 600 }}
-                  >
-                    {user.education?.university || "-"}
-                  </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "#64748b", display: "block", mt: 0.25 }}
-                  >
-                    {user.education?.faculty
-                      ? `${user.education.faculty} / ${user.education.major}`
-                      : ""}
-                  </Typography>
+                  {!user.education?.university || user.education.university === "Default University" || user.education.university === "ไม่ระบุ" ? (
+                    <Typography
+                      variant="body2"
+                      sx={{ fontSize: "13px", color: "#94a3b8", fontWeight: 500 }}
+                    >
+                      ไม่ระบุ
+                    </Typography>
+                  ) : (
+                    <>
+                      <Typography
+                        variant="body2"
+                        sx={{ fontSize: "13px", color: "#0f172a", fontWeight: 600 }}
+                      >
+                        {user.education.university}
+                      </Typography>
+                      {user.education?.faculty && user.education.faculty !== "Default Faculty" && user.education.faculty !== "ไม่ระบุ" && user.education.faculty !== "-" && (
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#64748b", display: "block", mt: 0.25 }}
+                        >
+                          {user.education.major && user.education.major !== "Default Major" && user.education.major !== "ไม่ระบุ" && user.education.major !== "-"
+                            ? `${user.education.faculty} / ${user.education.major}`
+                            : user.education.faculty}
+                        </Typography>
+                      )}
+                    </>
+                  )}
                 </TableCell>
                 <TableCell sx={{ color: "#64748b", fontSize: "13px", py: 2 }}>
                   {formatDate(user.registerTimestamp)}
@@ -238,7 +251,7 @@ export function UserTable({
                   <Box
                     sx={{ display: "flex", gap: 1, justifyContent: "center", alignItems: "center" }}
                   >
-                    {/* ปุ่มดูข้อมูลผู้ใช้งาน (สไตล์เดียวกับหน้า ExerciseTable) */}
+                    {/* ปุ่มดูข้อมูลผู้ใช้งาน */}
                     <Tooltip title="ดูข้อมูลผู้ใช้งาน" arrow>
                       <IconButton
                         size="small"
@@ -260,40 +273,52 @@ export function UserTable({
                         <Eye size={15} />
                       </IconButton>
                     </Tooltip>
-                    <IconButton
-                      onClick={() => onEdit(user)}
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        color: "#4f46e5",
-                        bgcolor: "#ffffff",
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "50%",
-                        "&:hover": {
-                          bgcolor: "rgba(79, 70, 229, 0.05)",
-                          borderColor: "#818cf8",
-                        },
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <Edit2 size={14} />
-                    </IconButton>
-                    <IconButton
-                      onClick={() => onDelete(user.userId, user.username)}
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        color: "#ffffff",
-                        bgcolor: "#ef4444",
-                        borderRadius: "50%",
-                        "&:hover": {
-                          bgcolor: "#dc2626",
-                        },
-                        transition: "all 0.15s",
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </IconButton>
+
+                    {/* ปุ่มแก้ไขข้อมูลผู้ใช้งาน */}
+                    <Tooltip title="แก้ไขข้อมูลผู้ใช้งาน" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => onEdit(user)}
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          color: "#4f46e5",
+                          bgcolor: "#eef2ff",
+                          border: "1px solid #c7d2fe",
+                          borderRadius: "8px",
+                          "&:hover": {
+                            bgcolor: "#e0e7ff",
+                            borderColor: "#a5b4fc",
+                          },
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <Edit2 size={14} />
+                      </IconButton>
+                    </Tooltip>
+
+                    {/* ปุ่มลบผู้ใช้งาน */}
+                    <Tooltip title="ลบผู้ใช้งาน" arrow>
+                      <IconButton
+                        size="small"
+                        onClick={() => onDelete(user.userId, user.username)}
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          color: "#e11d48",
+                          bgcolor: "#ffe4e6",
+                          border: "1px solid #fecdd3",
+                          borderRadius: "8px",
+                          "&:hover": {
+                            bgcolor: "#fecdd3",
+                            borderColor: "#fda4af",
+                          },
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
