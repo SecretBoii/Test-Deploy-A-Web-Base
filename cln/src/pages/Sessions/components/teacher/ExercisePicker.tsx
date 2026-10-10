@@ -149,12 +149,13 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
           }}
         />
 
+        {/* ตัวกรองระดับความยาก (แสดงชื่อระดับ Bloom's Taxonomy แบบย่อ Lv.X เพื่อความชัดเจนและกระชับ) */}
         <TextField
           select
           value={pickerLevelFilter}
           onChange={(e) => setPickerLevelFilter(e.target.value)}
           size="small"
-          sx={{ width: 145 }}
+          sx={{ width: { xs: '100%', sm: 195, md: 205 } }}
           slotProps={{
             input: {
               sx: {
@@ -169,10 +170,12 @@ export const ExercisePicker = React.memo<ExercisePickerProps>(({
             },
           }}
         >
-          <MenuItem value="all">ระดับ: ทั้งหมด</MenuItem>
+          <MenuItem value="all" sx={{ fontSize: '13px', fontWeight: 600 }}>
+            ระดับ: ทั้งหมด
+          </MenuItem>
           {[1, 2, 3, 4, 5].map((lvl) => (
-            <MenuItem key={lvl} value={String(lvl)}>
-              Level {lvl}
+            <MenuItem key={lvl} value={String(lvl)} sx={{ fontSize: '13px' }}>
+              Lv.{lvl} - {DIFFICULTY_LEVELS[lvl]?.label || ''}
             </MenuItem>
           ))}
         </TextField>
