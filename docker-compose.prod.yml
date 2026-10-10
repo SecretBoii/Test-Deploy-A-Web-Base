@@ -1,0 +1,50 @@
+name: web-based-python-prod
+
+services:
+  # 1. Redis คลังเก็บคิวงานของ BullMQ สำหรับ Background Process (รันโค้ดและส่งตรวจ AI)
+  redis:
+    image: redis:6.0-alpine
+    command: redis-server --save "" --appendonly no
+    restart: always
+    # ไม่จำเป็นต้องเปิดพอร์ตออกสู่ภายนอกเพื่อความปลอดภัย ให้ backend สื่อสารภายใน docker network
+
+  # 2. Backend NestJS Service (Production Target)
+  backend:
+    build:
+      context: ./srv
+      dockerfile: Dockerfile
+      target: prod
+    container_name: web-based-python-backend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./srv/.env
+    environment:
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      # เชื่อมต่อ Docker daemon ของเครื่องโฮสต์เพื่อรัน Python Sandbox ในคอนเทนเนอร์แยก
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+
+  # 3. Frontend React Service (เสิร์ฟผ่าน Nginx Production)
+  frontend:
+    build:
+      context: ./cln
+      dockerfile: Dockerfile
+      target: prod
+      args:
+        VITE_API_URL: /api
+    container_name: web-based-python-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+networks:
+  default:
+    name: web-based-python-prod-net
