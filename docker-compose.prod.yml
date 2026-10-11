@@ -10,6 +10,7 @@ services:
 
   # 2. Backend NestJS Service (Production Target)
   backend:
+    image: registry.in.psu.ac.th:443/6610210015/a-web-based-python/srv:latest
     build:
       context: ./srv
       dockerfile: Dockerfile
@@ -32,6 +33,7 @@ services:
 
   # 3. Frontend React Service (เสิร์ฟผ่าน Nginx Production)
   frontend:
+    image: registry.in.psu.ac.th:443/6610210015/a-web-based-python/cln:latest
     build:
       context: ./cln
       dockerfile: Dockerfile
