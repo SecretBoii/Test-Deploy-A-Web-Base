@@ -100,22 +100,31 @@ export class ExercisesService {
       },
     });
 
-    // ตรวจสอบประวัติว่าผู้เรียนเคยเปิดดูคำใบ้ (Hint) ในโจทย์ข้อนี้มาก่อนหรือไม่ เพื่อให้ Frontend จดจำสถานะได้
-    // ใช้ select เฉพาะ activityId เพื่อลดภาระการดึงก้อนข้อมูลขนาดใหญ่จากฐานข้อมูล
-    const hintActivity = await this.prisma.activity.findFirst({
+    // ตรวจสอบประวัติว่าผู้เรียนเคยกดเปิดดูคำใบ้ (Hint) ในรอบปัจจุบันของโจทย์ข้อนี้มาก่อนหรือไม่
+    // ตรวจสอบจาก AuditLog (action: 'VIEW_HINT') ที่เกิดขึ้นในรอบปัจจุบัน (หลัง latestSubmit)
+    // ตามกติกา: ในรอบนั้นจะเปิดค้างไว้ตลอด จนกว่าจะ Submit แล้วกลับมาทำใหม่
+    const hintAuditLog = await this.prisma.auditLog.findFirst({
       where: {
         userId: Number(userId),
-        exerciseId: id,
-        hintUsed: true,
+        action: 'VIEW_HINT',
+        entity: 'Exercise',
+        entityId: id,
+        ...(latestSubmit
+          ? {
+              createdAt: {
+                gt: latestSubmit.submittedAt,
+              },
+            }
+          : {}),
       },
-      select: { activityId: true },
+      select: { id: true },
     });
 
     return {
       ...exerciseData,
       sessions,
       runCount,
-      hasUsedHint: Boolean(hintActivity),
+      hasUsedHint: Boolean(hintAuditLog),
     };
   }
 
@@ -127,45 +136,10 @@ export class ExercisesService {
       throw new NotFoundException('ไม่พบแบบฝึกหัดที่ระบุ');
     }
 
-    // ตรวจสอบว่าเคยมีประวัติเปิดคำใบ้ในข้อนี้แล้วหรือไม่ หากมีแล้วไม่ต้องสร้างซ้ำซ้อน
-    const existingHint = await this.prisma.activity.findFirst({
-      where: {
-        userId: Number(userId),
-        exerciseId: Number(exerciseId),
-        hintUsed: true,
-      },
-      select: { activityId: true },
-    });
-
-    if (existingHint) {
-      return { success: true, message: 'เคยบันทึกการใช้คำใบ้ไปแล้ว' };
-    }
-
-    // ดึง sessionId จาก sessionExercise ที่เกี่ยวข้อง หรือ fallback เป็น 1
-    const sessionExercise = await this.prisma.sessionExercise.findFirst({
-      where: { exerciseId: Number(exerciseId) },
-    });
-    const sessionId = sessionExercise?.sessionId ?? 1;
-
-    const activity = await this.prisma.activity.create({
-      data: {
-        userId: Number(userId),
-        exerciseId: Number(exerciseId),
-        sessionId,
-        startedAt: new Date(),
-        submittedAt: new Date(),
-        hintUsed: true,
-        answer: '',
-        score: 0,
-        status: 'HINT_USED',
-        eventType: 'hint',
-        runCount: 0,
-      },
-    });
-
+    // การเปิดดูคำใบ้จะถูกบันทึกลง audit_log โดย Controller โดยตรง
+    // โดยตาราง activity จะสงวนไว้สำหรับ event_type 'run' และ 'submit' เท่านั้น
     return {
       success: true,
-      activityId: activity.activityId,
       message: 'บันทึกการใช้งานคำใบ้สำเร็จ',
     };
   }
@@ -297,19 +271,27 @@ export class ExercisesService {
           }
         }
 
-        // ตรวจสอบสถานะการใช้งานคำใบ้ (Hint) อย่างครอบคลุม:
-        // หากส่งมาเป็น true หรือรอบ Run ล่าสุดเป็น true อยู่แล้ว ให้ใช้ค่านั้นทันทีโดยไม่ต้อง Query ฐานข้อมูลซ้ำซ้อน
-        let isHintUsed = Boolean(hintUsed || latestRun.hintUsed);
+        // ตรวจสอบสถานะการใช้งานคำใบ้ (Hint) ในรอบปัจจุบัน:
+        // ผู้เรียนถือว่าใช้คำใบ้หาก: หน้าบ้านส่งมาเป็น true (เปิดดูคำใบ้อยู่ในหน้าจอ) หรือมี AuditLog บันทึกการขอคำใบ้ (action: 'VIEW_HINT') ในรอบปัจจุบัน
+        let isHintUsed = Boolean(hintUsed);
         if (!isHintUsed) {
-          const hasUsedHintBefore = await this.prisma.activity.findFirst({
+          const hintLog = await this.prisma.auditLog.findFirst({
             where: {
               userId: Number(userId),
-              exerciseId: Number(exerciseId),
-              hintUsed: true,
+              action: 'VIEW_HINT',
+              entity: 'Exercise',
+              entityId: Number(exerciseId),
+              ...(latestSubmit
+                ? {
+                    createdAt: {
+                      gt: latestSubmit.submittedAt,
+                    },
+                  }
+                : {}),
             },
-            select: { activityId: true },
+            select: { id: true },
           });
-          isHintUsed = Boolean(hasUsedHintBefore);
+          isHintUsed = Boolean(hintLog);
         }
 
         const activity = await this.prisma.activity.create({
@@ -342,19 +324,42 @@ export class ExercisesService {
         };
       }
 
+      // ค้นหาการส่งคำตอบล่าสุด เพื่อจำกัดขอบเขตการตรวจสอบ Hint เฉพาะรอบการทำโจทย์ปัจจุบัน
+      const latestSubmitForRun = await this.prisma.activity.findFirst({
+        where: {
+          userId: Number(userId),
+          exerciseId: Number(exerciseId),
+          eventType: 'submit',
+        },
+        orderBy: {
+          submittedAt: 'desc',
+        },
+        select: {
+          submittedAt: true,
+        },
+      });
+
       // กรณี 'run' สร้าง Activity ชั่วคราวและส่งเข้าคิวงาน
-      // หากส่งมาเป็น true อยู่แล้ว ให้ใช้ได้ทันทีโดยไม่ต้อง Query ซ้ำซ้อน
+      // ผู้เรียนถือว่าใช้คำใบ้เฉพาะเมื่อ: หน้าบ้านส่งมาเป็น true หรือมี AuditLog บันทึกการขอคำใบ้จริง (action: 'VIEW_HINT') ในรอบปัจจุบัน
       let isHintUsedForRun = Boolean(hintUsed);
       if (!isHintUsedForRun) {
-        const hasUsedHintBeforeRun = await this.prisma.activity.findFirst({
+        const hintLogForRun = await this.prisma.auditLog.findFirst({
           where: {
             userId: Number(userId),
-            exerciseId: Number(exerciseId),
-            hintUsed: true,
+            action: 'VIEW_HINT',
+            entity: 'Exercise',
+            entityId: Number(exerciseId),
+            ...(latestSubmitForRun
+              ? {
+                  createdAt: {
+                    gt: latestSubmitForRun.submittedAt,
+                  },
+                }
+              : {}),
           },
-          select: { activityId: true },
+          select: { id: true },
         });
-        isHintUsedForRun = Boolean(hasUsedHintBeforeRun);
+        isHintUsedForRun = Boolean(hintLogForRun);
       }
 
       const activity = await this.prisma.activity.create({
@@ -453,11 +458,6 @@ export class ExercisesService {
     };
   }
 
-  /**
-   * ดึงรายการแบบฝึกหัดทั้งหมดสำหรับมุมมองอาจารย์และแอดมิน (จัดการคลังโจทย์)
-   * ทำการ include ความสัมพันธ์ sessionExercises และ session เพื่อให้หน้าพรีวิวโจทย์ (ExercisePreviewDialog)
-   * และหน้าจัดการแบบฝึกหัดทราบว่าโจทย์แต่ละข้อถูกนำไปบรรจุไว้ในบทเรียน (Session) ใดบ้าง
-   */
   async getAllExercisesForManage() {
     const exercises = await this.prisma.exercise.findMany({
       orderBy: { exerciseId: 'desc' },

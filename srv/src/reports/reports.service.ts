@@ -512,14 +512,14 @@ export class ReportsService {
       throw new Error('ไม่พบข้อมูลแบบฝึกหัดที่ระบุ');
     }
 
-    // 2. ดึงเฉพาะนักศึกษาที่มีประวัติการทำโจทย์ข้อนี้จริง
+    // 2. ดึงเฉพาะนักศึกษาที่มีประวัติการทำโจทย์ข้อนี้จริง (รันหรือส่งตรวจ)
     const students = await this.prisma.userProfile.findMany({
       where: {
         roleId: 1, // เฉพาะนักศึกษา
         activities: {
           some: {
             exerciseId,
-            eventType: { in: ['run', 'submit', 'hint'] },
+            eventType: { in: ['run', 'submit'] },
           },
         },
         education: filters?.education
@@ -543,7 +543,7 @@ export class ReportsService {
         activities: {
           where: {
             exerciseId,
-            eventType: { in: ['run', 'submit', 'hint'] },
+            eventType: { in: ['run', 'submit'] },
           },
           orderBy: { submittedAt: 'desc' },
         },
