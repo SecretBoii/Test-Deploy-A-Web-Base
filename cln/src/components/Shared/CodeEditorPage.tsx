@@ -55,12 +55,14 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
   useEffect(() => {
     if (exerciseId) {
       setLoadingExercise(true)
+      // รีเซ็ตสถานะการใช้คำใบ้เป็น false ทันทีที่มีการเปลี่ยนหรือโหลดข้อใหม่ เพื่อป้องกันสถานะจากข้อก่อนหน้าค้าง
+      setHintUsed(false)
       apiClient
         .get(`/exercises/${exerciseId}`)
         .then((res) => {
           setExerciseData(res.data)
           setExerciseError(null)
-          // หากผู้เรียนเคยเปิดดูคำใบ้ในข้อนี้มาก่อน ให้เปิดค้างไว้ตามเดิมแม้จะมีการรีเฟรชหน้าเว็บ
+          // หากผู้เรียนเคยเปิดดูคำใบ้ในรอบปัจจุบันของข้อนี้มาก่อน ให้เปิดค้างไว้ตามเดิมแม้จะมีการรีเฟรชหน้าเว็บ
           if (res.data?.hasUsedHint) {
             setHintUsed(true)
           } else {
