@@ -92,13 +92,6 @@ export class ExercisesGradingService implements OnModuleInit {
     return obj;
   }
 
-  /**
-   * ระบบส่ง Prompt วิเคราะห์ผลลัพธ์ผ่าน AI แบบลำดับชั้น (Multi-tier AI Pipeline):
-   * 1. เรียก PSU Gemma (ai.psu.blue) เป็นลำดับแรกตามเป้าหมายหลัก
-   * 2. หาก PSU Gemma ขัดข้องหรือถูก Cloudflare บล็อก จะสลับไปใช้ Groq (Qwen/Llama) เป็นตัวสำรองทันที
-   * 3. หากยังไม่สำเร็จ จะสลับไปใช้ Google Gemini 2.5 เป็นตัวสำรองลำดับถัดไป
-   * 4. หากขัดข้องทั้งหมด จะคืนค่า null เพื่อให้ระบบตัดเกรดผ่านผลลัพธ์ Docker Sandbox โดยตรง
-   */
   private async requestAiAnalysis(prompt: string): Promise<string | null> {
     // 1. ลำดับแรก: ลองเรียก PSU Gemma
     const psuKey = this.configService.get<string>('GEMMA_PSU');
