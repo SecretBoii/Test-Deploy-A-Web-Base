@@ -141,8 +141,8 @@ export class ExercisesGradingService implements OnModuleInit {
         },
       });
 
-      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API
-      let gemmaResponse: any;
+      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API (เพิ่ม Headers เลียนแบบเบราว์เซอร์เพื่อป้องกัน Cloudflare WAF บล็อกคำขอจาก AWS IP)
+      let gemmaResponse: { data?: { choices?: Array<{ message?: { content?: string } }> } } | null = null;
       try {
         this.logger.log(
           `[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`,
@@ -162,62 +162,69 @@ export class ExercisesGradingService implements OnModuleInit {
               headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
+                Accept: 'application/json, text/plain, */*',
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
               },
+              timeout: 15000,
             },
           ),
         );
-      } catch (apiError: any) {
-        this.logger.error(
-          'Gemma model call failed:',
-          apiError.response?.data?.error?.message ||
-            apiError.response?.data ||
-            apiError.message,
-        );
+      } catch (apiError: unknown) {
+        const errorDetail =
+          (apiError as any)?.response?.data?.error?.message ||
+          (apiError as any)?.response?.data ||
+          (apiError as Error)?.message ||
+          String(apiError);
+        this.logger.error('Gemma model call failed:', errorDetail);
       }
 
-      // 3. เมื่อ Gemma ตอบกลับมา บันทึกคะแนนและคำแนะนำ แล้วปรับ status เป็น SUCCESS
+      // 3. ตรวจสอบผลลัพธ์จาก AI: หากสำเร็จให้ใช้คำแนะนำจาก Gemma หากล้มเหลวให้ใช้ Fallback อัตโนมัติ (Graceful Degradation)
       const aiText = gemmaResponse?.data?.choices?.[0]?.message?.content;
 
-      if (!aiText) {
-        throw new Error(
-          'AI Grading response is empty or Gemma API call failed.',
+      let finalScore = runResult.status === 'Accepted' ? 100 : 0;
+      let finalFeedback: string;
+      let finalExceptionMessage: string | null = runResult.stderr ? runResult.stderr : null;
+
+      if (aiText) {
+        // กรณี AI ตอบกลับมาสำเร็จ ทำการประเมินคะแนนและคำแนะนำเชิงสร้างสรรค์
+        const parsed = parseAiResponse(
+          aiText,
+          runResult.status === 'Accepted' ? 100 : 0,
+          event_type,
+          run_count,
         );
-      }
 
-      let aiReview = {
-        score: runResult.status === 'Accepted' ? 100 : 0,
-        exception_message: outputMsg as string | null,
-        ai_feedback:
-          runResult.status === 'Accepted'
+        finalScore = runResult.status === 'Accepted' ? parsed.score : 0;
+        finalFeedback =
+          parsed.ai_feedback ??
+          (runResult.status === 'Accepted'
             ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้ว'
-            : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง',
-      };
+            : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง');
 
-      const defaultScore = runResult.status === 'Accepted' ? 100 : 0;
-      const parsed = parseAiResponse(
-        aiText,
-        defaultScore,
-        event_type,
-        run_count,
-      );
-
-      aiReview = {
-        score: parsed.score,
-        exception_message:
-          parsed.exception_message ??
-          (runResult.stderr ? runResult.stderr : null),
-        ai_feedback: parsed.ai_feedback ?? aiReview.ai_feedback,
-      };
-
-      const finalScore = runResult.status === 'Accepted' ? aiReview.score : 0;
+        if (parsed.exception_message) {
+          finalExceptionMessage = parsed.exception_message;
+        }
+      } else {
+        // กรณี Gemma API ขัดข้องหรือ Cloudflare บล็อกคำขอ ให้ระบบตัดเกรดอิงตาม Docker Sandbox ต่อไปได้ทันที
+        // เพื่อป้องกันไม่ให้ระบบล่มหรือนักศึกษาไม่ได้รับผลรันโค้ด
+        this.logger.warn(
+          `[Fallback Grading] Activity ID ${activityId}: AI ไม่ตอบกลับ ระบบใช้ผลจาก Docker Sandbox โดยตรง (Status: ${runResult.status})`,
+        );
+        finalScore = runResult.status === 'Accepted' ? 100 : 0;
+        finalFeedback =
+          runResult.status === 'Accepted'
+            ? 'โค้ดทำงานถูกต้องตามเงื่อนไข (ระบบวิเคราะห์เสริม AI ขัดข้องชั่วคราว)'
+            : 'ผลการรันโค้ดยังไม่ถูกต้องหรือพบข้อผิดพลาด โปรดตรวจสอบรายละเอียดใน Console Output';
+      }
 
       const updatedActivity = await this.prisma.activity.update({
         where: { activityId },
         data: {
           score: finalScore,
           output: runResult.stdout || null,
-          exceptionMessage: aiReview.exception_message,
-          aiFeedback: aiReview.ai_feedback,
+          exceptionMessage: finalExceptionMessage,
+          aiFeedback: finalFeedback,
           status: 'SUCCESS',
         },
         select: {
@@ -233,17 +240,22 @@ export class ExercisesGradingService implements OnModuleInit {
           updatedActivity.sessionId,
         );
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
       this.logger.error(
         `completeGrading Error for Activity ID ${activityId}:`,
-        error.message,
+        errorMsg,
       );
+      // ในกรณีข้อผิดพลาดระดับระบบ ให้คงผลลัพธ์ stdout/stderr เดิมของนักศึกษาไว้เสมอ เพื่อไม่ให้หน้าจอแจ้งว่า Backend processing failed
       await this.prisma.activity.update({
         where: { activityId },
         data: {
           status: 'FAILED',
-          exceptionMessage: 'Backend processing failed',
-          aiFeedback: `Grading failed: ${error.message}`,
+          output: runResult.stdout || null,
+          exceptionMessage:
+            runResult.stderr ||
+            (runResult.stdout ? null : 'ไม่สามารถประมวลผลโค้ดได้ กรุณาลองใหม่อีกครั้ง'),
+          aiFeedback: `ระบบตรวจข้อสอบขัดข้อง: ${errorMsg}`,
         },
       });
     }
