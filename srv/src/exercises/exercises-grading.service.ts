@@ -92,6 +92,146 @@ export class ExercisesGradingService implements OnModuleInit {
     return obj;
   }
 
+  /**
+   * ระบบส่ง Prompt วิเคราะห์ผลลัพธ์ผ่าน AI แบบลำดับชั้น (Multi-tier AI Pipeline):
+   * 1. เรียก PSU Gemma (ai.psu.blue) เป็นลำดับแรกตามเป้าหมายหลัก
+   * 2. หาก PSU Gemma ขัดข้องหรือถูก Cloudflare บล็อก จะสลับไปใช้ Groq (Qwen/Llama) เป็นตัวสำรองทันที
+   * 3. หากยังไม่สำเร็จ จะสลับไปใช้ Google Gemini 2.5 เป็นตัวสำรองลำดับถัดไป
+   * 4. หากขัดข้องทั้งหมด จะคืนค่า null เพื่อให้ระบบตัดเกรดผ่านผลลัพธ์ Docker Sandbox โดยตรง
+   */
+  private async requestAiAnalysis(prompt: string): Promise<string | null> {
+    // 1. ลำดับแรก: ลองเรียก PSU Gemma
+    const psuKey = this.configService.get<string>('GEMMA_PSU');
+    const psuModel =
+      this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
+    const psuUrl =
+      this.configService.get<string>('GEMMA_API_URL') ||
+      'https://ai.psu.blue/v1/chat/completions';
+
+    if (psuKey) {
+      try {
+        this.logger.log(`[AI Primary] กำลังเรียก PSU Gemma: ${psuModel}`);
+        const res = await firstValueFrom(
+          this.httpService.post(
+            psuUrl,
+            {
+              model: psuModel,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.2,
+              max_tokens: 300,
+              stream: false,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${psuKey}`,
+                'Content-Type': 'application/json',
+                Accept: 'application/json, text/plain, */*',
+                'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+              },
+              timeout: 8000,
+            },
+          ),
+        );
+        const content = res?.data?.choices?.[0]?.message?.content;
+        if (content && typeof content === 'string') {
+          this.logger.log(`[AI Primary] PSU Gemma ตอบกลับสำเร็จ!`);
+          return content;
+        }
+      } catch (err: unknown) {
+        const errorDetail =
+          (err as any)?.response?.data?.error?.message ||
+          (err as any)?.response?.data ||
+          (err as Error)?.message ||
+          String(err);
+        this.logger.warn(
+          `[AI Primary] PSU Gemma ขัดข้อง (เตรียมสลับไป AI ตัวสำรอง): ${errorDetail}`,
+        );
+      }
+    }
+
+    // 2. ลำดับที่สอง: สลับไปใช้ Groq API (Qwen / Gemma)
+    const groqKey = this.configService.get<string>('BACKUP_GROQ_KEY');
+    const groqModel =
+      this.configService.get<string>('BACKUP_GROQ_MODEL') || 'qwen/qwen3.8-27b';
+
+    if (groqKey) {
+      try {
+        this.logger.log(`[AI Backup 1] กำลังเรียก Groq Cloud: ${groqModel}`);
+        const res = await firstValueFrom(
+          this.httpService.post(
+            'https://api.groq.com/openai/v1/chat/completions',
+            {
+              model: groqModel,
+              messages: [{ role: 'user', content: prompt }],
+              temperature: 0.2,
+              max_tokens: 300,
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${groqKey}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: 10000,
+            },
+          ),
+        );
+        const content = res?.data?.choices?.[0]?.message?.content;
+        if (content && typeof content === 'string') {
+          this.logger.log(`[AI Backup 1] Groq Cloud ตอบกลับสำเร็จ!`);
+          return content;
+        }
+      } catch (err: unknown) {
+        const errorDetail =
+          (err as any)?.response?.data?.error?.message ||
+          (err as Error)?.message ||
+          String(err);
+        this.logger.warn(`[AI Backup 1] Groq Cloud ขัดข้อง: ${errorDetail}`);
+      }
+    }
+
+    // 3. ลำดับที่สาม: สลับไปใช้ Google Gemini 2.5 Flash
+    const geminiKey = this.configService.get<string>('BACKUP_GEMINI_KEY');
+
+    if (geminiKey) {
+      try {
+        this.logger.log(`[AI Backup 2] กำลังเรียก Google Gemini 2.5 Flash`);
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+        const res = await firstValueFrom(
+          this.httpService.post(
+            geminiUrl,
+            {
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.2,
+                maxOutputTokens: 300,
+              },
+            },
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: 10000,
+            },
+          ),
+        );
+        const content = res?.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (content && typeof content === 'string') {
+          this.logger.log(`[AI Backup 2] Google Gemini ตอบกลับสำเร็จ!`);
+          return content;
+        }
+      } catch (err: unknown) {
+        const errorDetail =
+          (err as any)?.response?.data?.error?.message ||
+          (err as Error)?.message ||
+          String(err);
+        this.logger.warn(
+          `[AI Backup 2] Google Gemini ขัดข้อง: ${errorDetail}`,
+        );
+      }
+    }
+
+    return null;
+  }
+
   async completeGrading(
     activityId: number,
     runResult: GemmaRunResult,
@@ -110,13 +250,6 @@ export class ExercisesGradingService implements OnModuleInit {
         );
       }
 
-      const apiKey = this.configService.get<string>('GEMMA_PSU');
-      const model =
-        this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
-      const gemmaUrl =
-        this.configService.get<string>('GEMMA_API_URL') ||
-        'https://ai.psu.blue/v1/chat/completions';
-
       const prompt = buildGemmaPrompt(
         sourceCode,
         runResult,
@@ -127,12 +260,6 @@ export class ExercisesGradingService implements OnModuleInit {
       );
 
       // 1. บันทึกผลลัพธ์จาก Docker (stdout/stderr) ทันที (สถานะยังคง PENDING จนกว่า AI จะวิเคราะห์เสร็จ)
-      const outputMsg = runResult.stderr
-        ? runResult.stderr
-        : runResult.stdout
-          ? runResult.stdout
-          : 'โค้ดทำงานสำเร็จ (ไม่มีข้อความ print ออกมา)';
-
       await this.prisma.activity.update({
         where: { activityId },
         data: {
@@ -141,46 +268,8 @@ export class ExercisesGradingService implements OnModuleInit {
         },
       });
 
-      // 2. ส่งข้อมูลไปประเมินผลผ่าน Gemma API (เพิ่ม Headers เลียนแบบเบราว์เซอร์เพื่อป้องกัน Cloudflare WAF บล็อกคำขอจาก AWS IP)
-      let gemmaResponse: { data?: { choices?: Array<{ message?: { content?: string } }> } } | null = null;
-      try {
-        this.logger.log(
-          `[Gemma API] Sending prompt to model: ${model}, key exists: ${!!apiKey}`,
-        );
-        // ส่ง prompt ไปยัง Gemma API โดยกำหนด temperature ต่ำเพื่อเน้นความแม่นยำในการทำตามเกณฑ์ Socratic Method
-        gemmaResponse = await firstValueFrom(
-          this.httpService.post(
-            gemmaUrl,
-            {
-              model: model,
-              messages: [{ role: 'user', content: prompt }],
-              temperature: 0.2,
-              max_tokens: 300,
-              stream: false,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
-                Accept: 'application/json, text/plain, */*',
-                'User-Agent':
-                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-              },
-              timeout: 15000,
-            },
-          ),
-        );
-      } catch (apiError: unknown) {
-        const errorDetail =
-          (apiError as any)?.response?.data?.error?.message ||
-          (apiError as any)?.response?.data ||
-          (apiError as Error)?.message ||
-          String(apiError);
-        this.logger.error('Gemma model call failed:', errorDetail);
-      }
-
-      // 3. ตรวจสอบผลลัพธ์จาก AI: หากสำเร็จให้ใช้คำแนะนำจาก Gemma หากล้มเหลวให้ใช้ Fallback อัตโนมัติ (Graceful Degradation)
-      const aiText = gemmaResponse?.data?.choices?.[0]?.message?.content;
+      // 2. ส่งข้อมูลไปประเมินผลผ่านระบบ Multi-tier AI (PSU Gemma -> Groq -> Gemini)
+      const aiText = await this.requestAiAnalysis(prompt);
 
       let finalScore = runResult.status === 'Accepted' ? 100 : 0;
       let finalFeedback: string;
