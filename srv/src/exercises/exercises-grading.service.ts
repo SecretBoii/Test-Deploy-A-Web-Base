@@ -110,7 +110,8 @@ export class ExercisesGradingService implements OnModuleInit {
             {
               model: psuModel,
               messages: [{ role: 'user', content: prompt }],
-              temperature: 0.2,
+              // กำหนด temperature เป็น 0.0 เพื่อให้ผลการให้คะแนนและคำแนะนำเป็นแบบ Deterministic (โค้ดเดิมได้ผลตรวจเดิมแน่นอน ไม่สุ่มคะแนน)
+              temperature: 0.0,
               max_tokens: 300,
               stream: false,
             },
@@ -157,7 +158,8 @@ export class ExercisesGradingService implements OnModuleInit {
             {
               model: groqModel,
               messages: [{ role: 'user', content: prompt }],
-              temperature: 0.2,
+              // ล็อก temperature เป็น 0.0 ให้การตรวจโค้ดเสถียรและแน่นอน
+              temperature: 0.0,
               max_tokens: 300,
             },
             {
@@ -196,7 +198,8 @@ export class ExercisesGradingService implements OnModuleInit {
             {
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                temperature: 0.2,
+                // ล็อก temperature เป็น 0.0 ให้ผลการประเมินคงเส้นคงวา
+                temperature: 0.0,
                 maxOutputTokens: 300,
               },
             },

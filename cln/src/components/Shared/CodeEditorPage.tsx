@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Box, Card, Typography, Button } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { Lock, ArrowLeft } from 'lucide-react'
 import { WorkspaceHeader } from '../CodeWorkspace/WorkspaceHeader'
 import { CodeEditor } from '../CodeWorkspace/CodeEditor'
@@ -31,6 +31,7 @@ export interface ExerciseDetail {
 
 export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPageProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [code, setCode] = useState('# Write your Python code here\nprint("Hello World!")')
   const [output, setOutput] = useState('')
   const [gemmaResponse, setGemmaResponse] = useState('')
@@ -79,7 +80,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
           setLoadingExercise(false)
         })
     }
-  }, [exerciseId])
+  }, [exerciseId, location.key])
   
   // ทำความสะอาด Interval เมื่อ Component ถูกถอดออก (unmount) ป้องกัน Memory Leak
   useEffect(() => {
@@ -149,6 +150,7 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
             setIsRunning(false)
 
             if (endpoint === '/exercises/submit') {
+              setHintUsed(false)
               navigate(`/result/${activityId}`)
               return
             }

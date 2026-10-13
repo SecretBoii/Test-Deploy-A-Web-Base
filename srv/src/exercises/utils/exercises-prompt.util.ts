@@ -71,7 +71,11 @@ export function buildGemmaPrompt(
     - In your Socratic feedback (ai_feedback), always guide the student by referring strictly to the requirements described in the Exercise Description (คำอธิบายโจทย์).
 
     Additional rules to evaluate (use these criteria):
-    [Correctness Check] Evaluate the student's code and execution output strictly based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic completely satisfies the Exercise Description, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch, or slightly incorrect output format while using the expected functions), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and provide guiding questions for the student to notice the difference between their output and the Exercise Description. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
+    [Correctness Check - Deterministic Scoring Rubric]:
+    Evaluate the student's code and execution output strictly based on the requirements in the 'Exercise Description':
+    - Full Score (100 points): The printed output or program logic completely satisfies what is specified in the Exercise Description.
+    - Minor Formatting Discrepancy (70 points): The target concept and message are present, but with minor case differences (e.g. "welcome to python" vs "Welcome to Python") or trailing whitespace differences.
+    - Wrong Output / Different String / Crash (0 points): The output content does not match what the Exercise Description specifies (for example, printing "Hello World!" when the Exercise Description requires "Welcome to Python", or incorrect mathematical result, or runtime error). You MUST award 0 points deterministically in these cases (do NOT award partial credit for completely different strings).
     [Adaptive Hints Framework] ${adaptiveHintsRules}
     [Security Check] ${securityRules}
     [Complexity/Big-O Check] ${complexityRules}

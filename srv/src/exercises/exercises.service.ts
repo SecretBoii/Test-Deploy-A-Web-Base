@@ -101,21 +101,43 @@ export class ExercisesService {
     });
 
     // ตรวจสอบประวัติว่าผู้เรียนเคยกดเปิดดูคำใบ้ (Hint) ในรอบปัจจุบันของโจทย์ข้อนี้มาก่อนหรือไม่
-    // ตรวจสอบจาก AuditLog (action: 'VIEW_HINT') ที่เกิดขึ้นในรอบปัจจุบัน (หลัง latestSubmit)
-    // ตามกติกา: ในรอบนั้นจะเปิดค้างไว้ตลอด จนกว่าจะ Submit แล้วกลับมาทำใหม่
+    // ตามกติกา: ในรอบนั้นเมื่อเปิดใช้แล้วจะเปิดค้างไว้ตลอด จนกว่าจะกด Submit แล้วเริ่มทำรอบใหม่
+    // จุดเริ่มต้นของรอบ:
+    // 1. หากเคย Submit ให้ใช้เวลา submittedAt ของการส่งล่าสุด
+    // 2. หากยังไม่เคย Submit ให้ดู Run แรกในรอบนี้ หรือไม่เกิน 4 ชั่วโมงล่าสุด เพื่อป้องกันประวัติข้ามวันมาเปิดค้าง
+    let hintRoundStartTime: Date;
+    if (latestSubmit) {
+      hintRoundStartTime = latestSubmit.submittedAt;
+    } else {
+      const firstRunInRound = await this.prisma.activity.findFirst({
+        where: {
+          userId: Number(userId),
+          exerciseId: id,
+          eventType: 'run',
+        },
+        orderBy: {
+          startedAt: 'asc',
+        },
+        select: { startedAt: true },
+      });
+      if (firstRunInRound) {
+        hintRoundStartTime = new Date(
+          firstRunInRound.startedAt.getTime() - 10 * 60 * 1000,
+        );
+      } else {
+        hintRoundStartTime = new Date(Date.now() - 4 * 60 * 60 * 1000);
+      }
+    }
+
     const hintAuditLog = await this.prisma.auditLog.findFirst({
       where: {
         userId: Number(userId),
         action: 'VIEW_HINT',
         entity: 'Exercise',
         entityId: id,
-        ...(latestSubmit
-          ? {
-              createdAt: {
-                gt: latestSubmit.submittedAt,
-              },
-            }
-          : {}),
+        createdAt: {
+          gt: hintRoundStartTime,
+        },
       },
       select: { id: true },
     });
@@ -272,27 +294,38 @@ export class ExercisesService {
         }
 
         // ตรวจสอบสถานะการใช้งานคำใบ้ (Hint) ในรอบปัจจุบัน:
-        // ผู้เรียนถือว่าใช้คำใบ้หาก: หน้าบ้านส่งมาเป็น true (เปิดดูคำใบ้อยู่ในหน้าจอ) หรือมี AuditLog บันทึกการขอคำใบ้ (action: 'VIEW_HINT') ในรอบปัจจุบัน
-        let isHintUsed = Boolean(hintUsed);
-        if (!isHintUsed) {
-          const hintLog = await this.prisma.auditLog.findFirst({
+        // ผู้เรียนถือว่าใช้คำใบ้หาก: มีการบันทึกการขอคำใบ้ (action: 'VIEW_HINT') ในรอบปัจจุบัน (หลัง latestSubmit)
+        let submitRoundStartTime: Date;
+        if (latestSubmit) {
+          submitRoundStartTime = latestSubmit.submittedAt;
+        } else {
+          const firstRun = await this.prisma.activity.findFirst({
             where: {
               userId: Number(userId),
-              action: 'VIEW_HINT',
-              entity: 'Exercise',
-              entityId: Number(exerciseId),
-              ...(latestSubmit
-                ? {
-                    createdAt: {
-                      gt: latestSubmit.submittedAt,
-                    },
-                  }
-                : {}),
+              exerciseId: Number(exerciseId),
+              eventType: 'run',
             },
-            select: { id: true },
+            orderBy: { startedAt: 'asc' },
+            select: { startedAt: true },
           });
-          isHintUsed = Boolean(hintLog);
+          submitRoundStartTime = firstRun
+            ? new Date(firstRun.startedAt.getTime() - 10 * 60 * 1000)
+            : new Date(Date.now() - 4 * 60 * 60 * 1000);
         }
+
+        const hintLog = await this.prisma.auditLog.findFirst({
+          where: {
+            userId: Number(userId),
+            action: 'VIEW_HINT',
+            entity: 'Exercise',
+            entityId: Number(exerciseId),
+            createdAt: {
+              gt: submitRoundStartTime,
+            },
+          },
+          select: { id: true },
+        });
+        const isHintUsed = Boolean(hintLog);
 
         const activity = await this.prisma.activity.create({
           data: {
@@ -340,27 +373,38 @@ export class ExercisesService {
       });
 
       // กรณี 'run' สร้าง Activity ชั่วคราวและส่งเข้าคิวงาน
-      // ผู้เรียนถือว่าใช้คำใบ้เฉพาะเมื่อ: หน้าบ้านส่งมาเป็น true หรือมี AuditLog บันทึกการขอคำใบ้จริง (action: 'VIEW_HINT') ในรอบปัจจุบัน
-      let isHintUsedForRun = Boolean(hintUsed);
-      if (!isHintUsedForRun) {
-        const hintLogForRun = await this.prisma.auditLog.findFirst({
+      // ตรวจสอบว่าในรอบปัจจุบัน (หลัง latestSubmitForRun) มีการเปิดดูคำใบ้ (action: 'VIEW_HINT') หรือไม่
+      let runRoundStartTime: Date;
+      if (latestSubmitForRun) {
+        runRoundStartTime = latestSubmitForRun.submittedAt;
+      } else {
+        const firstRun = await this.prisma.activity.findFirst({
           where: {
             userId: Number(userId),
-            action: 'VIEW_HINT',
-            entity: 'Exercise',
-            entityId: Number(exerciseId),
-            ...(latestSubmitForRun
-              ? {
-                  createdAt: {
-                    gt: latestSubmitForRun.submittedAt,
-                  },
-                }
-              : {}),
+            exerciseId: Number(exerciseId),
+            eventType: 'run',
           },
-          select: { id: true },
+          orderBy: { startedAt: 'asc' },
+          select: { startedAt: true },
         });
-        isHintUsedForRun = Boolean(hintLogForRun);
+        runRoundStartTime = firstRun
+          ? new Date(firstRun.startedAt.getTime() - 10 * 60 * 1000)
+          : new Date(Date.now() - 4 * 60 * 60 * 1000);
       }
+
+      const hintLogForRun = await this.prisma.auditLog.findFirst({
+        where: {
+          userId: Number(userId),
+          action: 'VIEW_HINT',
+          entity: 'Exercise',
+          entityId: Number(exerciseId),
+          createdAt: {
+            gt: runRoundStartTime,
+          },
+        },
+        select: { id: true },
+      });
+      const isHintUsedForRun = Boolean(hintLogForRun);
 
       const activity = await this.prisma.activity.create({
         data: {
