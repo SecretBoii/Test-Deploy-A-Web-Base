@@ -278,26 +278,30 @@ export class ExercisesGradingService implements OnModuleInit {
         );
 
         finalScore = runResult.status === 'Accepted' ? parsed.score : 0;
+
+        // ป้องกันข้อความขัดแย้ง: ผูกข้อความสำรองให้สอดคล้องกับคะแนนจริง (ห้ามชมว่าถูกต้องเด็ดขาดหากคะแนนเป็น 0)
         finalFeedback =
           parsed.ai_feedback ??
-          (runResult.status === 'Accepted'
-            ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้ว'
-            : 'โค้ดมีข้อผิดพลาด โปรดตรวจสอบไวยากรณ์หรือผลลัพธ์อีกครั้ง');
+          (finalScore >= 100
+            ? 'โค้ดทำงานถูกต้องตามโจทย์เรียบร้อยแล้วครับ'
+            : finalScore > 0
+              ? 'โค้ดผ่านเงื่อนไขบางส่วน ลองตรวจสอบผลลัพธ์หรือเงื่อนไขเพิ่มเติมอีกนิดนะครับ'
+              : 'ผลการรันโค้ดยังไม่ตรงกับเงื่อนไขของโจทย์ ลองตรวจสอบวิธีการคำนวณและผลลัพธ์อีกครั้งนะครับ');
 
         if (parsed.exception_message) {
           finalExceptionMessage = parsed.exception_message;
         }
       } else {
-        // กรณี Gemma API ขัดข้องหรือ Cloudflare บล็อกคำขอ ให้ระบบตัดเกรดอิงตาม Docker Sandbox ต่อไปได้ทันที
-        // เพื่อป้องกันไม่ให้ระบบล่มหรือนักศึกษาไม่ได้รับผลรันโค้ด
+        // กรณีระบบ AI ภายนอกขัดข้องทั้งหมด จะไม่แจก 100 คะแนนเต็มให้โค้ดที่ยังไม่ผ่านการประเมินตรรกะ
+        // แต่จะแสดงผลการรันจริงจาก Sandbox และแจ้งให้นักศึกษากดส่งตรวจอีกครั้ง
         this.logger.warn(
-          `[Fallback Grading] Activity ID ${activityId}: AI ไม่ตอบกลับ ระบบใช้ผลจาก Docker Sandbox โดยตรง (Status: ${runResult.status})`,
+          `[Fallback Grading] Activity ID ${activityId}: AI ทุกตัวไม่ตอบกลับ ใช้การประเมินเบื้องต้นจาก Sandbox (Status: ${runResult.status})`,
         );
-        finalScore = runResult.status === 'Accepted' ? 100 : 0;
+        finalScore = 0;
         finalFeedback =
           runResult.status === 'Accepted'
-            ? 'โค้ดทำงานถูกต้องตามเงื่อนไข (ระบบวิเคราะห์เสริม AI ขัดข้องชั่วคราว)'
-            : 'ผลการรันโค้ดยังไม่ถูกต้องหรือพบข้อผิดพลาด โปรดตรวจสอบรายละเอียดใน Console Output';
+            ? 'โค้ดรันผ่านแล้ว แต่ระบบวิเคราะห์ AI ขัดข้องชั่วคราว โปรดตรวจสอบผลลัพธ์ใน Console Output และกดส่งตรวจใหม่อีกครั้งครับ'
+            : 'โค้ดมีข้อผิดพลาดขณะทำงาน โปรดตรวจสอบรายละเอียดใน Console Output';
       }
 
       const updatedActivity = await this.prisma.activity.update({

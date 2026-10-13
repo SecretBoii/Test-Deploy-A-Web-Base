@@ -153,10 +153,18 @@ export function parseAiResponse(
 
     try {
       const parsed = JSON.parse(cleanText);
+      // รองรับชื่อฟิลด์คำแนะนำที่หลากหลายจากโมเดล AI แต่ละค่าย (ai_feedback, feedback, hint, message)
+      const rawFeedback =
+        parsed.ai_feedback ??
+        parsed.feedback ??
+        parsed.hint ??
+        parsed.message ??
+        null;
+
       return {
         score: typeof parsed.score === 'number' ? parsed.score : defaultScore,
         exception_message: parsed.exception_message ?? null,
-        ai_feedback: sanitizeAiFeedback(parsed.ai_feedback ?? null),
+        ai_feedback: sanitizeAiFeedback(rawFeedback),
         event_type: parsed.event_type ?? safe_event_type,
         run_count:
           typeof parsed.run_count === 'number'
@@ -178,8 +186,9 @@ export function parseAiResponse(
           .replace(/\\\\/g, '\\');
       }
 
+      // ตรวจจับชื่อฟิลด์ข้อเสนอแนะทุกรูปแบบผ่าน Regex กรณี JSON มี syntax หลุด
       const feedbackMatch = cleanText.match(
-        /"ai_feedback"\s*:\s*"((?:[^"\\]|\\.)*)"/,
+        /"(?:ai_feedback|feedback|hint|message)"\s*:\s*"((?:[^"\\]|\\.)*)"/,
       );
       let ai_feedback: string | null = null;
       if (feedbackMatch) {
