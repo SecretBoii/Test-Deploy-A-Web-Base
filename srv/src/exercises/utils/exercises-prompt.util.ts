@@ -52,7 +52,7 @@ export function buildGemmaPrompt(
   return ` 
     Evaluate the student's Python program based on the following information:
     Exercise Title: "${exercise.title}"
-    Exercise Description: "${exercise.description}"
+    Exercise Description (GROUND TRUTH / PRIMARY SPECIFICATION): "${exercise.description}"
     Topic: "${exercise.topic}"
     Objective/Rubric: "${exercise.objective}"
     
@@ -64,8 +64,14 @@ export function buildGemmaPrompt(
     - Output: ${runResult.stdout || 'None'}
     - Error: ${runResult.stderr || 'None'}
 
+    CRITICAL EVALUATION PRINCIPLE (Strict Description-First):
+    - The "Exercise Description" is the ABSOLUTE GROUND TRUTH and PRIMARY SPECIFICATION of what the student must accomplish.
+    - The "Exercise Title" and "Topic" are only general categorization labels. You MUST NOT use the title to loosen, alter, or override the explicit requirements written in the Exercise Description.
+    - Evaluate whether the student's output and logic satisfy the exact requirements of the "Exercise Description".
+    - In your Socratic feedback (ai_feedback), always guide the student by referring strictly to the requirements described in the Exercise Description (คำอธิบายโจทย์).
+
     Additional rules to evaluate (use these criteria):
-    [Correctness Check] Evaluate the student's code and execution output based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic is completely correct, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch such as printing "Hello Python" or "hello python" instead of "Welcome to Python", or slightly incorrect output format), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and provide guiding questions for the student to notice the difference. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
+    [Correctness Check] Evaluate the student's code and execution output strictly based on its proximity/closeness to the requirements described in the 'Exercise Description'. If the printed output or logic completely satisfies the Exercise Description, award a score of 100. If it is partially correct (e.g., minor typos, case mismatch, or slightly incorrect output format while using the expected functions), deduct some score proportionally (e.g. award a partial score like 50 to 80 points) and provide guiding questions for the student to notice the difference between their output and the Exercise Description. Give a score of 0 only if the output or logic is completely wrong, unrelated, or failed to compile/run.
     [Adaptive Hints Framework] ${adaptiveHintsRules}
     [Security Check] ${securityRules}
     [Complexity/Big-O Check] ${complexityRules}
