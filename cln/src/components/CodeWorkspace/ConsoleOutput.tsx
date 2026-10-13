@@ -52,13 +52,27 @@ const TerminalContent = styled(Box)(() => ({
 }));
 
 export function ConsoleOutput({ output }: ConsoleOutputProps) {
-  const isError = output.toLowerCase().includes('error') || 
-                  output.toLowerCase().includes('exception') || 
-                  output.toLowerCase().includes('traceback') ||
-                  output.toLowerCase().includes('failed')
+  // แปลงค่า output เป็นสตริงที่ปลอดภัยเสมอ ป้องกัน TypeError: output.toLowerCase is not a function กรณีได้รับ Array หรือค่าว่าง
+  const safeOutput =
+    typeof output === 'string'
+      ? output
+      : Array.isArray(output)
+        ? (output as string[]).join('\n')
+        : String(output || '')
 
-  const isWaiting = !output || output.includes('Waiting for execution...')
-  const textColor = isWaiting ? 'var(--text)' : (isError ? '#ef4444' : 'var(--text-h)')
+  const isError =
+    safeOutput.toLowerCase().includes('error') ||
+    safeOutput.toLowerCase().includes('exception') ||
+    safeOutput.toLowerCase().includes('traceback') ||
+    safeOutput.toLowerCase().includes('failed')
+
+  const isWaiting =
+    !safeOutput || safeOutput.includes('Waiting for execution...')
+  const textColor = isWaiting
+    ? 'var(--text)'
+    : isError
+      ? '#ef4444'
+      : 'var(--text-h)'
 
   return (
     <TerminalContainer>

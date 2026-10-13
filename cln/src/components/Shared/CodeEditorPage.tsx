@@ -188,9 +188,12 @@ export function CodeEditorPage({ exerciseId = 101, sessionId }: CodeEditorPagePr
           console.error('Polling status error:', pollErr)
         }
       }, 1000)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsRunning(false)
-      setOutput(err.response?.data?.message || err.message || 'เกิดข้อผิดพลาดในการรันโค้ด')
+      const errResponse = (err as { response?: { data?: { message?: unknown } }; message?: string })?.response?.data?.message
+      const rawMsg = errResponse ?? (err as Error)?.message ?? 'เกิดข้อผิดพลาดในการรันโค้ด'
+      const formattedMsg = Array.isArray(rawMsg) ? rawMsg.join(', ') : String(rawMsg)
+      setOutput(formattedMsg)
       setGemmaResponse('เกิดข้อผิดพลาดในการเชื่อมต่อกับระบบ AI')
     }
   }

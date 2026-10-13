@@ -13,7 +13,7 @@ export class SubmitExerciseDto {
   @Type(() => Number)
   exerciseId: number;
 
-  @IsNotEmpty({ message: 'sourceCode' })
+  // อนุญาตให้เป็นสตริงว่างได้ (เช่น เมื่อผู้เรียนยังไม่ได้พิมพ์โค้ด) เพื่อให้ Sandbox รันได้ตามปกติ ไม่ติด Error 400
   @IsString()
   sourceCode: string;
 
