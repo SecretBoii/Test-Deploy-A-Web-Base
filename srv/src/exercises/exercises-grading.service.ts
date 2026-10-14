@@ -32,8 +32,11 @@ export class ExercisesGradingService implements OnModuleInit {
     try {
       const possiblePaths = [
         path.join(process.cwd(), 'src', 'exercises', 'skills'),
+        path.join(process.cwd(), 'dist', 'src', 'exercises', 'skills'),
         path.join(process.cwd(), 'dist', 'exercises', 'skills'),
         path.join(__dirname, 'skills'),
+        path.join(__dirname, '..', 'skills'),
+        path.join(__dirname, '..', '..', 'src', 'exercises', 'skills'),
       ];
 
       let skillsDir = '';
@@ -92,13 +95,84 @@ export class ExercisesGradingService implements OnModuleInit {
     return obj;
   }
 
+  /**
+   * ทำความสะอาดค่า Config จาก Environment Variables
+   * เหตุผล: ป้องกันปัญหา Docker Compose ส่งเครื่องหมายคำพูด (" หรือ ') ติดมากับค่าตัวแปรใน .env
+   * ซึ่งส่งผลให้ HTTP Authorization Header กลายเป็น 'Bearer "token"' และถูกปฏิเสธด้วย 401 Unauthorized
+   */
+  private cleanConfig(val?: string): string {
+    if (!val) return '';
+    return val.trim().replace(/^["']|["']$/g, '').trim();
+  }
+
+  /**
+   * แยกข้อความวิเคราะห์จาก Response ของ AI (รองรับทั้ง JSON ปกติ และ Server-Sent Events / SSE Stream)
+   * เหตุผล: PSU Gemma เวลาที่มีผู้ใช้งานพร้อมกันหรือเซิร์ฟเวอร์มีโหลด จะสลับไปส่งข้อมูลแบบ SSE Stream (data: {...})
+   * อัตโนมัติแม้จะส่ง stream: false จึงต้องดักจับและรวม chunk delta.content เข้าด้วยกันเพื่อให้ได้คำตอบสมบูรณ์
+   */
+  private extractAiContent(data: unknown): string | null {
+    if (!data) return null;
+
+    // 1. กรณี Response เป็น JSON Object ปกติ ({ choices: [ { message: { content: "..." } } ] })
+    if (typeof data === 'object' && data !== null && 'choices' in data) {
+      const choices = (data as { choices?: Array<{ message?: { content?: unknown } }> }).choices;
+      if (Array.isArray(choices) && choices.length > 0) {
+        const content = choices[0]?.message?.content;
+        if (typeof content === 'string' && content.trim()) {
+          return content.trim();
+        }
+      }
+    }
+
+    // 2. กรณี Response ถูกส่งมาเป็น SSE Stream String (data: {"choices":[{"delta":{"content":"..."}}]})
+    if (typeof data === 'string' && data.includes('data:')) {
+      const lines = data.split('\n');
+      let fullText = '';
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed === 'data: [DONE]') continue;
+        if (trimmed.startsWith('data:')) {
+          const jsonStr = trimmed.replace(/^data:\s*/, '');
+          try {
+            const chunk = JSON.parse(jsonStr);
+            const deltaContent =
+              chunk.choices?.[0]?.delta?.content ??
+              chunk.choices?.[0]?.message?.content ??
+              '';
+            if (typeof deltaContent === 'string') {
+              fullText += deltaContent;
+            }
+          } catch {
+            // ข้าม chunk ที่ syntax ยังไม่สมบูรณ์
+          }
+        }
+      }
+      if (fullText.trim()) {
+        return fullText.trim();
+      }
+    }
+
+    // 3. กรณีเป็น String ธรรมดา
+    if (typeof data === 'string' && data.trim()) {
+      try {
+        const parsed = JSON.parse(data);
+        return this.extractAiContent(parsed);
+      } catch {
+        return data.trim();
+      }
+    }
+
+    return null;
+  }
+
   private async requestAiAnalysis(prompt: string): Promise<string | null> {
     // 1. ลำดับแรก: ลองเรียก PSU Gemma
-    const psuKey = this.configService.get<string>('GEMMA_PSU');
+    const psuKey = this.cleanConfig(this.configService.get<string>('GEMMA_PSU'));
     const psuModel =
-      this.configService.get<string>('GEMMA_MODEL') || 'PSU-LLM/psu-gemma';
+      this.cleanConfig(this.configService.get<string>('GEMMA_MODEL')) ||
+      'PSU-LLM/psu-gemma';
     const psuUrl =
-      this.configService.get<string>('GEMMA_API_URL') ||
+      this.cleanConfig(this.configService.get<string>('GEMMA_API_URL')) ||
       'https://ai.psu.blue/v1/chat/completions';
 
     if (psuKey) {
@@ -119,7 +193,7 @@ export class ExercisesGradingService implements OnModuleInit {
               headers: {
                 Authorization: `Bearer ${psuKey}`,
                 'Content-Type': 'application/json',
-                Accept: 'application/json, text/plain, */*',
+                Accept: 'application/json, text/event-stream, text/plain, */*',
                 'User-Agent':
                   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
               },
@@ -127,8 +201,8 @@ export class ExercisesGradingService implements OnModuleInit {
             },
           ),
         );
-        const content = res?.data?.choices?.[0]?.message?.content;
-        if (content && typeof content === 'string') {
+        const content = this.extractAiContent(res?.data);
+        if (content) {
           this.logger.log(`[AI Primary] PSU Gemma ตอบกลับสำเร็จ!`);
           return content;
         }
@@ -145,9 +219,12 @@ export class ExercisesGradingService implements OnModuleInit {
     }
 
     // 2. ลำดับที่สอง: สลับไปใช้ Groq API (Qwen / Gemma)
-    const groqKey = this.configService.get<string>('BACKUP_GROQ_KEY');
+    const groqKey = this.cleanConfig(
+      this.configService.get<string>('BACKUP_GROQ_KEY'),
+    );
     const groqModel =
-      this.configService.get<string>('BACKUP_GROQ_MODEL') || 'qwen/qwen3.8-27b';
+      this.cleanConfig(this.configService.get<string>('BACKUP_GROQ_MODEL')) ||
+      'qwen/qwen3.8-27b';
 
     if (groqKey) {
       try {
@@ -171,8 +248,8 @@ export class ExercisesGradingService implements OnModuleInit {
             },
           ),
         );
-        const content = res?.data?.choices?.[0]?.message?.content;
-        if (content && typeof content === 'string') {
+        const content = this.extractAiContent(res?.data);
+        if (content) {
           this.logger.log(`[AI Backup 1] Groq Cloud ตอบกลับสำเร็จ!`);
           return content;
         }
@@ -186,7 +263,9 @@ export class ExercisesGradingService implements OnModuleInit {
     }
 
     // 3. ลำดับที่สาม: สลับไปใช้ Google Gemini 2.5 Flash
-    const geminiKey = this.configService.get<string>('BACKUP_GEMINI_KEY');
+    const geminiKey = this.cleanConfig(
+      this.configService.get<string>('BACKUP_GEMINI_KEY'),
+    );
 
     if (geminiKey) {
       try {
